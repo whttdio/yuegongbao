@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.aireport.mapper.YgbAiReportTaskMapper">
+
+    <resultMap id="YgbAiReportTaskResult" type="YgbAiReportTask">
+        <id property="taskId" column="task_id" />
+        <result property="reportId" column="report_id" />
+        <result property="reportType" column="report_type" />
+        <result property="taskType" column="task_type" />
+        <result property="taskName" column="task_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="riskLevel" column="risk_level" />
+        <result property="reportPeriod" column="report_period" />
+        <result property="reportSummary" column="report_summary" />
+        <result property="suggestionText" column="suggestion_text" />
+        <result property="receiveUser" column="receive_user" />
+        <result property="receiveDept" column="receive_dept" />
+        <result property="handleStatus" column="handle_status" />
+        <result property="dueDate" column="due_date" />
+        <result property="feedbackText" column="feedback_text" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectAiReportTaskColumns">
+        select task_id, report_id, report_type, task_type, task_name, region_code, risk_level, report_period,
+               report_summary, suggestion_text, receive_user, receive_dept, handle_status, due_date, feedback_text,
+               source_mode, create_by, create_time, update_by, update_time, remark
+        from t_ai_report_task
+    </sql>
+
+    <select id="selectAiReportTaskList" parameterType="YgbAiReportTask" resultMap="YgbAiReportTaskResult">
+        <include refid="selectAiReportTaskColumns" />
+        <where>
+            del_flag = '0'
+            <if test="taskName != null and taskName != ''">
+                and task_name like concat('%', #{taskName}, '%')
+            </if>
+            <if test="reportType != null and reportType != ''">
+                and report_type = #{reportType}
+            </if>
+            <if test="taskType != null and taskType != ''">
+                and task_type = #{taskType}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+            <if test="riskLevel != null and riskLevel != ''">
+                and risk_level = #{riskLevel}
+            </if>
+            <if test="handleStatus != null and handleStatus != ''">
+                and handle_status = #{handleStatus}
+            </if>
+        </where>
+        order by case when due_date is null then 1 else 0 end, due_date asc, task_id desc
+    </select>
+
+    <select id="selectAiReportTaskById" resultMap="YgbAiReportTaskResult">
+        <include refid="selectAiReportTaskColumns" />
+        where task_id = #{taskId}
+          and del_flag = '0'
+    </select>
+
+    <insert id="insertAiReportTask" parameterType="YgbAiReportTask" useGeneratedKeys="true" keyProperty="taskId">
+        insert into t_ai_report_task (
+            report_id, report_type, task_type, task_name, region_code, risk_level, report_period, report_summary,
+            suggestion_text, receive_user, receive_dept, handle_status, due_date, feedback_text, source_mode,
+            del_flag, create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{reportId}, #{reportType}, #{taskType}, #{taskName}, #{regionCode}, #{riskLevel}, #{reportPeriod},
+            #{reportSummary}, #{suggestionText}, #{receiveUser}, #{receiveDept}, #{handleStatus}, #{dueDate},
+            #{feedbackText}, #{sourceMode}, '0', #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{remark}
+        )
+    </insert>
+
+    <update id="updateAiReportTask" parameterType="YgbAiReportTask">
+        update t_ai_report_task
+        <set>
+            <if test="reportId != null">report_id = #{reportId},</if>
+            <if test="reportType != null">report_type = #{reportType},</if>
+            <if test="taskType != null">task_type = #{taskType},</if>
+            <if test="taskName != null">task_name = #{taskName},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="riskLevel != null">risk_level = #{riskLevel},</if>
+            <if test="reportPeriod != null">report_period = #{reportPeriod},</if>
+            <if test="reportSummary != null">report_summary = #{reportSummary},</if>
+            <if test="suggestionText != null">suggestion_text = #{suggestionText},</if>
+            <if test="receiveUser != null">receive_user = #{receiveUser},</if>
+            <if test="receiveDept != null">receive_dept = #{receiveDept},</if>
+            <if test="handleStatus != null">handle_status = #{handleStatus},</if>
+            <if test="dueDate != null">due_date = #{dueDate},</if>
+            <if test="feedbackText != null">feedback_text = #{feedbackText},</if>
+            <if test="sourceMode != null">source_mode = #{sourceMode},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = now()
+        </set>
+        where task_id = #{taskId}
+          and del_flag = '0'
+    </update>
+
+    <update id="deleteAiReportTaskByIds">
+        update t_ai_report_task
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = now()
+        where del_flag = '0'
+          and task_id in
+        <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+            #{taskId}
+        </foreach>
+    </update>
+</mapper>

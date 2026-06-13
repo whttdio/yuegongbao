@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.compliance.mapper.YgbSalaryDetailMapper">
+
+    <resultMap type="YgbSalaryDetail" id="YgbSalaryDetailResult">
+        <id property="detailId" column="detail_id" />
+        <result property="batchId" column="batch_id" />
+        <result property="batchNo" column="batch_no" />
+        <result property="statMonth" column="stat_month" />
+        <result property="monthlyId" column="monthly_id" />
+        <result property="contractId" column="contract_id" />
+        <result property="contractNo" column="contract_no" />
+        <result property="dispatchEnterpriseId" column="dispatch_enterprise_id" />
+        <result property="dispatchEnterpriseName" column="dispatch_enterprise_name" />
+        <result property="employerEnterpriseId" column="employer_enterprise_id" />
+        <result property="employerEnterpriseName" column="employer_enterprise_name" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="idCard" column="id_card" />
+        <result property="regionCode" column="region_code" />
+        <result property="attendanceDays" column="attendance_days" />
+        <result property="totalHours" column="total_hours" />
+        <result property="attCheck" column="att_check" />
+        <result property="payableAmount" column="payable_amount" />
+        <result property="deductionAmount" column="deduction_amount" />
+        <result property="netAmount" column="net_amount" />
+        <result property="bankAccountName" column="bank_account_name" />
+        <result property="bankAccountNo" column="bank_account_no" />
+        <result property="payStatus" column="pay_status" />
+        <result property="failReason" column="fail_reason" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectSalaryDetailVo">
+        select d.detail_id, d.batch_id, d.batch_no, d.stat_month, d.monthly_id, d.contract_id, d.contract_no,
+               d.dispatch_enterprise_id, d.dispatch_enterprise_name, d.employer_enterprise_id, d.employer_enterprise_name,
+               d.person_id, d.person_name, d.id_card, d.region_code, d.attendance_days, d.total_hours,
+               d.att_check, d.payable_amount, d.deduction_amount, d.net_amount, d.bank_account_name,
+               d.bank_account_no, d.pay_status, d.fail_reason, d.create_by, d.create_time, d.update_by, d.update_time, d.remark
+        from t_salary_detail d
+    </sql>
+
+    <select id="selectSalaryDetailList" parameterType="YgbSalaryDetail" resultMap="YgbSalaryDetailResult">
+        <include refid="selectSalaryDetailVo" />
+        <where>
+            d.del_flag = '0'
+            <if test="batchId != null">
+                and d.batch_id = #{batchId}
+            </if>
+            <if test="batchNo != null and batchNo != ''">
+                and d.batch_no like concat('%', #{batchNo}, '%')
+            </if>
+            <if test="statMonth != null and statMonth != ''">
+                and d.stat_month = #{statMonth}
+            </if>
+            <if test="dispatchEnterpriseId != null">
+                and d.dispatch_enterprise_id = #{dispatchEnterpriseId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and d.person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="attCheck != null and attCheck != ''">
+                and d.att_check = #{attCheck}
+            </if>
+            <if test="payStatus != null and payStatus != ''">
+                and d.pay_status = #{payStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and d.region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by d.stat_month desc, d.detail_id desc
+    </select>
+
+    <select id="selectSalaryDetailById" parameterType="Long" resultMap="YgbSalaryDetailResult">
+        <include refid="selectSalaryDetailVo" />
+        where d.detail_id = #{detailId} and d.del_flag = '0'
+    </select>
+
+    <insert id="insertSalaryDetail" parameterType="YgbSalaryDetail" useGeneratedKeys="true" keyProperty="detailId">
+        insert into t_salary_detail (
+            batch_id, batch_no, stat_month, monthly_id, contract_id, contract_no,
+            dispatch_enterprise_id, dispatch_enterprise_name, employer_enterprise_id, employer_enterprise_name,
+            person_id, person_name, id_card, region_code, attendance_days, total_hours,
+            att_check, payable_amount, deduction_amount, net_amount, bank_account_name,
+            bank_account_no, pay_status, fail_reason, remark, create_by, create_time
+        ) values (
+            #{batchId}, #{batchNo}, #{statMonth}, #{monthlyId}, #{contractId}, #{contractNo},
+            #{dispatchEnterpriseId}, #{dispatchEnterpriseName}, #{employerEnterpriseId}, #{employerEnterpriseName},
+            #{personId}, #{personName}, #{idCard}, #{regionCode}, #{attendanceDays}, #{totalHours},
+            #{attCheck}, #{payableAmount}, #{deductionAmount}, #{netAmount}, #{bankAccountName},
+            #{bankAccountNo}, #{payStatus}, #{failReason}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateSalaryDetail" parameterType="YgbSalaryDetail">
+        update t_salary_detail
+        <set>
+            <if test="attCheck != null and attCheck != ''">att_check = #{attCheck},</if>
+            <if test="payableAmount != null">payable_amount = #{payableAmount},</if>
+            <if test="deductionAmount != null">deduction_amount = #{deductionAmount},</if>
+            <if test="netAmount != null">net_amount = #{netAmount},</if>
+            <if test="bankAccountName != null">bank_account_name = #{bankAccountName},</if>
+            <if test="bankAccountNo != null">bank_account_no = #{bankAccountNo},</if>
+            <if test="payStatus != null and payStatus != ''">pay_status = #{payStatus},</if>
+            <if test="failReason != null">fail_reason = #{failReason},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where detail_id = #{detailId} and del_flag = '0'
+    </update>
+
+    <update id="deleteSalaryDetailByIds">
+        update t_salary_detail
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and detail_id in
+        <foreach collection="detailIds" item="detailId" open="(" separator="," close=")">
+            #{detailId}
+        </foreach>
+    </update>
+
+    <delete id="deleteByBatchId" parameterType="Long">
+        delete from t_salary_detail where batch_id = #{batchId}
+    </delete>
+
+    <update id="updatePayStatusByBatchId">
+        update t_salary_detail
+        set pay_status = #{payStatus},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and batch_id = #{batchId}
+          and pay_status = '0'
+    </update>
+
+    <update id="updatePayResultByBatchAndCardNo">
+        update t_salary_detail
+        set pay_status = #{payStatus},
+            fail_reason = #{failReason},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and batch_id = #{batchId}
+          and bank_account_no = #{bankAccountNo}
+          and pay_status = '1'
+    </update>
+
+    <select id="selectLatestNetAmountByPerson" resultType="java.math.BigDecimal">
+        select d.net_amount
+        from t_salary_detail d
+        where d.del_flag = '0'
+          and d.person_id = #{personId}
+        <if test="statMonth != null and statMonth != ''">
+          and d.stat_month = #{statMonth}
+        </if>
+        order by d.stat_month desc, d.detail_id desc
+        limit 1
+    </select>
+
+    <select id="selectWorkerSalaryList" resultMap="YgbSalaryDetailResult">
+        <include refid="selectSalaryDetailVo" />
+        where d.del_flag = '0'
+          and d.person_id = #{personId}
+        <if test="yearPrefix != null and yearPrefix != ''">
+          and d.stat_month like concat(#{yearPrefix}, '%')
+        </if>
+        order by d.stat_month desc, d.detail_id desc
+    </select>
+
+    <select id="selectWorkerSalaryDetail" resultMap="YgbSalaryDetailResult">
+        <include refid="selectSalaryDetailVo" />
+        where d.del_flag = '0'
+          and d.person_id = #{personId}
+          and d.stat_month = #{statMonth}
+        order by d.detail_id desc
+        limit 1
+    </select>
+
+</mapper>

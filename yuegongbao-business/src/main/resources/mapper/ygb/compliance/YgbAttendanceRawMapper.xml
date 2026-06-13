@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.compliance.mapper.YgbAttendanceRawMapper">
+
+    <resultMap type="YgbAttendanceRaw" id="YgbAttendanceRawResult">
+        <id property="attendanceId" column="attendance_id" />
+        <result property="attendanceNo" column="attendance_no" />
+        <result property="contractId" column="contract_id" />
+        <result property="contractNo" column="contract_no" />
+        <result property="dispatchEnterpriseId" column="dispatch_enterprise_id" />
+        <result property="dispatchEnterpriseName" column="dispatch_enterprise_name" />
+        <result property="employerEnterpriseId" column="employer_enterprise_id" />
+        <result property="employerEnterpriseName" column="employer_enterprise_name" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="idCard" column="id_card" />
+        <result property="regionCode" column="region_code" />
+        <result property="attendanceDate" column="attendance_date" />
+        <result property="clockInTime" column="clock_in_time" />
+        <result property="clockOutTime" column="clock_out_time" />
+        <result property="shiftName" column="shift_name" />
+        <result property="attendanceHours" column="attendance_hours" />
+        <result property="overtimeHours" column="overtime_hours" />
+        <result property="attendanceStatus" column="attendance_status" />
+        <result property="sourceType" column="source_type" />
+        <result property="collectStatus" column="collect_status" />
+        <result property="attCheck" column="att_check" />
+        <result property="deviceCode" column="device_code" />
+        <result property="anomalyRemark" column="anomaly_remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectAttendanceRawVo">
+        select a.attendance_id, a.attendance_no, a.contract_id, a.contract_no,
+               a.dispatch_enterprise_id, a.dispatch_enterprise_name,
+               a.employer_enterprise_id, a.employer_enterprise_name,
+               a.person_id, a.person_name, a.id_card, a.region_code,
+               a.attendance_date, a.clock_in_time, a.clock_out_time,
+               a.shift_name, a.attendance_hours, a.overtime_hours,
+               a.attendance_status, a.source_type, a.collect_status,
+               a.att_check, a.device_code, a.anomaly_remark,
+               a.create_by, a.create_time, a.update_by, a.update_time, a.remark
+        from t_attendance_raw a
+    </sql>
+
+    <select id="selectAttendanceRawList" parameterType="YgbAttendanceRaw" resultMap="YgbAttendanceRawResult">
+        <include refid="selectAttendanceRawVo" />
+        <where>
+            a.del_flag = '0'
+            <if test="attendanceNo != null and attendanceNo != ''">
+                and a.attendance_no like concat('%', #{attendanceNo}, '%')
+            </if>
+            <if test="contractId != null">
+                and a.contract_id = #{contractId}
+            </if>
+            <if test="dispatchEnterpriseId != null">
+                and a.dispatch_enterprise_id = #{dispatchEnterpriseId}
+            </if>
+            <if test="personId != null">
+                and a.person_id = #{personId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and a.person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="attendanceStatus != null and attendanceStatus != ''">
+                and a.attendance_status = #{attendanceStatus}
+            </if>
+            <if test="sourceType != null and sourceType != ''">
+                and a.source_type = #{sourceType}
+            </if>
+            <if test="collectStatus != null and collectStatus != ''">
+                and a.collect_status = #{collectStatus}
+            </if>
+            <if test="attCheck != null and attCheck != ''">
+                and a.att_check = #{attCheck}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and a.region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by a.attendance_date desc, a.attendance_id desc
+    </select>
+
+    <select id="selectAttendanceRawById" parameterType="Long" resultMap="YgbAttendanceRawResult">
+        <include refid="selectAttendanceRawVo" />
+        where a.attendance_id = #{attendanceId} and a.del_flag = '0'
+    </select>
+
+    <select id="selectAttendanceRawByPersonAndDate" resultMap="YgbAttendanceRawResult">
+        <include refid="selectAttendanceRawVo" />
+        where a.person_id = #{personId}
+          and a.attendance_date = #{attendanceDate}
+          and a.del_flag = '0'
+        order by a.attendance_id desc
+        limit 1
+    </select>
+
+    <select id="selectAttendanceRawByPersonAndMonth" resultMap="YgbAttendanceRawResult">
+        <include refid="selectAttendanceRawVo" />
+        where a.person_id = #{personId}
+          and date_format(a.attendance_date, '%Y-%m') = #{month}
+          and a.del_flag = '0'
+        order by a.attendance_date asc, a.attendance_id asc
+    </select>
+
+    <select id="checkAttendanceNoUnique" parameterType="String" resultMap="YgbAttendanceRawResult">
+        <include refid="selectAttendanceRawVo" />
+        where a.attendance_no = #{attendanceNo} and a.del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertAttendanceRaw" parameterType="YgbAttendanceRaw" useGeneratedKeys="true" keyProperty="attendanceId">
+        insert into t_attendance_raw (
+            attendance_no, contract_id, contract_no,
+            dispatch_enterprise_id, dispatch_enterprise_name,
+            employer_enterprise_id, employer_enterprise_name,
+            person_id, person_name, id_card, region_code,
+            attendance_date, clock_in_time, clock_out_time,
+            shift_name, attendance_hours, overtime_hours,
+            attendance_status, source_type, collect_status, att_check,
+            device_code, anomaly_remark, remark, create_by, create_time
+        ) values (
+            #{attendanceNo}, #{contractId}, #{contractNo},
+            #{dispatchEnterpriseId}, #{dispatchEnterpriseName},
+            #{employerEnterpriseId}, #{employerEnterpriseName},
+            #{personId}, #{personName}, #{idCard}, #{regionCode},
+            #{attendanceDate}, #{clockInTime}, #{clockOutTime},
+            #{shiftName}, #{attendanceHours}, #{overtimeHours},
+            #{attendanceStatus}, #{sourceType}, #{collectStatus}, #{attCheck},
+            #{deviceCode}, #{anomalyRemark}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateAttendanceRaw" parameterType="YgbAttendanceRaw">
+        update t_attendance_raw
+        <set>
+            <if test="attendanceNo != null and attendanceNo != ''">attendance_no = #{attendanceNo},</if>
+            <if test="contractId != null">contract_id = #{contractId},</if>
+            <if test="contractNo != null">contract_no = #{contractNo},</if>
+            <if test="dispatchEnterpriseId != null">dispatch_enterprise_id = #{dispatchEnterpriseId},</if>
+            <if test="dispatchEnterpriseName != null">dispatch_enterprise_name = #{dispatchEnterpriseName},</if>
+            <if test="employerEnterpriseId != null">employer_enterprise_id = #{employerEnterpriseId},</if>
+            <if test="employerEnterpriseName != null">employer_enterprise_name = #{employerEnterpriseName},</if>
+            <if test="personId != null">person_id = #{personId},</if>
+            <if test="personName != null">person_name = #{personName},</if>
+            <if test="idCard != null">id_card = #{idCard},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="attendanceDate != null">attendance_date = #{attendanceDate},</if>
+            <if test="clockInTime != null">clock_in_time = #{clockInTime},</if>
+            <if test="clockOutTime != null">clock_out_time = #{clockOutTime},</if>
+            <if test="shiftName != null">shift_name = #{shiftName},</if>
+            <if test="attendanceHours != null">attendance_hours = #{attendanceHours},</if>
+            <if test="overtimeHours != null">overtime_hours = #{overtimeHours},</if>
+            <if test="attendanceStatus != null and attendanceStatus != ''">attendance_status = #{attendanceStatus},</if>
+            <if test="sourceType != null and sourceType != ''">source_type = #{sourceType},</if>
+            <if test="collectStatus != null and collectStatus != ''">collect_status = #{collectStatus},</if>
+            <if test="attCheck != null and attCheck != ''">att_check = #{attCheck},</if>
+            <if test="deviceCode != null">device_code = #{deviceCode},</if>
+            <if test="anomalyRemark != null">anomaly_remark = #{anomalyRemark},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where attendance_id = #{attendanceId} and del_flag = '0'
+    </update>
+
+    <update id="deleteAttendanceRawByIds">
+        update t_attendance_raw
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and attendance_id in
+        <foreach collection="attendanceIds" item="attendanceId" open="(" separator="," close=")">
+            #{attendanceId}
+        </foreach>
+    </update>
+
+    <update id="updateCollectStatusByMonth">
+        update t_attendance_raw
+        set collect_status = '1',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and date_format(attendance_date, '%Y-%m') = #{statMonth}
+        <if test="dispatchEnterpriseId != null">
+            and dispatch_enterprise_id = #{dispatchEnterpriseId}
+        </if>
+    </update>
+
+</mapper>

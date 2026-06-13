@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.worker.mapper.WorkerJobMapper">
+
+    <resultMap id="WorkerJobPostResult" type="com.yuegongbao.ygb.worker.domain.WorkerJobPost">
+        <id property="jobId" column="job_id" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="title" column="title" />
+        <result property="jobType" column="job_type" />
+        <result property="workAddress" column="work_address" />
+        <result property="longitude" column="longitude" />
+        <result property="latitude" column="latitude" />
+        <result property="salaryMin" column="salary_min" />
+        <result property="salaryMax" column="salary_max" />
+        <result property="salaryText" column="salary_text" />
+        <result property="recruitCount" column="recruit_count" />
+        <result property="contactName" column="contact_name" />
+        <result property="contactMobile" column="contact_mobile" />
+        <result property="description" column="description" />
+        <result property="requirementText" column="requirement_text" />
+        <result property="status" column="status" />
+        <result property="publishTime" column="publish_time" />
+    </resultMap>
+
+    <resultMap id="WorkerJobApplyResult" type="com.yuegongbao.ygb.worker.domain.WorkerJobApply">
+        <id property="applyId" column="apply_id" />
+        <result property="jobId" column="job_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="mobile" column="mobile" />
+        <result property="status" column="status" />
+        <result property="jobTitle" column="job_title" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="applyTime" column="apply_time" />
+    </resultMap>
+
+    <sql id="WorkerJobPostColumns">
+        job_id, enterprise_id, enterprise_name, title, job_type, work_address, longitude, latitude, salary_min, salary_max, salary_text,
+        recruit_count, contact_name, contact_mobile, description, requirement_text, status, publish_time
+    </sql>
+
+    <select id="selectJobList" resultMap="WorkerJobPostResult">
+        select <include refid="WorkerJobPostColumns" />
+        from ygb_worker_job_post
+        where del_flag = '0'
+          and status = '0'
+        <if test="keyword != null and keyword != ''">
+          and (
+            title like concat('%', #{keyword}, '%')
+            or enterprise_name like concat('%', #{keyword}, '%')
+            or job_type like concat('%', #{keyword}, '%')
+          )
+        </if>
+        <if test="jobType != null and jobType != ''">
+          and job_type = #{jobType}
+        </if>
+        <if test="salaryMin != null">
+          and ifnull(salary_max, salary_min) <![CDATA[>=]]> #{salaryMin}
+        </if>
+        <if test="salaryMax != null">
+          and ifnull(salary_min, salary_max) <![CDATA[<=]]> #{salaryMax}
+        </if>
+        order by job_id desc
+    </select>
+
+    <select id="selectJobDetail" resultMap="WorkerJobPostResult">
+        select <include refid="WorkerJobPostColumns" />
+        from ygb_worker_job_post
+        where del_flag = '0'
+          and status = '0'
+          and job_id = #{jobId}
+        limit 1
+    </select>
+
+    <select id="countUserApplied" resultType="long">
+        select count(1)
+        from ygb_worker_job_apply
+        where del_flag = '0'
+          and job_id = #{jobId}
+          and user_id = #{userId}
+    </select>
+
+    <insert id="insertJobApply" parameterType="com.yuegongbao.ygb.worker.domain.WorkerJobApply" useGeneratedKeys="true" keyProperty="applyId">
+        insert into ygb_worker_job_apply (
+            job_id, user_id, person_id, person_name, mobile, status, create_by, apply_time, create_time, del_flag
+        ) values (
+            #{jobId}, #{userId}, #{personId}, #{personName}, #{mobile}, #{status}, #{createBy}, sysdate(), sysdate(), '0'
+        )
+    </insert>
+
+    <select id="selectJobApplyList" resultMap="WorkerJobApplyResult">
+        select
+            a.apply_id,
+            a.job_id,
+            a.user_id,
+            a.person_id,
+            a.person_name,
+            a.mobile,
+            a.status,
+            a.apply_time,
+            p.title as job_title,
+            p.enterprise_name
+        from ygb_worker_job_apply a
+        left join ygb_worker_job_post p on a.job_id = p.job_id
+        where a.del_flag = '0'
+          and a.user_id = #{userId}
+        order by a.apply_id desc
+    </select>
+
+    <select id="selectAdminJobPostList" resultMap="WorkerJobPostResult">
+        select <include refid="WorkerJobPostColumns" />
+        from ygb_worker_job_post
+        where del_flag = '0'
+        <if test="title != null and title != ''">
+          and title like concat('%', #{title}, '%')
+        </if>
+        <if test="enterpriseName != null and enterpriseName != ''">
+          and enterprise_name like concat('%', #{enterpriseName}, '%')
+        </if>
+        <if test="jobType != null and jobType != ''">
+          and job_type = #{jobType}
+        </if>
+        <if test="status != null and status != ''">
+          and status = #{status}
+        </if>
+        order by job_id desc
+    </select>
+
+    <select id="selectAdminJobPostById" resultMap="WorkerJobPostResult">
+        select <include refid="WorkerJobPostColumns" />
+        from ygb_worker_job_post
+        where del_flag = '0'
+          and job_id = #{jobId}
+        limit 1
+    </select>
+
+    <insert id="insertJobPost" parameterType="com.yuegongbao.ygb.worker.domain.WorkerJobPost" useGeneratedKeys="true" keyProperty="jobId">
+        insert into ygb_worker_job_post (
+            enterprise_id, enterprise_name, title, job_type, work_address, longitude, latitude, salary_min, salary_max, salary_text,
+            recruit_count, contact_name, contact_mobile, description, requirement_text, status, publish_time,
+            create_by, create_time, del_flag
+        ) values (
+            #{enterpriseId}, #{enterpriseName}, #{title}, #{jobType}, #{workAddress}, #{longitude}, #{latitude}, #{salaryMin}, #{salaryMax}, #{salaryText},
+            #{recruitCount}, #{contactName}, #{contactMobile}, #{description}, #{requirementText}, #{status}, #{publishTime},
+            #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <update id="updateJobPost" parameterType="com.yuegongbao.ygb.worker.domain.WorkerJobPost">
+        update ygb_worker_job_post
+        set enterprise_id = #{enterpriseId},
+            enterprise_name = #{enterpriseName},
+            title = #{title},
+            job_type = #{jobType},
+            work_address = #{workAddress},
+            longitude = #{longitude},
+            latitude = #{latitude},
+            salary_min = #{salaryMin},
+            salary_max = #{salaryMax},
+            salary_text = #{salaryText},
+            recruit_count = #{recruitCount},
+            contact_name = #{contactName},
+            contact_mobile = #{contactMobile},
+            description = #{description},
+            requirement_text = #{requirementText},
+            status = #{status},
+            publish_time = #{publishTime},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where job_id = #{jobId}
+    </update>
+
+    <update id="deleteJobPostByIds">
+        update ygb_worker_job_post
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where job_id in
+        <foreach collection="jobIds" item="jobId" open="(" separator="," close=")">
+            #{jobId}
+        </foreach>
+    </update>
+
+</mapper>

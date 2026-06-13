@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.regulation.mapper.YgbEmploymentRatioMapper">
+
+    <resultMap type="YgbEmploymentRatio" id="YgbEmploymentRatioResult">
+        <id property="recordId" column="record_id" />
+        <result property="statMonth" column="stat_month" />
+        <result property="employerEnterpriseId" column="employer_enterprise_id" />
+        <result property="employerEnterpriseName" column="employer_enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="dispatchCount" column="dispatch_count" />
+        <result property="formalCount" column="formal_count" />
+        <result property="ratioValue" column="ratio_value" />
+        <result property="warningLevel" column="warning_level" />
+        <result property="warningStatus" column="warning_status" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectEmploymentRatioVo">
+        select record_id, stat_month, employer_enterprise_id, employer_enterprise_name, region_code,
+               dispatch_count, formal_count, ratio_value, warning_level, warning_status, remark,
+               create_by, create_time, update_by, update_time
+        from t_employment_proportion
+    </sql>
+
+    <select id="selectEmploymentRatioList" parameterType="YgbEmploymentRatio" resultMap="YgbEmploymentRatioResult">
+        <include refid="selectEmploymentRatioVo" />
+        <where>
+            del_flag = '0'
+            <if test="statMonth != null and statMonth != ''">
+                and stat_month = #{statMonth}
+            </if>
+            <if test="employerEnterpriseId != null">
+                and employer_enterprise_id = #{employerEnterpriseId}
+            </if>
+            <if test="warningLevel != null and warningLevel != ''">
+                and warning_level = #{warningLevel}
+            </if>
+            <if test="warningStatus != null and warningStatus != ''">
+                and warning_status = #{warningStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by stat_month desc, ratio_value desc, record_id desc
+    </select>
+
+    <insert id="insertEmploymentRatio" parameterType="YgbEmploymentRatio" useGeneratedKeys="true"
+        keyProperty="recordId">
+        insert into t_employment_proportion (
+            stat_month, employer_enterprise_id, employer_enterprise_name, region_code, dispatch_count, formal_count,
+            ratio_value, warning_level, warning_status, remark, create_by, create_time
+        ) values (
+            #{statMonth}, #{employerEnterpriseId}, #{employerEnterpriseName}, #{regionCode}, #{dispatchCount},
+            #{formalCount}, #{ratioValue}, #{warningLevel}, #{warningStatus}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <delete id="deleteByScope">
+        delete from t_employment_proportion
+        where stat_month = #{statMonth}
+        <if test="employerEnterpriseId != null">
+            and employer_enterprise_id = #{employerEnterpriseId}
+        </if>
+    </delete>
+
+</mapper>

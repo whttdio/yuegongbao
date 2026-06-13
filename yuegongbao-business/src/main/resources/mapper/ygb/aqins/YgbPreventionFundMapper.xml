@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.aqins.mapper.YgbPreventionFundMapper">
+
+    <resultMap id="YgbPreventionFundResult" type="YgbPreventionFund">
+        <id property="fundId" column="fund_id" />
+        <result property="policyId" column="policy_id" />
+        <result property="statMonth" column="stat_month" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="accruedAmount" column="accrued_amount" />
+        <result property="usedAmount" column="used_amount" />
+        <result property="remainingAmount" column="remaining_amount" />
+        <result property="fundStatus" column="fund_status" />
+        <result property="usagePurpose" column="usage_purpose" />
+        <result property="evidenceUrl" column="evidence_url" />
+        <result property="lastSettleTime" column="last_settle_time" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <select id="selectPreventionFundList" parameterType="YgbPreventionFund" resultMap="YgbPreventionFundResult">
+        select fund_id, policy_id, stat_month, enterprise_id, enterprise_name, region_code, accrued_amount,
+               used_amount, remaining_amount, fund_status, usage_purpose, evidence_url, last_settle_time,
+               source_mode, create_by, create_time, update_by, update_time, remark
+        from t_prevention_fund
+        <where>
+            del_flag = '0'
+            <if test="statMonth != null and statMonth != ''">
+                and stat_month = #{statMonth}
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="enterpriseName != null and enterpriseName != ''">
+                and enterprise_name like concat('%', #{enterpriseName}, '%')
+            </if>
+            <if test="fundStatus != null and fundStatus != ''">
+                and fund_status = #{fundStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by stat_month desc, fund_status asc, fund_id desc
+    </select>
+
+    <select id="selectPreventionFundById" resultMap="YgbPreventionFundResult">
+        select fund_id, policy_id, stat_month, enterprise_id, enterprise_name, region_code, accrued_amount,
+               used_amount, remaining_amount, fund_status, usage_purpose, evidence_url, last_settle_time,
+               source_mode, create_by, create_time, update_by, update_time, remark
+        from t_prevention_fund
+        where fund_id = #{fundId}
+          and del_flag = '0'
+    </select>
+
+    <select id="selectPreventionFundByScope" resultMap="YgbPreventionFundResult">
+        select fund_id, policy_id, stat_month, enterprise_id, enterprise_name, region_code, accrued_amount,
+               used_amount, remaining_amount, fund_status, usage_purpose, evidence_url, last_settle_time,
+               source_mode, create_by, create_time, update_by, update_time, remark
+        from t_prevention_fund
+        where policy_id = #{policyId}
+          and stat_month = #{statMonth}
+          and del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertPreventionFund" parameterType="YgbPreventionFund" useGeneratedKeys="true" keyProperty="fundId">
+        insert into t_prevention_fund (
+            policy_id, stat_month, enterprise_id, enterprise_name, region_code, accrued_amount, used_amount,
+            remaining_amount, fund_status, usage_purpose, evidence_url, last_settle_time, source_mode,
+            del_flag, create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{policyId}, #{statMonth}, #{enterpriseId}, #{enterpriseName}, #{regionCode}, #{accruedAmount},
+            #{usedAmount}, #{remainingAmount}, #{fundStatus}, #{usagePurpose}, #{evidenceUrl}, #{lastSettleTime},
+            #{sourceMode}, '0', #{createBy}, sysdate(), #{updateBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updatePreventionFund" parameterType="YgbPreventionFund">
+        update t_prevention_fund
+        set accrued_amount = #{accruedAmount},
+            used_amount = #{usedAmount},
+            remaining_amount = #{remainingAmount},
+            fund_status = #{fundStatus},
+            usage_purpose = #{usagePurpose},
+            evidence_url = #{evidenceUrl},
+            last_settle_time = #{lastSettleTime},
+            source_mode = #{sourceMode},
+            update_by = #{updateBy},
+            update_time = sysdate(),
+            remark = #{remark}
+        where fund_id = #{fundId}
+    </update>
+
+</mapper>

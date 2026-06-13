@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.worker.mapper.WorkerNoticeMessageMapper">
+
+    <resultMap id="WorkerNoticeMessageResult" type="com.yuegongbao.ygb.worker.domain.WorkerNoticeMessage">
+        <id property="messageId" column="message_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="messageType" column="message_type" />
+        <result property="title" column="title" />
+        <result property="summary" column="summary" />
+        <result property="content" column="content" />
+        <result property="bizType" column="biz_type" />
+        <result property="bizId" column="biz_id" />
+        <result property="jumpPath" column="jump_path" />
+        <result property="jumpQueryText" column="jump_query_text" />
+        <result property="actionLabel" column="action_label" />
+        <result property="sourceLabel" column="source_label" />
+        <result property="readFlag" column="read_flag" />
+        <result property="readTime" column="read_time" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <sql id="WorkerNoticeMessageColumns">
+        message_id, user_id, person_id, person_name, message_type, title, summary, content, biz_type, biz_id,
+        jump_path, jump_query_text, action_label, source_label, read_flag, read_time, create_by, create_time,
+        update_by, update_time, remark, del_flag
+    </sql>
+
+    <insert id="insertWorkerNoticeMessage" parameterType="com.yuegongbao.ygb.worker.domain.WorkerNoticeMessage"
+        useGeneratedKeys="true" keyProperty="messageId">
+        insert into ygb_worker_notice_message (
+            user_id, person_id, person_name, message_type, title, summary, content, biz_type, biz_id,
+            jump_path, jump_query_text, action_label, source_label, read_flag, create_by, create_time, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{messageType}, #{title}, #{summary}, #{content}, #{bizType}, #{bizId},
+            #{jumpPath}, #{jumpQueryText}, #{actionLabel}, #{sourceLabel}, #{readFlag}, #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <select id="countUnreadWorkerNoticeMessage" resultType="int">
+        select count(1)
+        from ygb_worker_notice_message
+        where del_flag = '0'
+          and user_id = #{userId}
+          and read_flag = '0'
+    </select>
+
+    <select id="selectWorkerNoticeMessageList" resultMap="WorkerNoticeMessageResult">
+        select <include refid="WorkerNoticeMessageColumns" />
+        from ygb_worker_notice_message
+        where del_flag = '0'
+          and user_id = #{userId}
+        order by message_id desc
+        <if test="limit != null and limit > 0">
+            limit #{limit}
+        </if>
+    </select>
+
+    <select id="selectWorkerNoticeMessageById" resultMap="WorkerNoticeMessageResult">
+        select <include refid="WorkerNoticeMessageColumns" />
+        from ygb_worker_notice_message
+        where del_flag = '0'
+          and message_id = #{messageId}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectLatestWorkerNoticeMessageByBiz" resultMap="WorkerNoticeMessageResult">
+        select <include refid="WorkerNoticeMessageColumns" />
+        from ygb_worker_notice_message
+        where del_flag = '0'
+          and user_id = #{userId}
+          and biz_type = #{bizType}
+          and biz_id = #{bizId}
+        order by message_id desc
+        limit 1
+    </select>
+
+    <update id="markWorkerNoticeMessageRead">
+        update ygb_worker_notice_message
+        set read_flag = '1',
+            read_time = case when read_time is null then sysdate() else read_time end,
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where message_id = #{messageId}
+          and user_id = #{userId}
+          and del_flag = '0'
+          and read_flag = '0'
+    </update>
+
+</mapper>

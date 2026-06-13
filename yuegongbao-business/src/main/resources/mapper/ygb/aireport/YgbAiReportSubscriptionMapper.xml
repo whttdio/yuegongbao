@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.aireport.mapper.YgbAiReportSubscriptionMapper">
+
+    <resultMap id="YgbAiReportSubscriptionResult" type="YgbAiReportSubscription">
+        <id property="subscriptionId" column="subscription_id" />
+        <result property="subscriptionName" column="subscription_name" />
+        <result property="reportType" column="report_type" />
+        <result property="regionCode" column="region_code" />
+        <result property="cycleType" column="cycle_type" />
+        <result property="receiveType" column="receive_type" />
+        <result property="receiver" column="receiver" />
+        <result property="versionScope" column="version_scope" />
+        <result property="status" column="status" />
+        <result property="lastSendTime" column="last_send_time" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectAiReportSubscriptionColumns">
+        select subscription_id, subscription_name, report_type, region_code, cycle_type, receive_type, receiver,
+               version_scope, status, last_send_time, source_mode, create_by, create_time, update_by, update_time, remark
+        from t_ai_report_subscription
+    </sql>
+
+    <select id="selectAiReportSubscriptionList" parameterType="YgbAiReportSubscription" resultMap="YgbAiReportSubscriptionResult">
+        <include refid="selectAiReportSubscriptionColumns" />
+        <where>
+            del_flag = '0'
+            <if test="subscriptionName != null and subscriptionName != ''">
+                and subscription_name like concat('%', #{subscriptionName}, '%')
+            </if>
+            <if test="reportType != null and reportType != ''">
+                and report_type = #{reportType}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+            <if test="cycleType != null and cycleType != ''">
+                and cycle_type = #{cycleType}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+        </where>
+        order by update_time desc, subscription_id desc
+    </select>
+
+    <select id="selectAiReportSubscriptionById" resultMap="YgbAiReportSubscriptionResult">
+        <include refid="selectAiReportSubscriptionColumns" />
+        where subscription_id = #{subscriptionId}
+          and del_flag = '0'
+    </select>
+
+    <insert id="insertAiReportSubscription" parameterType="YgbAiReportSubscription" useGeneratedKeys="true" keyProperty="subscriptionId">
+        insert into t_ai_report_subscription (
+            subscription_name, report_type, region_code, cycle_type, receive_type, receiver, version_scope, status,
+            last_send_time, source_mode, del_flag, create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{subscriptionName}, #{reportType}, #{regionCode}, #{cycleType}, #{receiveType}, #{receiver},
+            #{versionScope}, #{status}, #{lastSendTime}, #{sourceMode}, '0', #{createBy}, #{createTime}, #{updateBy},
+            #{updateTime}, #{remark}
+        )
+    </insert>
+
+    <update id="updateAiReportSubscription" parameterType="YgbAiReportSubscription">
+        update t_ai_report_subscription
+        <set>
+            <if test="subscriptionName != null">subscription_name = #{subscriptionName},</if>
+            <if test="reportType != null">report_type = #{reportType},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="cycleType != null">cycle_type = #{cycleType},</if>
+            <if test="receiveType != null">receive_type = #{receiveType},</if>
+            <if test="receiver != null">receiver = #{receiver},</if>
+            <if test="versionScope != null">version_scope = #{versionScope},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="lastSendTime != null">last_send_time = #{lastSendTime},</if>
+            <if test="sourceMode != null">source_mode = #{sourceMode},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = now()
+        </set>
+        where subscription_id = #{subscriptionId}
+          and del_flag = '0'
+    </update>
+
+    <update id="deleteAiReportSubscriptionByIds">
+        update t_ai_report_subscription
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = now()
+        where del_flag = '0'
+          and subscription_id in
+        <foreach collection="subscriptionIds" item="subscriptionId" open="(" separator="," close=")">
+            #{subscriptionId}
+        </foreach>
+    </update>
+</mapper>

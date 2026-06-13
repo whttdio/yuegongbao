@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.warning.mapper.YgbWarningRuleMapper">
+
+    <resultMap type="YgbWarningRule" id="YgbWarningRuleResult">
+        <id property="ruleId" column="rule_id" />
+        <result property="ruleName" column="rule_name" />
+        <result property="warnLevel" column="warn_level" />
+        <result property="sourceModule" column="source_module" />
+        <result property="conditionText" column="condition_text" />
+        <result property="pushTargets" column="push_targets" />
+        <result property="timeoutMinutes" column="timeout_minutes" />
+        <result property="upgradeLevel" column="upgrade_level" />
+        <result property="ruleStatus" column="rule_status" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectWarningRuleVo">
+        select rule_id, rule_name, warn_level, source_module, condition_text, push_targets,
+               timeout_minutes, upgrade_level, rule_status, remark, create_by, create_time, update_by, update_time
+        from t_warning_rule
+    </sql>
+
+    <select id="selectWarningRuleList" parameterType="YgbWarningRule" resultMap="YgbWarningRuleResult">
+        <include refid="selectWarningRuleVo" />
+        <where>
+            <if test="ruleName != null and ruleName != ''">
+                and rule_name like concat('%', #{ruleName}, '%')
+            </if>
+            <if test="sourceModule != null and sourceModule != ''">
+                and source_module = #{sourceModule}
+            </if>
+            <if test="ruleStatus != null and ruleStatus != ''">
+                and rule_status = #{ruleStatus}
+            </if>
+        </where>
+        order by rule_id desc
+    </select>
+
+    <select id="selectWarningRuleById" parameterType="Long" resultMap="YgbWarningRuleResult">
+        <include refid="selectWarningRuleVo" />
+        where rule_id = #{ruleId}
+    </select>
+
+    <insert id="insertWarningRule" parameterType="YgbWarningRule" useGeneratedKeys="true" keyProperty="ruleId">
+        insert into t_warning_rule (
+            rule_name, warn_level, source_module, condition_text, push_targets, timeout_minutes,
+            upgrade_level, rule_status, remark, create_by, create_time
+        ) values (
+            #{ruleName}, #{warnLevel}, #{sourceModule}, #{conditionText}, #{pushTargets}, #{timeoutMinutes},
+            #{upgradeLevel}, #{ruleStatus}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateWarningRule" parameterType="YgbWarningRule">
+        update t_warning_rule
+        <set>
+            <if test="ruleName != null and ruleName != ''">rule_name = #{ruleName},</if>
+            <if test="warnLevel != null and warnLevel != ''">warn_level = #{warnLevel},</if>
+            <if test="sourceModule != null and sourceModule != ''">source_module = #{sourceModule},</if>
+            <if test="conditionText != null">condition_text = #{conditionText},</if>
+            <if test="pushTargets != null">push_targets = #{pushTargets},</if>
+            <if test="timeoutMinutes != null">timeout_minutes = #{timeoutMinutes},</if>
+            <if test="upgradeLevel != null">upgrade_level = #{upgradeLevel},</if>
+            <if test="ruleStatus != null and ruleStatus != ''">rule_status = #{ruleStatus},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where rule_id = #{ruleId}
+    </update>
+
+    <update id="deleteWarningRuleByIds">
+        update t_warning_rule
+        set rule_status = '0',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where rule_id in
+        <foreach collection="ruleIds" item="ruleId" open="(" separator="," close=")">
+            #{ruleId}
+        </foreach>
+    </update>
+
+</mapper>

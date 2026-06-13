@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.safety.mapper.YgbInjuryEventMapper">
+
+    <resultMap type="YgbInjuryEvent" id="YgbInjuryEventResult">
+        <id property="eventId" column="event_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="eventDate" column="event_date" />
+        <result property="reportTime" column="report_time" />
+        <result property="injuryLocation" column="injury_location" />
+        <result property="injuryPart" column="injury_part" />
+        <result property="diagnosisUrl" column="diagnosis_url" />
+        <result property="injuryStatus" column="injury_status" />
+        <result property="approvalDeadline" column="approval_deadline" />
+        <result property="remainingDays" column="remaining_days" />
+        <result property="approvalResult" column="approval_result" />
+        <result property="warningStatus" column="warning_status" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectInjuryEventVo">
+        select event_id, person_id, person_name, enterprise_id, enterprise_name, region_code, event_date, report_time,
+               injury_location, injury_part, diagnosis_url, injury_status, approval_deadline, remaining_days,
+               approval_result, warning_status, remark, create_by, create_time, update_by, update_time
+        from t_injury_event
+    </sql>
+
+    <select id="selectInjuryEventList" parameterType="YgbInjuryEvent" resultMap="YgbInjuryEventResult">
+        <include refid="selectInjuryEventVo" />
+        <where>
+            del_flag = '0'
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="personId != null">
+                and person_id = #{personId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="injuryStatus != null and injuryStatus != ''">
+                and injury_status = #{injuryStatus}
+            </if>
+            <if test="warningStatus != null and warningStatus != ''">
+                and warning_status = #{warningStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by event_date desc, event_id desc
+    </select>
+
+    <select id="selectInjuryEventById" parameterType="Long" resultMap="YgbInjuryEventResult">
+        <include refid="selectInjuryEventVo" />
+        where event_id = #{eventId} and del_flag = '0'
+    </select>
+
+    <insert id="insertInjuryEvent" parameterType="YgbInjuryEvent" useGeneratedKeys="true" keyProperty="eventId">
+        insert into t_injury_event (
+            person_id, person_name, enterprise_id, enterprise_name, region_code, event_date, report_time,
+            injury_location, injury_part, diagnosis_url, injury_status, approval_deadline, remaining_days,
+            approval_result, warning_status, remark, create_by, create_time
+        ) values (
+            #{personId}, #{personName}, #{enterpriseId}, #{enterpriseName}, #{regionCode}, #{eventDate}, #{reportTime},
+            #{injuryLocation}, #{injuryPart}, #{diagnosisUrl}, #{injuryStatus}, #{approvalDeadline}, #{remainingDays},
+            #{approvalResult}, #{warningStatus}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateInjuryEvent" parameterType="YgbInjuryEvent">
+        update t_injury_event
+        <set>
+            <if test="personId != null">person_id = #{personId},</if>
+            <if test="personName != null">person_name = #{personName},</if>
+            <if test="enterpriseId != null">enterprise_id = #{enterpriseId},</if>
+            <if test="enterpriseName != null">enterprise_name = #{enterpriseName},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="eventDate != null">event_date = #{eventDate},</if>
+            <if test="reportTime != null">report_time = #{reportTime},</if>
+            <if test="injuryLocation != null">injury_location = #{injuryLocation},</if>
+            <if test="injuryPart != null">injury_part = #{injuryPart},</if>
+            <if test="diagnosisUrl != null">diagnosis_url = #{diagnosisUrl},</if>
+            <if test="injuryStatus != null and injuryStatus != ''">injury_status = #{injuryStatus},</if>
+            <if test="approvalDeadline != null">approval_deadline = #{approvalDeadline},</if>
+            <if test="remainingDays != null">remaining_days = #{remainingDays},</if>
+            <if test="approvalResult != null">approval_result = #{approvalResult},</if>
+            <if test="warningStatus != null and warningStatus != ''">warning_status = #{warningStatus},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where event_id = #{eventId} and del_flag = '0'
+    </update>
+
+    <update id="deleteInjuryEventByIds">
+        update t_injury_event
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and event_id in
+        <foreach collection="eventIds" item="eventId" open="(" separator="," close=")">
+            #{eventId}
+        </foreach>
+    </update>
+
+</mapper>

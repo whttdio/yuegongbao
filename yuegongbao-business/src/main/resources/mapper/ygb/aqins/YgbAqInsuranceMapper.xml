@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.aqins.mapper.YgbAqInsuranceMapper">
+
+    <resultMap id="YgbAqInsuranceResult" type="YgbAqInsurance">
+        <id property="policyId" column="policy_id" />
+        <result property="statMonth" column="stat_month" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="insurerName" column="insurer_name" />
+        <result property="policyNo" column="policy_no" />
+        <result property="premium" column="premium" />
+        <result property="startDate" column="start_date" />
+        <result property="endDate" column="end_date" />
+        <result property="policyStatus" column="policy_status" />
+        <result property="insuredPersonCount" column="insured_person_count" />
+        <result property="preventionFundRatio" column="prevention_fund_ratio" />
+        <result property="preventionFundAmount" column="prevention_fund_amount" />
+        <result property="usedFundAmount" column="used_fund_amount" />
+        <result property="remainingFundAmount" column="remaining_fund_amount" />
+        <result property="expireInDays" column="expire_in_days" />
+        <result property="sourceSerialNo" column="source_serial_no" />
+        <result property="sourceStatus" column="source_status" />
+        <result property="sourceMessage" column="source_message" />
+        <result property="callbackTime" column="callback_time" />
+        <result property="rawPayload" column="raw_payload" />
+    </resultMap>
+
+    <sql id="selectAqInsuranceColumns">
+        select policy_id, stat_month, enterprise_id, enterprise_name, region_code, insurer_name, policy_no, premium,
+               start_date, end_date, policy_status, insured_person_count, prevention_fund_ratio,
+               prevention_fund_amount, used_fund_amount, remaining_fund_amount, datediff(end_date, curdate()) as expire_in_days,
+               source_serial_no, source_status, source_message, callback_time, raw_payload
+        from t_aq_insurance
+    </sql>
+
+    <select id="selectAqInsuranceList" parameterType="YgbAqInsurance" resultMap="YgbAqInsuranceResult">
+        <include refid="selectAqInsuranceColumns" />
+        <where>
+            del_flag = '0'
+            <if test="statMonth != null and statMonth != ''">
+                and stat_month = #{statMonth}
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="enterpriseName != null and enterpriseName != ''">
+                and enterprise_name like concat('%', #{enterpriseName}, '%')
+            </if>
+            <if test="policyStatus != null and policyStatus != ''">
+                and policy_status = #{policyStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by stat_month desc, policy_status desc, end_date asc, policy_id desc
+    </select>
+
+    <select id="selectAqInsuranceById" resultMap="YgbAqInsuranceResult">
+        <include refid="selectAqInsuranceColumns" />
+        where policy_id = #{policyId}
+          and del_flag = '0'
+    </select>
+
+    <select id="selectAqInsuranceByScope" resultMap="YgbAqInsuranceResult">
+        <include refid="selectAqInsuranceColumns" />
+        where stat_month = #{statMonth}
+          and enterprise_id = #{enterpriseId}
+          and del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectLatestAqInsuranceByEnterpriseId" resultMap="YgbAqInsuranceResult">
+        <include refid="selectAqInsuranceColumns" />
+        where enterprise_id = #{enterpriseId}
+          and del_flag = '0'
+        order by stat_month desc, end_date desc, policy_id desc
+        limit 1
+    </select>
+
+    <insert id="insertAqInsurance" parameterType="YgbAqInsurance" useGeneratedKeys="true" keyProperty="policyId">
+        insert into t_aq_insurance (
+            stat_month, enterprise_id, enterprise_name, region_code, insurer_name, policy_no, premium, start_date,
+            end_date, policy_status, insured_person_count, prevention_fund_ratio, prevention_fund_amount,
+            used_fund_amount, remaining_fund_amount, source_serial_no, source_status, source_message, callback_time,
+            raw_payload, del_flag, create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{statMonth}, #{enterpriseId}, #{enterpriseName}, #{regionCode}, #{insurerName}, #{policyNo},
+            #{premium}, #{startDate}, #{endDate}, #{policyStatus}, #{insuredPersonCount}, #{preventionFundRatio},
+            #{preventionFundAmount}, #{usedFundAmount}, #{remainingFundAmount}, #{sourceSerialNo}, #{sourceStatus},
+            #{sourceMessage}, #{callbackTime}, #{rawPayload}, '0', #{createBy}, sysdate(), #{updateBy}, sysdate(),
+            #{remark}
+        )
+    </insert>
+
+    <update id="updateAqInsurance" parameterType="YgbAqInsurance">
+        update t_aq_insurance
+        set enterprise_name = #{enterpriseName},
+            region_code = #{regionCode},
+            insurer_name = #{insurerName},
+            policy_no = #{policyNo},
+            premium = #{premium},
+            start_date = #{startDate},
+            end_date = #{endDate},
+            policy_status = #{policyStatus},
+            insured_person_count = #{insuredPersonCount},
+            prevention_fund_ratio = #{preventionFundRatio},
+            prevention_fund_amount = #{preventionFundAmount},
+            used_fund_amount = #{usedFundAmount},
+            remaining_fund_amount = #{remainingFundAmount},
+            source_serial_no = #{sourceSerialNo},
+            source_status = #{sourceStatus},
+            source_message = #{sourceMessage},
+            callback_time = #{callbackTime},
+            raw_payload = #{rawPayload},
+            update_by = #{updateBy},
+            update_time = sysdate(),
+            remark = #{remark}
+        where policy_id = #{policyId}
+    </update>
+
+    <update id="updateFundAmounts">
+        update t_aq_insurance
+        set used_fund_amount = #{usedFundAmount},
+            remaining_fund_amount = #{remainingFundAmount},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where policy_id = #{policyId}
+    </update>
+
+</mapper>

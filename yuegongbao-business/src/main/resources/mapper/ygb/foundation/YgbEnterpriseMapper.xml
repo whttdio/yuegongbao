@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper">
+
+    <resultMap type="YgbEnterprise" id="YgbEnterpriseResult">
+        <id property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="enterpriseCode" column="enterprise_code" />
+        <result property="regionCode" column="region_code" />
+        <result property="enterpriseType" column="enterprise_type" />
+        <result property="legalPerson" column="legal_person" />
+        <result property="contactPerson" column="contact_person" />
+        <result property="contactPhone" column="contact_phone" />
+        <result property="address" column="address" />
+        <result property="establishedDate" column="established_date" />
+        <result property="syncStatus" column="sync_status" />
+        <result property="status" column="status" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectEnterpriseVo">
+        select enterprise_id, enterprise_name, enterprise_code, region_code, enterprise_type,
+               legal_person, contact_person, contact_phone, address, established_date,
+               sync_status, status, create_by, create_time, update_by, update_time, remark
+        from t_enterprise
+    </sql>
+
+    <select id="selectEnterpriseList" parameterType="YgbEnterprise" resultMap="YgbEnterpriseResult">
+        <include refid="selectEnterpriseVo" />
+        <where>
+            del_flag = '0'
+            <if test="enterpriseName != null and enterpriseName != ''">
+                and enterprise_name like concat('%', #{enterpriseName}, '%')
+            </if>
+            <if test="enterpriseCode != null and enterpriseCode != ''">
+                and enterprise_code like concat('%', #{enterpriseCode}, '%')
+            </if>
+            <if test="enterpriseType != null and enterpriseType != ''">
+                and enterprise_type = #{enterpriseType}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="syncStatus != null and syncStatus != ''">
+                and sync_status = #{syncStatus}
+            </if>
+        </where>
+        order by create_time desc, enterprise_id desc
+    </select>
+
+    <select id="selectEnterpriseOptions" resultMap="YgbEnterpriseResult">
+        <include refid="selectEnterpriseVo" />
+        where del_flag = '0' and status = '0'
+        order by enterprise_name asc
+    </select>
+
+    <select id="selectEnterpriseById" parameterType="Long" resultMap="YgbEnterpriseResult">
+        <include refid="selectEnterpriseVo" />
+        where enterprise_id = #{enterpriseId} and del_flag = '0'
+    </select>
+
+    <select id="checkEnterpriseNameUnique" parameterType="String" resultMap="YgbEnterpriseResult">
+        <include refid="selectEnterpriseVo" />
+        where enterprise_name = #{enterpriseName} and del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="checkEnterpriseCodeUnique" parameterType="String" resultMap="YgbEnterpriseResult">
+        <include refid="selectEnterpriseVo" />
+        where enterprise_code = #{enterpriseCode} and del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertEnterprise" parameterType="YgbEnterprise" useGeneratedKeys="true" keyProperty="enterpriseId">
+        insert into t_enterprise (
+            enterprise_name,
+            enterprise_code,
+            region_code,
+            enterprise_type,
+            legal_person,
+            contact_person,
+            contact_phone,
+            address,
+            established_date,
+            sync_status,
+            status,
+            remark,
+            create_by,
+            create_time
+        ) values (
+            #{enterpriseName},
+            #{enterpriseCode},
+            #{regionCode},
+            #{enterpriseType},
+            #{legalPerson},
+            #{contactPerson},
+            #{contactPhone},
+            #{address},
+            #{establishedDate},
+            #{syncStatus},
+            #{status},
+            #{remark},
+            #{createBy},
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateEnterprise" parameterType="YgbEnterprise">
+        update t_enterprise
+        <set>
+            <if test="enterpriseName != null and enterpriseName != ''">enterprise_name = #{enterpriseName},</if>
+            <if test="enterpriseCode != null and enterpriseCode != ''">enterprise_code = #{enterpriseCode},</if>
+            <if test="regionCode != null and regionCode != ''">region_code = #{regionCode},</if>
+            <if test="enterpriseType != null and enterpriseType != ''">enterprise_type = #{enterpriseType},</if>
+            <if test="legalPerson != null">legal_person = #{legalPerson},</if>
+            <if test="contactPerson != null">contact_person = #{contactPerson},</if>
+            <if test="contactPhone != null">contact_phone = #{contactPhone},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="establishedDate != null">established_date = #{establishedDate},</if>
+            <if test="syncStatus != null and syncStatus != ''">sync_status = #{syncStatus},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where enterprise_id = #{enterpriseId} and del_flag = '0'
+    </update>
+
+    <update id="deleteEnterpriseByIds">
+        update t_enterprise
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and enterprise_id in
+        <foreach collection="enterpriseIds" item="enterpriseId" open="(" separator="," close=")">
+            #{enterpriseId}
+        </foreach>
+    </update>
+
+</mapper>

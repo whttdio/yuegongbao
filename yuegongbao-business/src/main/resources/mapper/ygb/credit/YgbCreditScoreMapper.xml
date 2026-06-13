@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.credit.mapper.YgbCreditScoreMapper">
+
+    <resultMap type="YgbCreditScore" id="YgbCreditScoreResult">
+        <id property="scoreId" column="score_id" />
+        <result property="statMonth" column="stat_month" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="enterpriseType" column="enterprise_type" />
+        <result property="contractScore" column="contract_score" />
+        <result property="attendanceScore" column="attendance_score" />
+        <result property="salaryScore" column="salary_score" />
+        <result property="socialTaxScore" column="social_tax_score" />
+        <result property="safetyScore" column="safety_score" />
+        <result property="governanceScore" column="governance_score" />
+        <result property="totalScore" column="total_score" />
+        <result property="creditLevel" column="credit_level" />
+        <result property="colorCode" column="color_code" />
+        <result property="rankNo" column="rank_no" />
+        <result property="factorJson" column="factor_json" />
+        <result property="summaryText" column="summary_text" />
+        <result property="warningStatus" column="warning_status" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="evaluateTime" column="evaluate_time" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectCreditScoreVo">
+        select score_id, stat_month, enterprise_id, enterprise_name, region_code, enterprise_type,
+               contract_score, attendance_score, salary_score, social_tax_score, safety_score,
+               governance_score, total_score, credit_level, color_code, rank_no, factor_json,
+               summary_text, warning_status, source_mode, evaluate_time, create_by, create_time,
+               update_by, update_time, remark
+        from t_credit_score
+    </sql>
+
+    <select id="selectCreditScoreList" parameterType="YgbCreditScore" resultMap="YgbCreditScoreResult">
+        <include refid="selectCreditScoreVo" />
+        <where>
+            del_flag = '0'
+            <if test="statMonth != null and statMonth != ''">
+                and stat_month = #{statMonth}
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="enterpriseName != null and enterpriseName != ''">
+                and enterprise_name like concat('%', #{enterpriseName}, '%')
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+            <if test="creditLevel != null and creditLevel != ''">
+                and credit_level = #{creditLevel}
+            </if>
+            <if test="colorCode != null and colorCode != ''">
+                and color_code = #{colorCode}
+            </if>
+            <if test="warningStatus != null and warningStatus != ''">
+                and warning_status = #{warningStatus}
+            </if>
+        </where>
+        order by stat_month desc, total_score desc, score_id desc
+    </select>
+
+    <select id="selectCreditScoreById" parameterType="Long" resultMap="YgbCreditScoreResult">
+        <include refid="selectCreditScoreVo" />
+        where score_id = #{scoreId} and del_flag = '0'
+    </select>
+
+    <select id="selectCreditScoreByScope" resultMap="YgbCreditScoreResult">
+        <include refid="selectCreditScoreVo" />
+        where stat_month = #{statMonth}
+          and enterprise_id = #{enterpriseId}
+          and del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectLatestCreditScoreByEnterpriseId" parameterType="Long" resultMap="YgbCreditScoreResult">
+        <include refid="selectCreditScoreVo" />
+        where enterprise_id = #{enterpriseId}
+          and del_flag = '0'
+        order by stat_month desc, evaluate_time desc, score_id desc
+        limit 1
+    </select>
+
+    <insert id="insertCreditScore" parameterType="YgbCreditScore" useGeneratedKeys="true" keyProperty="scoreId">
+        insert into t_credit_score (
+            stat_month, enterprise_id, enterprise_name, region_code, enterprise_type,
+            contract_score, attendance_score, salary_score, social_tax_score, safety_score,
+            governance_score, total_score, credit_level, color_code, rank_no, factor_json,
+            summary_text, warning_status, source_mode, evaluate_time, remark, create_by, create_time
+        ) values (
+            #{statMonth}, #{enterpriseId}, #{enterpriseName}, #{regionCode}, #{enterpriseType},
+            #{contractScore}, #{attendanceScore}, #{salaryScore}, #{socialTaxScore}, #{safetyScore},
+            #{governanceScore}, #{totalScore}, #{creditLevel}, #{colorCode}, #{rankNo}, #{factorJson},
+            #{summaryText}, #{warningStatus}, #{sourceMode}, #{evaluateTime}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateCreditScore" parameterType="YgbCreditScore">
+        update t_credit_score
+        set enterprise_name = #{enterpriseName},
+            region_code = #{regionCode},
+            enterprise_type = #{enterpriseType},
+            contract_score = #{contractScore},
+            attendance_score = #{attendanceScore},
+            salary_score = #{salaryScore},
+            social_tax_score = #{socialTaxScore},
+            safety_score = #{safetyScore},
+            governance_score = #{governanceScore},
+            total_score = #{totalScore},
+            credit_level = #{creditLevel},
+            color_code = #{colorCode},
+            factor_json = #{factorJson},
+            summary_text = #{summaryText},
+            warning_status = #{warningStatus},
+            source_mode = #{sourceMode},
+            evaluate_time = #{evaluateTime},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where score_id = #{scoreId}
+    </update>
+
+    <select id="selectCreditScoreRanking" parameterType="String" resultMap="YgbCreditScoreResult">
+        <include refid="selectCreditScoreVo" />
+        where stat_month = #{statMonth}
+          and del_flag = '0'
+        order by total_score desc, evaluate_time asc, score_id asc
+    </select>
+
+    <update id="updateRankNo">
+        update t_credit_score
+        set rank_no = #{rankNo},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where score_id = #{scoreId}
+    </update>
+
+    <select id="countContractTotal" resultType="int">
+        select count(1)
+        from t_labor_contract
+        where del_flag = '0'
+          and start_date &lt;= #{periodEnd}
+          and end_date &gt;= #{periodStart}
+          and (dispatch_enterprise_id = #{enterpriseId} or employer_enterprise_id = #{enterpriseId})
+    </select>
+
+    <select id="countContractFiled" resultType="int">
+        select count(1)
+        from t_labor_contract
+        where del_flag = '0'
+          and start_date &lt;= #{periodEnd}
+          and end_date &gt;= #{periodStart}
+          and contract_status = '2'
+          and (dispatch_enterprise_id = #{enterpriseId} or employer_enterprise_id = #{enterpriseId})
+    </select>
+
+    <select id="countAttendanceTotal" resultType="int">
+        select count(1)
+        from t_attendance_monthly
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and (dispatch_enterprise_id = #{enterpriseId} or employer_enterprise_id = #{enterpriseId})
+    </select>
+
+    <select id="countAttendancePassed" resultType="int">
+        select count(1)
+        from t_attendance_monthly
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and att_check = '1'
+          and (dispatch_enterprise_id = #{enterpriseId} or employer_enterprise_id = #{enterpriseId})
+    </select>
+
+    <select id="countSalaryTotal" resultType="int">
+        select count(1)
+        from t_salary_detail
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and (dispatch_enterprise_id = #{enterpriseId} or employer_enterprise_id = #{enterpriseId})
+    </select>
+
+    <select id="countSalarySuccess" resultType="int">
+        select count(1)
+        from t_salary_detail
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and pay_status = '2'
+          and (dispatch_enterprise_id = #{enterpriseId} or employer_enterprise_id = #{enterpriseId})
+    </select>
+
+    <select id="countSocialBaseTotal" resultType="int">
+        select count(1)
+        from t_social_base_compare
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and enterprise_id = #{enterpriseId}
+    </select>
+
+    <select id="countSocialBaseNormal" resultType="int">
+        select count(1)
+        from t_social_base_compare
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and compare_result = '1'
+          and enterprise_id = #{enterpriseId}
+    </select>
+
+    <select id="countTaxCompareTotal" resultType="int">
+        select count(1)
+        from t_tax_compare
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and enterprise_id = #{enterpriseId}
+    </select>
+
+    <select id="countTaxCompareNormal" resultType="int">
+        select count(1)
+        from t_tax_compare
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and compare_result = '1'
+          and enterprise_id = #{enterpriseId}
+    </select>
+
+    <select id="countUninsuredTotal" resultType="int">
+        select count(1)
+        from t_uninsured_list
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and enterprise_id = #{enterpriseId}
+    </select>
+
+    <select id="selectAqPolicyStatus" resultType="string">
+        select policy_status
+        from t_aq_insurance
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and enterprise_id = #{enterpriseId}
+        order by policy_id desc
+        limit 1
+    </select>
+
+    <select id="selectAqRemainingFund" resultType="java.math.BigDecimal">
+        select remaining_fund_amount
+        from t_aq_insurance
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+          and enterprise_id = #{enterpriseId}
+        order by policy_id desc
+        limit 1
+    </select>
+
+    <select id="countInjuryTotal" resultType="int">
+        select count(1)
+        from t_injury_event
+        where del_flag = '0'
+          and enterprise_id = #{enterpriseId}
+          and event_date between #{periodStart} and #{periodEnd}
+    </select>
+
+    <select id="countInjuryOverdue" parameterType="Long" resultType="int">
+        select count(1)
+        from t_injury_event
+        where del_flag = '0'
+          and enterprise_id = #{enterpriseId}
+          and warning_status = '1'
+          and injury_status &lt;&gt; '4'
+    </select>
+
+    <select id="countWarningTotal" resultType="int">
+        select count(1)
+        from t_warning
+        where enterprise_id = #{enterpriseId}
+          and create_time between #{periodStart} and date_add(#{periodEnd}, interval 1 day)
+    </select>
+
+    <select id="countWarningClosed" resultType="int">
+        select count(1)
+        from t_warning
+        where enterprise_id = #{enterpriseId}
+          and create_time between #{periodStart} and date_add(#{periodEnd}, interval 1 day)
+          and warn_status = '2'
+    </select>
+
+    <select id="countActiveRedWarning" parameterType="Long" resultType="int">
+        select count(1)
+        from t_warning
+        where enterprise_id = #{enterpriseId}
+          and warn_level = '3'
+          and warn_status in ('0', '1', '4')
+    </select>
+
+</mapper>

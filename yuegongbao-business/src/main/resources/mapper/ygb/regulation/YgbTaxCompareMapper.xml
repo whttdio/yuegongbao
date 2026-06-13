@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.regulation.mapper.YgbTaxCompareMapper">
+
+    <resultMap type="YgbTaxCompare" id="YgbTaxCompareResult">
+        <id property="compareId" column="compare_id" />
+        <result property="statMonth" column="stat_month" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="idCard" column="id_card" />
+        <result property="regionCode" column="region_code" />
+        <result property="salaryAmount" column="salary_amount" />
+        <result property="declaredAmount" column="declared_amount" />
+        <result property="diffRatio" column="diff_ratio" />
+        <result property="compareResult" column="compare_result" />
+        <result property="warningStatus" column="warning_status" />
+        <result property="sourceSerialNo" column="source_serial_no" />
+        <result property="sourceStatus" column="source_status" />
+        <result property="sourceMessage" column="source_message" />
+        <result property="callbackTime" column="callback_time" />
+        <result property="rawPayload" column="raw_payload" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectTaxCompareVo">
+        select compare_id, stat_month, enterprise_id, enterprise_name, person_id, person_name, id_card,
+               region_code, salary_amount, declared_amount, diff_ratio, compare_result, warning_status,
+               source_serial_no, source_status, source_message, callback_time, raw_payload,
+               create_by, create_time, update_by, update_time, remark
+        from t_tax_compare
+    </sql>
+
+    <select id="selectTaxCompareList" parameterType="YgbTaxCompare" resultMap="YgbTaxCompareResult">
+        <include refid="selectTaxCompareVo" />
+        <where>
+            del_flag = '0'
+            <if test="statMonth != null and statMonth != ''">
+                and stat_month = #{statMonth}
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="compareResult != null and compareResult != ''">
+                and compare_result = #{compareResult}
+            </if>
+            <if test="warningStatus != null and warningStatus != ''">
+                and warning_status = #{warningStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by stat_month desc, compare_id desc
+    </select>
+
+    <insert id="insertTaxCompare" parameterType="YgbTaxCompare" useGeneratedKeys="true" keyProperty="compareId">
+        insert into t_tax_compare (
+            stat_month, enterprise_id, enterprise_name, person_id, person_name, id_card, region_code,
+            salary_amount, declared_amount, diff_ratio, compare_result, warning_status, source_serial_no,
+            source_status, source_message, callback_time, raw_payload, remark, create_by, create_time
+        ) values (
+            #{statMonth}, #{enterpriseId}, #{enterpriseName}, #{personId}, #{personName}, #{idCard}, #{regionCode},
+            #{salaryAmount}, #{declaredAmount}, #{diffRatio}, #{compareResult}, #{warningStatus}, #{sourceSerialNo},
+            #{sourceStatus}, #{sourceMessage}, #{callbackTime}, #{rawPayload}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <delete id="deleteByScope">
+        delete from t_tax_compare
+        where stat_month = #{statMonth}
+        <if test="enterpriseId != null">
+            and enterprise_id = #{enterpriseId}
+        </if>
+    </delete>
+
+    <select id="selectWorkerTaxCompareList" resultMap="YgbTaxCompareResult">
+        <include refid="selectTaxCompareVo" />
+        where del_flag = '0'
+          and person_id = #{personId}
+        <if test="yearPrefix != null and yearPrefix != ''">
+            and stat_month like concat(#{yearPrefix}, '%')
+        </if>
+        order by stat_month desc, compare_id desc
+    </select>
+
+    <select id="selectWorkerTaxCompareDetail" resultMap="YgbTaxCompareResult">
+        <include refid="selectTaxCompareVo" />
+        where del_flag = '0'
+          and person_id = #{personId}
+          and stat_month = #{statMonth}
+        order by compare_id desc
+        limit 1
+    </select>
+
+</mapper>

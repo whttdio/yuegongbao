@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.warning.mapper.YgbWarningMapper">
+
+    <resultMap type="YgbWarning" id="YgbWarningResult">
+        <id property="warnId" column="warn_id" />
+        <result property="warnLevel" column="warn_level" />
+        <result property="warnType" column="warn_type" />
+        <result property="sourceModule" column="source_module" />
+        <result property="targetObjectId" column="target_object_id" />
+        <result property="targetType" column="target_type" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="content" column="content" />
+        <result property="evidenceUrl" column="evidence_url" />
+        <result property="warnStatus" column="warn_status" />
+        <result property="assignTo" column="assign_to" />
+        <result property="assignName" column="assign_name" />
+        <result property="createTime" column="create_time" />
+        <result property="resolveTime" column="resolve_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <resultMap type="YgbWarningSummary" id="YgbWarningSummaryResult">
+        <result property="totalCount" column="total_count" />
+        <result property="pendingCount" column="pending_count" />
+        <result property="processingCount" column="processing_count" />
+        <result property="closedCount" column="closed_count" />
+        <result property="misreportCount" column="misreport_count" />
+        <result property="upgradedCount" column="upgraded_count" />
+        <result property="tipCount" column="tip_count" />
+        <result property="yellowCount" column="yellow_count" />
+        <result property="redCount" column="red_count" />
+        <result property="socialCount" column="social_count" />
+        <result property="taxCount" column="tax_count" />
+        <result property="expansionCount" column="expansion_count" />
+        <result property="specialCount" column="special_count" />
+        <result property="deviceCount" column="device_count" />
+        <result property="injuryCount" column="injury_count" />
+    </resultMap>
+
+    <resultMap type="com.yuegongbao.ygb.warning.domain.YgbWarningDimensionCount" id="YgbWarningDimensionCountResult">
+        <result property="dimensionKey" column="dimension_key" />
+        <result property="dimensionLabel" column="dimension_label" />
+        <result property="dimensionCount" column="dimension_count" />
+    </resultMap>
+
+    <sql id="selectWarningVo">
+        select w.warn_id, w.warn_level, w.warn_type, w.source_module, w.target_object_id, w.target_type,
+               w.enterprise_id, w.enterprise_name, w.region_code, w.content, w.evidence_url,
+               w.warn_status, w.assign_to, w.assign_name, w.create_time, w.resolve_time, w.remark
+        from t_warning w
+    </sql>
+
+    <sql id="warningFilters">
+        <if test="warnLevel != null and warnLevel != ''">
+            and w.warn_level = #{warnLevel}
+        </if>
+        <if test="warnType != null and warnType != ''">
+            and w.warn_type = #{warnType}
+        </if>
+        <if test="sourceModule != null and sourceModule != ''">
+            and w.source_module = #{sourceModule}
+        </if>
+        <if test="warnStatus != null and warnStatus != ''">
+            and w.warn_status = #{warnStatus}
+        </if>
+        <if test="regionCode != null and regionCode != ''">
+            and w.region_code like concat(#{regionCode}, '%')
+        </if>
+        ${params.regionDataScope}
+        <if test="enterpriseId != null">
+            and w.enterprise_id = #{enterpriseId}
+        </if>
+        <if test="content != null and content != ''">
+            and w.content like concat('%', #{content}, '%')
+        </if>
+    </sql>
+
+    <select id="selectWarningList" parameterType="YgbWarning" resultMap="YgbWarningResult">
+        <include refid="selectWarningVo" />
+        <where>
+            <include refid="warningFilters" />
+        </where>
+        order by w.create_time desc, w.warn_id desc
+    </select>
+
+    <select id="selectWarningSummary" parameterType="YgbWarning" resultMap="YgbWarningSummaryResult">
+        select count(1) as total_count,
+               sum(case when w.warn_status = '0' then 1 else 0 end) as pending_count,
+               sum(case when w.warn_status = '1' then 1 else 0 end) as processing_count,
+               sum(case when w.warn_status = '2' then 1 else 0 end) as closed_count,
+               sum(case when w.warn_status = '3' then 1 else 0 end) as misreport_count,
+               sum(case when w.warn_status = '4' then 1 else 0 end) as upgraded_count,
+               sum(case when w.warn_level = '1' then 1 else 0 end) as tip_count,
+               sum(case when w.warn_level = '2' then 1 else 0 end) as yellow_count,
+               sum(case when w.warn_level = '3' then 1 else 0 end) as red_count,
+               sum(case when w.source_module = 'SOCIAL' then 1 else 0 end) as social_count,
+               sum(case when w.source_module = 'TAX' then 1 else 0 end) as tax_count,
+               sum(case when w.source_module = 'EXPANSION' then 1 else 0 end) as expansion_count,
+               sum(case when w.source_module = 'SPECIAL' then 1 else 0 end) as special_count,
+               sum(case when w.source_module = 'DEVICE' then 1 else 0 end) as device_count,
+               sum(case when w.source_module = 'INJURY' then 1 else 0 end) as injury_count
+        from t_warning w
+        <where>
+            <include refid="warningFilters" />
+        </where>
+    </select>
+
+    <select id="selectWarningLevelStats" parameterType="YgbWarning" resultMap="YgbWarningDimensionCountResult">
+        select w.warn_level as dimension_key,
+               case
+                   when w.warn_level = '1' then '提示'
+                   when w.warn_level = '2' then '黄警'
+                   when w.warn_level = '3' then '红警'
+                   else '其他'
+               end as dimension_label,
+               count(1) as dimension_count
+        from t_warning w
+        <where>
+            <include refid="warningFilters" />
+        </where>
+        group by w.warn_level
+        order by w.warn_level asc
+    </select>
+
+    <select id="selectWarningSourceStats" parameterType="YgbWarning" resultMap="YgbWarningDimensionCountResult">
+        select w.source_module as dimension_key,
+               case
+                   when w.source_module = 'SOCIAL' then '社保联动'
+                   when w.source_module = 'TAX' then '个税联动'
+                   when w.source_module = 'EXPANSION' then '扩面联动'
+                   when w.source_module = 'SPECIAL' then '专项治理'
+                   when w.source_module = 'DEVICE' then '设备联动'
+                   when w.source_module = 'INJURY' then '工伤事件'
+                   else ifnull(w.source_module, '其他')
+               end as dimension_label,
+               count(1) as dimension_count
+        from t_warning w
+        <where>
+            <include refid="warningFilters" />
+        </where>
+        group by w.source_module
+        order by dimension_count desc, w.source_module asc
+    </select>
+
+    <select id="selectWarningRegionStats" parameterType="YgbWarning" resultMap="YgbWarningDimensionCountResult">
+        select ifnull(w.region_code, '') as dimension_key,
+               ifnull(w.region_code, '未配置区域') as dimension_label,
+               count(1) as dimension_count
+        from t_warning w
+        <where>
+            <include refid="warningFilters" />
+        </where>
+        group by w.region_code
+        order by dimension_count desc, w.region_code asc
+        limit 5
+    </select>
+
+    <select id="selectWarningStatusStats" parameterType="YgbWarning" resultMap="YgbWarningDimensionCountResult">
+        select w.warn_status as dimension_key,
+               case
+                   when w.warn_status = '0' then '待处理'
+                   when w.warn_status = '1' then '处理中'
+                   when w.warn_status = '2' then '已办结'
+                   when w.warn_status = '3' then '误报'
+                   when w.warn_status = '4' then '已升级'
+                   else '其他'
+               end as dimension_label,
+               count(1) as dimension_count
+        from t_warning w
+        <where>
+            <include refid="warningFilters" />
+        </where>
+        group by w.warn_status
+        order by w.warn_status asc
+    </select>
+
+    <select id="countOverduePendingWarnings" parameterType="YgbWarning" resultType="int">
+        select count(1)
+        from t_warning w
+        <where>
+            <include refid="warningFilters" />
+            and w.warn_status in ('0', '1')
+            and timestampdiff(hour, w.create_time, sysdate()) &gt; 48
+        </where>
+    </select>
+
+    <select id="countClosedWithin72hWarnings" parameterType="YgbWarning" resultType="int">
+        select count(1)
+        from t_warning w
+        <where>
+            <include refid="warningFilters" />
+            and w.warn_status = '2'
+            and w.resolve_time is not null
+            and timestampdiff(hour, w.create_time, w.resolve_time) &lt;= 72
+        </where>
+    </select>
+
+    <select id="selectWarningById" parameterType="Long" resultMap="YgbWarningResult">
+        <include refid="selectWarningVo" />
+        where w.warn_id = #{warnId}
+    </select>
+
+    <insert id="insertWarning" parameterType="YgbWarning" useGeneratedKeys="true" keyProperty="warnId">
+        insert into t_warning (
+            warn_level, warn_type, source_module, target_object_id, target_type, enterprise_id,
+            enterprise_name, region_code, content, evidence_url, warn_status, assign_to, assign_name,
+            create_by, create_time, remark
+        ) values (
+            #{warnLevel}, #{warnType}, #{sourceModule}, #{targetObjectId}, #{targetType}, #{enterpriseId},
+            #{enterpriseName}, #{regionCode}, #{content}, #{evidenceUrl}, #{warnStatus}, #{assignTo}, #{assignName},
+            #{createBy}, #{createTime}, #{remark}
+        )
+    </insert>
+
+    <update id="updateWarningStatus">
+        update t_warning
+        set warn_status = #{warnStatus},
+            assign_name = #{assignName},
+            update_by = #{updateBy},
+            update_time = sysdate(),
+            resolve_time = case when #{resolveFlag} then sysdate() else resolve_time end
+        where warn_id = #{warnId}
+    </update>
+
+    <select id="countActiveWarning" resultType="int">
+        select count(1)
+        from t_warning
+        where source_module = #{sourceModule}
+          and warn_type = #{warnType}
+          and target_object_id = #{targetObjectId}
+          and warn_status in ('0', '1', '4')
+    </select>
+
+</mapper>

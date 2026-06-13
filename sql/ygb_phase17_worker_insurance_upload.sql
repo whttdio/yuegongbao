@@ -1,0 +1,22 @@
+create table if not exists ygb_worker_upload_record (
+  upload_id           bigint primary key auto_increment,
+  user_id             bigint not null,
+  person_id           bigint not null,
+  person_name         varchar(64) default '',
+  category_code       varchar(32) not null,
+  category_name       varchar(64) default '',
+  file_url            varchar(500) not null,
+  file_name           varchar(255) default '',
+  original_filename   varchar(255) default '',
+  file_size           bigint default 0,
+  content_type        varchar(64) default '',
+  source_module       varchar(32) default 'camera',
+  create_by           varchar(64) default '',
+  create_time         datetime,
+  update_by           varchar(64) default '',
+  update_time         datetime,
+  remark              varchar(255) default '',
+  del_flag            char(1) default '0',
+  key idx_worker_upload_user (user_id),
+  key idx_worker_upload_category (category_code)
+);

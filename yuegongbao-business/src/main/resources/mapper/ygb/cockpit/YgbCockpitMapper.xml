@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.cockpit.mapper.YgbCockpitMapper">
+
+    <resultMap id="YgbCockpitSnapshotResult" type="YgbCockpitSnapshot">
+        <id property="snapshotId" column="snapshot_id" />
+        <result property="statDate" column="stat_date" />
+        <result property="regionCode" column="region_code" />
+        <result property="dispatchCompanyCount" column="dispatch_company_count" />
+        <result property="employerCount" column="employer_count" />
+        <result property="dispatchedWorkerCount" column="dispatched_worker_count" />
+        <result property="highRiskEnterpriseCount" column="high_risk_enterprise_count" />
+        <result property="insuranceRate" column="insurance_rate" />
+        <result property="aqInsuranceRate" column="aq_insurance_rate" />
+        <result property="todayWarningCount" column="today_warning_count" />
+        <result property="expandCompletionRate" column="expand_completion_rate" />
+        <result property="newInjuryRate" column="new_injury_rate" />
+        <result property="onlineDeviceCount" column="online_device_count" />
+        <result property="pendingWarningCount" column="pending_warning_count" />
+        <result property="overdueInjuryCount" column="overdue_injury_count" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <resultMap id="YgbCockpitMapFeatureResult" type="YgbCockpitMapFeature">
+        <id property="featureId" column="feature_id" />
+        <result property="statDate" column="stat_date" />
+        <result property="regionCode" column="region_code" />
+        <result property="featureType" column="feature_type" />
+        <result property="featureName" column="feature_name" />
+        <result property="geometryType" column="geometry_type" />
+        <result property="geometryJson" column="geometry_json" />
+        <result property="featureStatus" column="feature_status" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="propertiesJson" column="properties_json" />
+        <result property="sortNo" column="sort_no" />
+    </resultMap>
+
+    <resultMap id="YgbCockpitDistributionResult" type="YgbCockpitDistribution">
+        <result property="dimensionCode" column="dimension_code" />
+        <result property="metricCount" column="metric_count" />
+    </resultMap>
+
+    <select id="selectLatestSnapshot" resultMap="YgbCockpitSnapshotResult">
+        select snapshot_id, stat_date, region_code, dispatch_company_count, employer_count,
+               dispatched_worker_count, high_risk_enterprise_count, insurance_rate, aq_insurance_rate,
+               today_warning_count, expand_completion_rate, new_injury_rate, online_device_count,
+               pending_warning_count, overdue_injury_count, source_mode, remark
+        from t_cockpit_snapshot
+        where region_code = #{regionCode}
+        <if test="statDate != null and statDate != ''">
+            and stat_date <![CDATA[<=]]> #{statDate}
+        </if>
+        order by stat_date desc
+        limit 1
+    </select>
+
+    <select id="selectSnapshotTrend" resultMap="YgbCockpitSnapshotResult">
+        select snapshot_id, stat_date, region_code, dispatch_company_count, employer_count,
+               dispatched_worker_count, high_risk_enterprise_count, insurance_rate, aq_insurance_rate,
+               today_warning_count, expand_completion_rate, new_injury_rate, online_device_count,
+               pending_warning_count, overdue_injury_count, source_mode, remark
+        from t_cockpit_snapshot
+        where region_code = #{regionCode}
+          and stat_date between #{startDate} and #{endDate}
+        order by stat_date asc
+    </select>
+
+    <select id="selectWarningDistribution" resultMap="YgbCockpitDistributionResult">
+        select w.source_module as dimension_code, count(1) as metric_count
+        from t_warning w
+        where date_format(w.create_time, '%Y-%m') = #{statMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and w.region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by w.source_module
+        order by metric_count desc, w.source_module asc
+    </select>
+
+    <select id="selectMapFeatureList" resultMap="YgbCockpitMapFeatureResult">
+        select feature_id, stat_date, region_code, feature_type, feature_name, geometry_type,
+               geometry_json, feature_status, source_mode, properties_json, sort_no
+        from t_cockpit_map_feature
+        where 1 = 1
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        and stat_date = ifnull(#{statDate}, (select max(stat_date) from t_cockpit_map_feature))
+        order by sort_no asc, feature_id asc
+    </select>
+
+    <select id="countWarningsByDate" resultType="int">
+        select count(1)
+        from t_warning
+        where date_format(create_time, '%Y-%m-%d') = #{statDate}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countPendingWarnings" resultType="int">
+        select count(1)
+        from t_warning
+        where warn_status in ('0', '1', '4')
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countOnlineDevices" resultType="int">
+        select count(1)
+        from t_device
+        where device_status = '1'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countOverdueInjuries" resultType="int">
+        select count(1)
+        from t_injury_event
+        where remaining_days <![CDATA[<]]> 0
+          and injury_status in ('0', '1', '2', '3')
+          and del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+</mapper>

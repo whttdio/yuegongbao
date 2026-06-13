@@ -1,0 +1,258 @@
+// Modern business palette — primary #3671E9
+$blue: #3671E9;
+$light-blue: #EBF1FD;
+$red: #E85D5D;
+$pink: #E88A96;
+$green: #3D9A68;
+$tiffany: #5B8DEF;
+$yellow: #E6A23C;
+$panGreen: #3D9A68;
+
+// Sidebar and navigation tokens
+$menuText: #C9CDD4;
+$menuActiveText: #ffffff;
+$menuBg: #1D2129;
+$menuHover: #2E3338;
+
+// Light theme menu tokens
+$menuLightBg: #FFFFFF;
+$menuLightHover: #F2F3F5;
+$menuLightText: #1D2129;
+$menuLightActiveText: #3671E9;
+
+// Layout
+$base-sidebar-width: 220px;
+$sideBarWidth: 220px;
+
+// Dark sidebar tokens
+$base-menu-color: rgba(255, 255, 255, 0.78);
+$base-menu-color-active: #ffffff;
+$base-menu-background: #1D2129;
+$base-sub-menu-background: #141820;
+$base-sub-menu-hover: rgba(255, 255, 255, 0.06);
+
+// Element Plus tokens
+$--color-primary: #3671E9;
+$--color-success: #3D9A68;
+$--color-warning: #E6A23C;
+$--color-danger: #E85D5D;
+$--color-info: #86909C;
+
+:export {
+  menuText: $menuText;
+  menuActiveText: $menuActiveText;
+  menuBg: $menuBg;
+  menuHover: $menuHover;
+  menuLightBg: $menuLightBg;
+  menuLightHover: $menuLightHover;
+  menuLightText: $menuLightText;
+  menuLightActiveText: $menuLightActiveText;
+  sideBarWidth: $sideBarWidth;
+  blue: $blue;
+  lightBlue: $light-blue;
+  red: $red;
+  pink: $pink;
+  green: $green;
+  tiffany: $tiffany;
+  yellow: $yellow;
+  panGreen: $panGreen;
+  colorPrimary: $--color-primary;
+  colorSuccess: $--color-success;
+  colorWarning: $--color-warning;
+  colorDanger: $--color-danger;
+  colorInfo: $--color-info;
+}
+
+:root {
+  color-scheme: light;
+
+  // Brand — modern blue
+  --gov-primary: #3671E9;
+  --gov-primary-hover: #4f82f0;
+  --gov-primary-active: #2554c4;
+  --gov-primary-soft: #eff3ff;
+  --gov-primary-soft-strong: #dce6fd;
+  --gov-hover: #f1f5f9;
+  --gov-success: #10b981;
+  --gov-warning: #f59e0b;
+  --gov-danger: #ef4444;
+
+  // Spacing (8px grid)
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+
+  // Radius
+  --radius-sm: 6px;
+  --panel-radius-sm: 8px;
+  --panel-radius: 10px;
+  --panel-radius-lg: 16px;
+
+  // Shadows
+  --gov-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --gov-shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --gov-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.08);
+
+  // Sidebar — deep dark
+  --sidebar-bg: #0f1119;
+  --sidebar-text: rgba(255, 255, 255, 0.55);
+  --sidebar-logo-text: #ffffff;
+  --menu-hover: rgba(255, 255, 255, 0.06);
+  --menu-active-text: #ffffff;
+
+  // Navbar — clean white
+  --navbar-bg: #ffffff;
+  --navbar-text: #1e293b;
+  --navbar-hover: #f1f5f9;
+  --navbar-border: #edf2f7;
+
+  // Surfaces
+  --page-bg: #f1f5f9;
+  --panel-bg: #f8fafc;
+  --panel-bg-strong: #ffffff;
+  --panel-border: #e2e8f0;
+  --panel-border-strong: #cbd5e1;
+  --content-text: #0f172a;
+  --content-text-secondary: #475569;
+  --content-text-muted: #94a3b8;
+
+  // Tags
+  --tags-bg: #ffffff;
+  --tags-item-bg: #f1f5f9;
+  --tags-item-border: #e2e8f0;
+  --tags-item-text: #475569;
+  --tags-item-hover: #f1f5f9;
+  --tags-close-hover: #94a3b8;
+
+  --splitpanes-default-bg: #FFFFFF;
+
+  // Element Plus
+  --el-color-primary: #3671E9;
+  --el-color-primary-light-3: #7299EF;
+  --el-color-primary-light-5: #9BB8F4;
+  --el-color-primary-light-7: #C4D6F9;
+  --el-color-primary-light-8: #D6E4FC;
+  --el-color-primary-light-9: #EBF1FD;
+  --el-color-primary-dark-2: #2554c4;
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-color-success: #10b981;
+  --el-color-warning: #f59e0b;
+  --el-color-danger: #ef4444;
+  --el-color-info: #6366f1;
+}
+
+html.dark {
+  --el-bg-color: #141414;
+  --el-bg-color-overlay: #1D1E1F;
+  --el-text-color-primary: #F5F6F8;
+  --el-text-color-regular: #C9CDD4;
+  --el-border-color: #434343;
+  --el-border-color-light: #434343;
+  --el-menu-text-color: #C9CDD4;
+  --sidebar-logo-text: #C9CDD4;
+
+  --gov-primary-soft: rgba(54, 113, 233, 0.12);
+  --gov-primary-soft-strong: rgba(54, 113, 233, 0.18);
+  --gov-hover: #2E3338;
+
+  --sidebar-bg: #141414;
+  --sidebar-text: #F5F6F8;
+  --menu-hover: #2D2D2D;
+  --menu-active-text: #{$menuActiveText};
+
+  --navbar-bg: #141414;
+  --navbar-text: #F5F6F8;
+  --navbar-hover: rgba(255, 255, 255, 0.08);
+  --navbar-border: #303030;
+
+  --page-bg: #0A0A0A;
+  --panel-bg: #1D1E1F;
+  --panel-bg-strong: #1D1E1F;
+  --panel-border: #303030;
+  --panel-border-strong: #434343;
+  --content-text: #F5F6F8;
+  --content-text-secondary: #C9CDD4;
+  --content-text-muted: #86909C;
+
+  --tags-bg: #141414;
+  --tags-item-bg: #1D1E1F;
+  --tags-item-border: #303030;
+  --tags-item-text: #C9CDD4;
+  --tags-item-hover: #2D2D2D;
+  --tags-close-hover: #64666A;
+
+  --splitpanes-default-bg: #141414;
+
+  .sidebar-container {
+    .el-menu-item:not(.is-active),
+    .menu-title {
+      color: var(--el-text-color-regular);
+    }
+
+    & .el-menu .theme-dark .nest-menu .el-sub-menu > .el-sub-menu__title,
+    & .el-menu .theme-dark .el-sub-menu .el-menu-item,
+    & .theme-dark .nest-menu .el-sub-menu > .el-sub-menu__title,
+    & .theme-dark .el-sub-menu .el-menu-item {
+      background-color: var(--el-bg-color) !important;
+
+      &:hover {
+        background-color: var(--menu-hover) !important;
+      }
+    }
+
+    &.theme-light {
+      border-right: none !important;
+
+      .el-menu-item,
+      .el-sub-menu__title {
+        color: var(--sidebar-text) !important;
+      }
+
+      .el-menu-item:not(.is-active):hover,
+      .submenu-title-noDropdown:hover,
+      .el-sub-menu__title:hover {
+        background-color: var(--menu-hover) !important;
+      }
+
+      .el-menu .nest-menu .el-sub-menu > .el-sub-menu__title,
+      .el-menu .el-sub-menu .el-menu-item,
+      .nest-menu .el-sub-menu > .el-sub-menu__title,
+      .el-sub-menu .el-menu-item {
+        background-color: var(--el-bg-color) !important;
+
+        &:hover {
+          background-color: var(--menu-hover) !important;
+        }
+      }
+    }
+  }
+
+  .topmenu-container {
+    .el-menu-item,
+    .el-sub-menu .el-sub-menu__title {
+      color: var(--el-text-color-regular) !important;
+    }
+  }
+
+  .topbar-menu.el-menu--horizontal > .el-sub-menu .el-sub-menu__title {
+    color: var(--el-text-color-regular) !important;
+  }
+
+  .el-menu--horizontal {
+    .el-menu-item,
+    .el-sub-menu {
+      &:not(.is-disabled) {
+        &:hover,
+        &:focus {
+          background-color: var(--navbar-hover) !important;
+
+          .el-sub-menu__title {
+            background-color: var(--navbar-hover) !important;
+          }
+        }
+      }
+    }
+  }
+}

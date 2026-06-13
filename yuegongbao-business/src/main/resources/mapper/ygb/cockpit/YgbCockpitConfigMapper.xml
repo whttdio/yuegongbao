@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.cockpit.mapper.YgbCockpitConfigMapper">
+
+    <resultMap id="YgbCockpitConfigResult" type="YgbCockpitConfig">
+        <id property="configId" column="config_id" />
+        <result property="configCode" column="config_code" />
+        <result property="configName" column="config_name" />
+        <result property="status" column="status" />
+        <result property="regionCode" column="region_code" />
+        <result property="defaultRegionCode" column="default_region_code" />
+        <result property="summaryCardConfig" column="summary_card_config" />
+        <result property="focusQueueConfig" column="focus_queue_config" />
+        <result property="rotateSeconds" column="rotate_seconds" />
+        <result property="refreshSeconds" column="refresh_seconds" />
+        <result property="mapCenterLng" column="map_center_lng" />
+        <result property="mapCenterLat" column="map_center_lat" />
+        <result property="mapZoom" column="map_zoom" />
+        <result property="defaultFocusKey" column="default_focus_key" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectCockpitConfigColumns">
+        select config_id, config_code, config_name, status, region_code, default_region_code, summary_card_config,
+               focus_queue_config, rotate_seconds, refresh_seconds, map_center_lng, map_center_lat, map_zoom,
+               default_focus_key, source_mode, create_by, create_time, update_by, update_time, remark
+        from t_cockpit_config
+    </sql>
+
+    <select id="selectCockpitConfigList" parameterType="YgbCockpitConfig" resultMap="YgbCockpitConfigResult">
+        <include refid="selectCockpitConfigColumns" />
+        <where>
+            del_flag = '0'
+            <if test="configCode != null and configCode != ''">
+                and config_code like concat('%', #{configCode}, '%')
+            </if>
+            <if test="configName != null and configName != ''">
+                and config_name like concat('%', #{configName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            <if test="defaultRegionCode != null and defaultRegionCode != ''">
+                and default_region_code = #{defaultRegionCode}
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by update_time desc, config_id desc
+    </select>
+
+    <select id="selectCockpitConfigById" resultMap="YgbCockpitConfigResult">
+        <include refid="selectCockpitConfigColumns" />
+        where config_id = #{configId}
+          and del_flag = '0'
+    </select>
+
+    <select id="selectCurrentConfig" resultMap="YgbCockpitConfigResult">
+        <include refid="selectCockpitConfigColumns" />
+        where status = '1'
+          and del_flag = '0'
+          and (region_code = #{regionCode} or region_code = '440000')
+        order by case when region_code = #{regionCode} then 0 else 1 end, update_time desc, config_id desc
+        limit 1
+    </select>
+
+    <select id="checkConfigCodeUnique" resultMap="YgbCockpitConfigResult">
+        <include refid="selectCockpitConfigColumns" />
+        where config_code = #{configCode}
+          and del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertCockpitConfig" parameterType="YgbCockpitConfig" useGeneratedKeys="true" keyProperty="configId">
+        insert into t_cockpit_config (
+            config_code, config_name, status, region_code, default_region_code, summary_card_config, focus_queue_config,
+            rotate_seconds, refresh_seconds, map_center_lng, map_center_lat, map_zoom, default_focus_key, source_mode,
+            create_by, create_time, update_by, update_time, remark, del_flag
+        ) values (
+            #{configCode}, #{configName}, #{status}, #{regionCode}, #{defaultRegionCode}, #{summaryCardConfig},
+            #{focusQueueConfig}, #{rotateSeconds}, #{refreshSeconds}, #{mapCenterLng}, #{mapCenterLat}, #{mapZoom},
+            #{defaultFocusKey}, #{sourceMode}, #{createBy}, sysdate(), #{updateBy}, sysdate(), #{remark}, '0'
+        )
+    </insert>
+
+    <update id="updateCockpitConfig" parameterType="YgbCockpitConfig">
+        update t_cockpit_config
+        <set>
+            <if test="configCode != null and configCode != ''">config_code = #{configCode},</if>
+            <if test="configName != null and configName != ''">config_name = #{configName},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="regionCode != null and regionCode != ''">region_code = #{regionCode},</if>
+            <if test="defaultRegionCode != null and defaultRegionCode != ''">default_region_code = #{defaultRegionCode},</if>
+            <if test="summaryCardConfig != null">summary_card_config = #{summaryCardConfig},</if>
+            <if test="focusQueueConfig != null">focus_queue_config = #{focusQueueConfig},</if>
+            <if test="rotateSeconds != null">rotate_seconds = #{rotateSeconds},</if>
+            <if test="refreshSeconds != null">refresh_seconds = #{refreshSeconds},</if>
+            <if test="mapCenterLng != null">map_center_lng = #{mapCenterLng},</if>
+            <if test="mapCenterLat != null">map_center_lat = #{mapCenterLat},</if>
+            <if test="mapZoom != null">map_zoom = #{mapZoom},</if>
+            <if test="defaultFocusKey != null">default_focus_key = #{defaultFocusKey},</if>
+            <if test="sourceMode != null and sourceMode != ''">source_mode = #{sourceMode},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where config_id = #{configId}
+          and del_flag = '0'
+    </update>
+
+    <update id="deleteCockpitConfigByIds">
+        update t_cockpit_config
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and config_id in
+        <foreach collection="configIds" item="configId" open="(" separator="," close=")">
+            #{configId}
+        </foreach>
+    </update>
+</mapper>

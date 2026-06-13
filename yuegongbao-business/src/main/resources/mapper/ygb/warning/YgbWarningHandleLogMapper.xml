@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.warning.mapper.YgbWarningHandleLogMapper">
+
+    <resultMap type="YgbWarningHandleLog" id="YgbWarningHandleLogResult">
+        <id property="logId" column="log_id" />
+        <result property="warnId" column="warn_id" />
+        <result property="actionType" column="action_type" />
+        <result property="opinion" column="opinion" />
+        <result property="attachmentUrls" column="attachment_urls" />
+        <result property="beforeStatus" column="before_status" />
+        <result property="afterStatus" column="after_status" />
+        <result property="handlerName" column="handler_name" />
+        <result property="handleTime" column="handle_time" />
+    </resultMap>
+
+    <insert id="insertWarningHandleLog" parameterType="YgbWarningHandleLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into t_warning_handle_log (
+            warn_id, action_type, opinion, attachment_urls, before_status, after_status,
+            handler_name, handle_time, create_by, create_time
+        ) values (
+            #{warnId}, #{actionType}, #{opinion}, #{attachmentUrls}, #{beforeStatus}, #{afterStatus},
+            #{handlerName}, #{handleTime}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <select id="selectWarningHandleLogList" parameterType="Long" resultMap="YgbWarningHandleLogResult">
+        select log_id, warn_id, action_type, opinion, attachment_urls, before_status, after_status,
+               handler_name, handle_time
+        from t_warning_handle_log
+        where warn_id = #{warnId}
+        order by handle_time desc, log_id desc
+    </select>
+
+</mapper>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.compliance.mapper.YgbAttendanceMonthlyMapper">
+
+    <resultMap type="YgbAttendanceMonthly" id="YgbAttendanceMonthlyResult">
+        <id property="monthlyId" column="monthly_id" />
+        <result property="statMonth" column="stat_month" />
+        <result property="contractId" column="contract_id" />
+        <result property="contractNo" column="contract_no" />
+        <result property="dispatchEnterpriseId" column="dispatch_enterprise_id" />
+        <result property="dispatchEnterpriseName" column="dispatch_enterprise_name" />
+        <result property="employerEnterpriseId" column="employer_enterprise_id" />
+        <result property="employerEnterpriseName" column="employer_enterprise_name" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="idCard" column="id_card" />
+        <result property="regionCode" column="region_code" />
+        <result property="attendanceDays" column="attendance_days" />
+        <result property="absenceDays" column="absence_days" />
+        <result property="lateDays" column="late_days" />
+        <result property="earlyLeaveDays" column="early_leave_days" />
+        <result property="overtimeHours" column="overtime_hours" />
+        <result property="totalHours" column="total_hours" />
+        <result property="attCheck" column="att_check" />
+        <result property="summaryStatus" column="summary_status" />
+        <result property="lastAttendanceDate" column="last_attendance_date" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectAttendanceMonthlyVo">
+        select m.monthly_id, m.stat_month, m.contract_id, m.contract_no,
+               m.dispatch_enterprise_id, m.dispatch_enterprise_name,
+               m.employer_enterprise_id, m.employer_enterprise_name,
+               m.person_id, m.person_name, m.id_card, m.region_code,
+               m.attendance_days, m.absence_days, m.late_days, m.early_leave_days,
+               m.overtime_hours, m.total_hours, m.att_check, m.summary_status,
+               m.last_attendance_date, m.create_by, m.create_time, m.update_by, m.update_time, m.remark
+        from t_attendance_monthly m
+    </sql>
+
+    <select id="selectAttendanceMonthlyList" parameterType="YgbAttendanceMonthly" resultMap="YgbAttendanceMonthlyResult">
+        <include refid="selectAttendanceMonthlyVo" />
+        <where>
+            m.del_flag = '0'
+            <if test="statMonth != null and statMonth != ''">
+                and m.stat_month = #{statMonth}
+            </if>
+            <if test="dispatchEnterpriseId != null">
+                and m.dispatch_enterprise_id = #{dispatchEnterpriseId}
+            </if>
+            <if test="personId != null">
+                and m.person_id = #{personId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and m.person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="summaryStatus != null and summaryStatus != ''">
+                and m.summary_status = #{summaryStatus}
+            </if>
+            <if test="attCheck != null and attCheck != ''">
+                and m.att_check = #{attCheck}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and m.region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by m.stat_month desc, m.person_id asc, m.monthly_id desc
+    </select>
+
+    <select id="selectMonthlyAggregateRows" resultMap="YgbAttendanceMonthlyResult">
+        select #{statMonth} as stat_month,
+               a.contract_id, a.contract_no,
+               a.dispatch_enterprise_id, a.dispatch_enterprise_name,
+               a.employer_enterprise_id, a.employer_enterprise_name,
+               a.person_id, a.person_name, a.id_card, a.region_code,
+               sum(case when a.attendance_status in ('1', '2', '3', '4') then 1 else 0 end) as attendance_days,
+               sum(case when a.attendance_status = '0' then 1 else 0 end) as absence_days,
+               sum(case when a.attendance_status = '2' then 1 else 0 end) as late_days,
+               sum(case when a.attendance_status = '3' then 1 else 0 end) as early_leave_days,
+               sum(ifnull(a.overtime_hours, 0)) as overtime_hours,
+               sum(ifnull(a.attendance_hours, 0)) as total_hours,
+               min(a.att_check) as att_check,
+               max(a.attendance_date) as last_attendance_date
+        from t_attendance_raw a
+        where a.del_flag = '0'
+          and date_format(a.attendance_date, '%Y-%m') = #{statMonth}
+        <if test="dispatchEnterpriseId != null">
+            and a.dispatch_enterprise_id = #{dispatchEnterpriseId}
+        </if>
+        group by a.contract_id, a.contract_no,
+                 a.dispatch_enterprise_id, a.dispatch_enterprise_name,
+                 a.employer_enterprise_id, a.employer_enterprise_name,
+                 a.person_id, a.person_name, a.id_card, a.region_code
+    </select>
+
+    <insert id="insertAttendanceMonthly" parameterType="YgbAttendanceMonthly" useGeneratedKeys="true" keyProperty="monthlyId">
+        insert into t_attendance_monthly (
+            stat_month, contract_id, contract_no,
+            dispatch_enterprise_id, dispatch_enterprise_name,
+            employer_enterprise_id, employer_enterprise_name,
+            person_id, person_name, id_card, region_code,
+            attendance_days, absence_days, late_days, early_leave_days,
+            overtime_hours, total_hours, att_check, summary_status,
+            last_attendance_date, remark, create_by, create_time
+        ) values (
+            #{statMonth}, #{contractId}, #{contractNo},
+            #{dispatchEnterpriseId}, #{dispatchEnterpriseName},
+            #{employerEnterpriseId}, #{employerEnterpriseName},
+            #{personId}, #{personName}, #{idCard}, #{regionCode},
+            #{attendanceDays}, #{absenceDays}, #{lateDays}, #{earlyLeaveDays},
+            #{overtimeHours}, #{totalHours}, #{attCheck}, #{summaryStatus},
+            #{lastAttendanceDate}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateSummaryStatusByScope">
+        update t_attendance_monthly
+        set summary_status = #{summaryStatus},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+        <if test="dispatchEnterpriseId != null">
+            and dispatch_enterprise_id = #{dispatchEnterpriseId}
+        </if>
+    </update>
+
+    <delete id="deleteMonthlyByScope">
+        delete from t_attendance_monthly
+        where stat_month = #{statMonth}
+        <if test="dispatchEnterpriseId != null">
+            and dispatch_enterprise_id = #{dispatchEnterpriseId}
+        </if>
+    </delete>
+
+</mapper>

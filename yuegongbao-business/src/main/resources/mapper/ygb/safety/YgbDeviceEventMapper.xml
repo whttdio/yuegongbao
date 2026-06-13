@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.safety.mapper.YgbDeviceEventMapper">
+
+    <resultMap type="YgbDeviceEvent" id="YgbDeviceEventResult">
+        <id property="eventId" column="event_id" />
+        <result property="deviceId" column="device_id" />
+        <result property="deviceCode" column="device_code" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="eventType" column="event_type" />
+        <result property="eventCode" column="event_code" />
+        <result property="eventContent" column="event_content" />
+        <result property="evidenceUrl" column="evidence_url" />
+        <result property="eventStatus" column="event_status" />
+        <result property="sourceSerialNo" column="source_serial_no" />
+        <result property="sourceStatus" column="source_status" />
+        <result property="sourceMessage" column="source_message" />
+        <result property="callbackTime" column="callback_time" />
+        <result property="rawPayload" column="raw_payload" />
+        <result property="eventTime" column="event_time" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="selectDeviceEventVo">
+        select event_id, device_id, device_code, enterprise_id, enterprise_name, region_code, event_type,
+               event_code, event_content, evidence_url, event_status, source_serial_no, source_status,
+               source_message, callback_time, raw_payload, event_time, create_by, create_time
+        from t_device_event
+    </sql>
+
+    <select id="selectDeviceEventList" parameterType="YgbDeviceEvent" resultMap="YgbDeviceEventResult">
+        <include refid="selectDeviceEventVo" />
+        <where>
+            1 = 1
+            <if test="deviceId != null">
+                and device_id = #{deviceId}
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                and device_code = #{deviceCode}
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="eventType != null and eventType != ''">
+                and event_type = #{eventType}
+            </if>
+            <if test="eventStatus != null and eventStatus != ''">
+                and event_status = #{eventStatus}
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by event_time desc, event_id desc
+    </select>
+
+    <insert id="insertDeviceEvent" parameterType="YgbDeviceEvent" useGeneratedKeys="true" keyProperty="eventId">
+        insert into t_device_event (
+            device_id, device_code, enterprise_id, enterprise_name, region_code, event_type, event_code,
+            event_content, evidence_url, event_status, source_serial_no, source_status, source_message,
+            callback_time, raw_payload, event_time, create_by, create_time
+        ) values (
+            #{deviceId}, #{deviceCode}, #{enterpriseId}, #{enterpriseName}, #{regionCode}, #{eventType}, #{eventCode},
+            #{eventContent}, #{evidenceUrl}, #{eventStatus}, #{sourceSerialNo}, #{sourceStatus}, #{sourceMessage},
+            #{callbackTime}, #{rawPayload}, #{eventTime}, #{createBy}, sysdate()
+        )
+    </insert>
+
+</mapper>

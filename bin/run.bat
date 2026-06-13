@@ -1,14 +1,14 @@
 @echo off
 echo.
-echo [信息] 使用Jar命令运行Web工程。
+echo [Info] Run the backend service from the packaged jar
 echo.
 
 cd %~dp0
-cd ../ruoyi-admin/target
+cd ../yuegongbao-admin/target
 
 set JAVA_OPTS=-Xms256m -Xmx1024m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m
 
-java -jar %JAVA_OPTS% ruoyi-admin.jar
+java %JAVA_OPTS% -jar yuegongbao-admin.jar
 
-cd bin
+cd ../../bin
 pause

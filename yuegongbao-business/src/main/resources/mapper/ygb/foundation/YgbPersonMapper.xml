@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.foundation.mapper.YgbPersonMapper">
+
+    <resultMap type="YgbPerson" id="YgbPersonResult">
+        <id property="personId" column="person_id" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="personName" column="person_name" />
+        <result property="idCard" column="id_card" />
+        <result property="mobile" column="mobile" />
+        <result property="workerType" column="worker_type" />
+        <result property="jobType" column="job_type" />
+        <result property="certStatus" column="cert_status" />
+        <result property="insuranceStatus" column="insurance_status" />
+        <result property="employmentStatus" column="employment_status" />
+        <result property="entryDate" column="entry_date" />
+        <result property="leaveDate" column="leave_date" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectPersonVo">
+        select p.person_id, p.enterprise_id, e.enterprise_name, p.region_code, p.person_name,
+               p.id_card, p.mobile, p.worker_type, p.job_type, p.cert_status, p.insurance_status,
+               p.employment_status, p.entry_date, p.leave_date, p.create_by, p.create_time,
+               p.update_by, p.update_time, p.remark
+        from t_person p
+        left join t_enterprise e on e.enterprise_id = p.enterprise_id
+    </sql>
+
+    <select id="selectPersonList" parameterType="YgbPerson" resultMap="YgbPersonResult">
+        <include refid="selectPersonVo" />
+        <where>
+            p.del_flag = '0'
+            and e.del_flag = '0'
+            <if test="enterpriseId != null">
+                and p.enterprise_id = #{enterpriseId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and p.person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="idCard != null and idCard != ''">
+                and p.id_card like concat('%', #{idCard}, '%')
+            </if>
+            <if test="workerType != null and workerType != ''">
+                and p.worker_type = #{workerType}
+            </if>
+            <if test="certStatus != null and certStatus != ''">
+                and p.cert_status = #{certStatus}
+            </if>
+            <if test="insuranceStatus != null and insuranceStatus != ''">
+                and p.insurance_status = #{insuranceStatus}
+            </if>
+            <if test="employmentStatus != null and employmentStatus != ''">
+                and p.employment_status = #{employmentStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and p.region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by p.create_time desc, p.person_id desc
+    </select>
+
+    <select id="selectPersonOptions" parameterType="Long" resultMap="YgbPersonResult">
+        <include refid="selectPersonVo" />
+        where p.del_flag = '0'
+          and e.del_flag = '0'
+        <if test="_parameter != null">
+          and p.enterprise_id = #{enterpriseId}
+        </if>
+        order by p.person_name asc
+    </select>
+
+    <select id="selectPersonById" parameterType="Long" resultMap="YgbPersonResult">
+        <include refid="selectPersonVo" />
+        where p.person_id = #{personId} and p.del_flag = '0'
+    </select>
+
+    <select id="selectPersonByMobile" parameterType="String" resultMap="YgbPersonResult">
+        <include refid="selectPersonVo" />
+        where p.mobile = #{mobile}
+          and p.del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectPersonByName" parameterType="String" resultMap="YgbPersonResult">
+        <include refid="selectPersonVo" />
+        where p.person_name = #{personName}
+          and p.del_flag = '0'
+        order by p.employment_status asc, p.person_id desc
+        limit 1
+    </select>
+
+    <select id="checkPersonIdCardUnique" parameterType="String" resultMap="YgbPersonResult">
+        <include refid="selectPersonVo" />
+        where p.id_card = #{idCard} and p.del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="countPersonByEnterpriseId" parameterType="Long" resultType="int">
+        select count(1)
+        from t_person
+        where enterprise_id = #{enterpriseId} and del_flag = '0'
+    </select>
+
+    <insert id="insertPerson" parameterType="YgbPerson" useGeneratedKeys="true" keyProperty="personId">
+        insert into t_person (
+            enterprise_id,
+            region_code,
+            person_name,
+            id_card,
+            mobile,
+            worker_type,
+            job_type,
+            cert_status,
+            insurance_status,
+            employment_status,
+            entry_date,
+            leave_date,
+            remark,
+            create_by,
+            create_time
+        ) values (
+            #{enterpriseId},
+            #{regionCode},
+            #{personName},
+            #{idCard},
+            #{mobile},
+            #{workerType},
+            #{jobType},
+            #{certStatus},
+            #{insuranceStatus},
+            #{employmentStatus},
+            #{entryDate},
+            #{leaveDate},
+            #{remark},
+            #{createBy},
+            sysdate()
+        )
+    </insert>
+
+    <update id="updatePerson" parameterType="YgbPerson">
+        update t_person
+        <set>
+            <if test="enterpriseId != null">enterprise_id = #{enterpriseId},</if>
+            <if test="regionCode != null and regionCode != ''">region_code = #{regionCode},</if>
+            <if test="personName != null and personName != ''">person_name = #{personName},</if>
+            <if test="idCard != null and idCard != ''">id_card = #{idCard},</if>
+            <if test="mobile != null">mobile = #{mobile},</if>
+            <if test="workerType != null and workerType != ''">worker_type = #{workerType},</if>
+            <if test="jobType != null">job_type = #{jobType},</if>
+            <if test="certStatus != null and certStatus != ''">cert_status = #{certStatus},</if>
+            <if test="insuranceStatus != null and insuranceStatus != ''">insurance_status = #{insuranceStatus},</if>
+            <if test="employmentStatus != null and employmentStatus != ''">employment_status = #{employmentStatus},</if>
+            <if test="entryDate != null">entry_date = #{entryDate},</if>
+            <if test="leaveDate != null">leave_date = #{leaveDate},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where person_id = #{personId} and del_flag = '0'
+    </update>
+
+    <update id="deletePersonByIds">
+        update t_person
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and person_id in
+        <foreach collection="personIds" item="personId" open="(" separator="," close=")">
+            #{personId}
+        </foreach>
+    </update>
+
+</mapper>

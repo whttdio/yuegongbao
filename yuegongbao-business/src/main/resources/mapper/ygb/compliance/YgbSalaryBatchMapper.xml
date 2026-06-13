@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.compliance.mapper.YgbSalaryBatchMapper">
+
+    <resultMap type="YgbSalaryBatch" id="YgbSalaryBatchResult">
+        <id property="batchId" column="batch_id" />
+        <result property="batchNo" column="batch_no" />
+        <result property="statMonth" column="stat_month" />
+        <result property="dispatchEnterpriseId" column="dispatch_enterprise_id" />
+        <result property="dispatchEnterpriseName" column="dispatch_enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="totalPersonCount" column="total_person_count" />
+        <result property="totalPayableAmount" column="total_payable_amount" />
+        <result property="totalPaidAmount" column="total_paid_amount" />
+        <result property="accountReceivedAmount" column="account_received_amount" />
+        <result property="batchStatus" column="batch_status" />
+        <result property="accountStatus" column="account_status" />
+        <result property="regulatorAccountName" column="regulator_account_name" />
+        <result property="regulatorAccountNo" column="regulator_account_no" />
+        <result property="bankSerialNo" column="bank_serial_no" />
+        <result property="submitTime" column="submit_time" />
+        <result property="paidTime" column="paid_time" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectSalaryBatchVo">
+        select b.batch_id, b.batch_no, b.stat_month, b.dispatch_enterprise_id, b.dispatch_enterprise_name,
+               b.region_code, b.total_person_count, b.total_payable_amount, b.total_paid_amount,
+               b.account_received_amount, b.batch_status, b.account_status, b.regulator_account_name,
+               b.regulator_account_no, b.bank_serial_no, b.submit_time, b.paid_time,
+               b.create_by, b.create_time, b.update_by, b.update_time, b.remark
+        from t_salary_batch b
+    </sql>
+
+    <select id="selectSalaryBatchList" parameterType="YgbSalaryBatch" resultMap="YgbSalaryBatchResult">
+        <include refid="selectSalaryBatchVo" />
+        <where>
+            b.del_flag = '0'
+            <if test="batchNo != null and batchNo != ''">
+                and b.batch_no like concat('%', #{batchNo}, '%')
+            </if>
+            <if test="statMonth != null and statMonth != ''">
+                and b.stat_month = #{statMonth}
+            </if>
+            <if test="dispatchEnterpriseId != null">
+                and b.dispatch_enterprise_id = #{dispatchEnterpriseId}
+            </if>
+            <if test="batchStatus != null and batchStatus != ''">
+                and b.batch_status = #{batchStatus}
+            </if>
+            <if test="accountStatus != null and accountStatus != ''">
+                and b.account_status = #{accountStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and b.region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by b.stat_month desc, b.batch_id desc
+    </select>
+
+    <select id="selectSalaryBatchOptions" resultMap="YgbSalaryBatchResult">
+        <include refid="selectSalaryBatchVo" />
+        where b.del_flag = '0'
+        order by b.stat_month desc, b.batch_id desc
+    </select>
+
+    <select id="selectSalaryBatchById" parameterType="Long" resultMap="YgbSalaryBatchResult">
+        <include refid="selectSalaryBatchVo" />
+        where b.batch_id = #{batchId} and b.del_flag = '0'
+    </select>
+
+    <select id="selectSalaryBatchByBatchNo" parameterType="String" resultMap="YgbSalaryBatchResult">
+        <include refid="selectSalaryBatchVo" />
+        where b.batch_no = #{batchNo} and b.del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="checkBatchNoUnique" parameterType="String" resultMap="YgbSalaryBatchResult">
+        <include refid="selectSalaryBatchVo" />
+        where b.batch_no = #{batchNo} and b.del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertSalaryBatch" parameterType="YgbSalaryBatch" useGeneratedKeys="true" keyProperty="batchId">
+        insert into t_salary_batch (
+            batch_no, stat_month, dispatch_enterprise_id, dispatch_enterprise_name,
+            region_code, total_person_count, total_payable_amount, total_paid_amount,
+            account_received_amount, batch_status, account_status, regulator_account_name,
+            regulator_account_no, bank_serial_no, submit_time, paid_time, remark, create_by, create_time
+        ) values (
+            #{batchNo}, #{statMonth}, #{dispatchEnterpriseId}, #{dispatchEnterpriseName},
+            #{regionCode}, #{totalPersonCount}, #{totalPayableAmount}, #{totalPaidAmount},
+            #{accountReceivedAmount}, #{batchStatus}, #{accountStatus}, #{regulatorAccountName},
+            #{regulatorAccountNo}, #{bankSerialNo}, #{submitTime}, #{paidTime}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateSalaryBatch" parameterType="YgbSalaryBatch">
+        update t_salary_batch
+        <set>
+            <if test="batchNo != null and batchNo != ''">batch_no = #{batchNo},</if>
+            <if test="statMonth != null and statMonth != ''">stat_month = #{statMonth},</if>
+            <if test="dispatchEnterpriseId != null">dispatch_enterprise_id = #{dispatchEnterpriseId},</if>
+            <if test="dispatchEnterpriseName != null">dispatch_enterprise_name = #{dispatchEnterpriseName},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="totalPersonCount != null">total_person_count = #{totalPersonCount},</if>
+            <if test="totalPayableAmount != null">total_payable_amount = #{totalPayableAmount},</if>
+            <if test="totalPaidAmount != null">total_paid_amount = #{totalPaidAmount},</if>
+            <if test="accountReceivedAmount != null">account_received_amount = #{accountReceivedAmount},</if>
+            <if test="batchStatus != null and batchStatus != ''">batch_status = #{batchStatus},</if>
+            <if test="accountStatus != null and accountStatus != ''">account_status = #{accountStatus},</if>
+            <if test="regulatorAccountName != null">regulator_account_name = #{regulatorAccountName},</if>
+            <if test="regulatorAccountNo != null">regulator_account_no = #{regulatorAccountNo},</if>
+            <if test="bankSerialNo != null">bank_serial_no = #{bankSerialNo},</if>
+            <if test="submitTime != null">submit_time = #{submitTime},</if>
+            <if test="paidTime != null">paid_time = #{paidTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where batch_id = #{batchId} and del_flag = '0'
+    </update>
+
+    <update id="updateBatchAmounts">
+        update t_salary_batch
+        set total_person_count = #{totalPersonCount},
+            total_payable_amount = #{totalPayableAmount},
+            total_paid_amount = #{totalPaidAmount},
+            batch_status = #{batchStatus},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where batch_id = #{batchId} and del_flag = '0'
+    </update>
+
+    <update id="updateBatchAccount">
+        update t_salary_batch
+        set account_received_amount = #{accountReceivedAmount},
+            bank_serial_no = #{bankSerialNo},
+            account_status = '1',
+            batch_status = #{batchStatus},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where batch_id = #{batchId} and del_flag = '0'
+    </update>
+
+    <update id="updateBatchPaid">
+        update t_salary_batch
+        set batch_status = #{batchStatus},
+            submit_time = case
+                when #{batchStatus} = '5' and submit_time is null then sysdate()
+                when #{batchStatus} = '6' and submit_time is null then sysdate()
+                else submit_time
+            end,
+            paid_time = case when #{batchStatus} = '6' then sysdate() else paid_time end,
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where batch_id = #{batchId} and del_flag = '0'
+    </update>
+
+    <update id="deleteSalaryBatchByIds">
+        update t_salary_batch
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and batch_id in
+        <foreach collection="batchIds" item="batchId" open="(" separator="," close=")">
+            #{batchId}
+        </foreach>
+    </update>
+
+</mapper>

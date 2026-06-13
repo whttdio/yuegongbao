@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.compliance.mapper.YgbSalaryArrearsMapper">
+
+    <resultMap id="YgbSalaryArrearsResult" type="YgbSalaryArrears">
+        <id property="arrearsId" column="arrears_id" />
+        <result property="batchId" column="batch_id" />
+        <result property="batchNo" column="batch_no" />
+        <result property="statMonth" column="stat_month" />
+        <result property="dispatchEnterpriseId" column="dispatch_enterprise_id" />
+        <result property="dispatchEnterpriseName" column="dispatch_enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="totalPersonCount" column="total_person_count" />
+        <result property="totalPayableAmount" column="total_payable_amount" />
+        <result property="totalPaidAmount" column="total_paid_amount" />
+        <result property="accountReceivedAmount" column="account_received_amount" />
+        <result property="arrearsAmount" column="arrears_amount" />
+        <result property="accountGapAmount" column="account_gap_amount" />
+        <result property="overdueDays" column="overdue_days" />
+        <result property="handleStatus" column="handle_status" />
+        <result property="warningId" column="warning_id" />
+        <result property="followUser" column="follow_user" />
+        <result property="followTime" column="follow_time" />
+        <result property="nextFollowTime" column="next_follow_time" />
+        <result property="handleResult" column="handle_result" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectSalaryArrearsVo">
+        select h.arrears_id, b.batch_id, b.batch_no, b.stat_month, b.dispatch_enterprise_id, b.dispatch_enterprise_name,
+               b.region_code, b.total_person_count, b.total_payable_amount, b.total_paid_amount, b.account_received_amount,
+               greatest(ifnull(b.total_payable_amount, 0) - ifnull(b.total_paid_amount, 0), 0) as arrears_amount,
+               greatest(ifnull(b.total_payable_amount, 0) - ifnull(b.account_received_amount, 0), 0) as account_gap_amount,
+               case
+                   when b.submit_time is null then 0
+                   else datediff(sysdate(), b.submit_time)
+               end as overdue_days,
+               ifnull(h.handle_status, 'pending') as handle_status,
+               h.warning_id, h.follow_user, h.follow_time, h.next_follow_time, h.handle_result, h.remark
+        from t_salary_batch b
+        left join t_salary_arrears_handle h on b.batch_id = h.batch_id
+    </sql>
+
+    <select id="selectSalaryArrearsList" parameterType="YgbSalaryArrears" resultMap="YgbSalaryArrearsResult">
+        <include refid="selectSalaryArrearsVo" />
+        <where>
+            b.del_flag = '0'
+            and (
+                b.batch_status = '7'
+                or ifnull(b.total_paid_amount, 0) &lt; ifnull(b.total_payable_amount, 0)
+                or ifnull(b.account_received_amount, 0) &lt; ifnull(b.total_payable_amount, 0)
+            )
+            <if test="batchNo != null and batchNo != ''">
+                and b.batch_no like concat('%', #{batchNo}, '%')
+            </if>
+            <if test="statMonth != null and statMonth != ''">
+                and b.stat_month = #{statMonth}
+            </if>
+            <if test="dispatchEnterpriseId != null">
+                and b.dispatch_enterprise_id = #{dispatchEnterpriseId}
+            </if>
+            <if test="handleStatus != null and handleStatus != ''">
+                and ifnull(h.handle_status, 'pending') = #{handleStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and b.region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by overdue_days desc, arrears_amount desc, b.batch_id desc
+    </select>
+
+    <select id="selectSalaryArrearsByBatchId" resultMap="YgbSalaryArrearsResult">
+        <include refid="selectSalaryArrearsVo" />
+        where b.batch_id = #{batchId}
+          and b.del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertOrUpdateHandle" parameterType="YgbSalaryArrears" useGeneratedKeys="true" keyProperty="arrearsId">
+        insert into t_salary_arrears_handle (
+            batch_id, warning_id, handle_status, follow_user, follow_time, next_follow_time, handle_result, remark,
+            create_by, create_time, update_by, update_time
+        ) values (
+            #{batchId}, #{warningId}, #{handleStatus}, #{followUser}, #{followTime}, #{nextFollowTime}, #{handleResult},
+            #{remark}, #{followUser}, sysdate(), #{followUser}, sysdate()
+        )
+        on duplicate key update
+            warning_id = values(warning_id),
+            handle_status = values(handle_status),
+            follow_user = values(follow_user),
+            follow_time = values(follow_time),
+            next_follow_time = values(next_follow_time),
+            handle_result = values(handle_result),
+            remark = values(remark),
+            update_by = values(update_by),
+            update_time = sysdate()
+    </insert>
+
+    <select id="countArrearsEnterprise" resultType="int">
+        select count(distinct b.dispatch_enterprise_id)
+        from t_salary_batch b
+        where b.del_flag = '0'
+          and (
+                b.batch_status = '7'
+                or ifnull(b.total_paid_amount, 0) &lt; ifnull(b.total_payable_amount, 0)
+                or ifnull(b.account_received_amount, 0) &lt; ifnull(b.total_payable_amount, 0)
+          )
+        <if test="statMonth != null and statMonth != ''">
+            and b.stat_month = #{statMonth}
+        </if>
+        <if test="regionCode != null and regionCode != ''">
+            and b.region_code like concat(#{regionCode}, '%')
+        </if>
+    </select>
+</mapper>

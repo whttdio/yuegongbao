@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.newform.mapper.YgbNewformWorkerMapper">
+
+    <resultMap type="YgbNewformWorker" id="YgbNewformWorkerResult">
+        <id property="workerRecordId" column="worker_record_id" />
+        <result property="statMonth" column="stat_month" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="idCard" column="id_card" />
+        <result property="regionCode" column="region_code" />
+        <result property="platformName" column="platform_name" />
+        <result property="employmentType" column="employment_type" />
+        <result property="insuranceStatus" column="insurance_status" />
+        <result property="injuryInsuranceStatus" column="injury_insurance_status" />
+        <result property="monthlyIncome" column="monthly_income" />
+        <result property="warningStatus" column="warning_status" />
+        <result property="sourceSerialNo" column="source_serial_no" />
+        <result property="sourceStatus" column="source_status" />
+        <result property="sourceMessage" column="source_message" />
+        <result property="callbackTime" column="callback_time" />
+        <result property="rawPayload" column="raw_payload" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <resultMap id="YgbNewformPlatformStatResult" type="com.yuegongbao.ygb.newform.domain.YgbNewformPlatformStat">
+        <result property="statMonth" column="stat_month" />
+        <result property="regionCode" column="region_code" />
+        <result property="platformName" column="platform_name" />
+        <result property="workerCount" column="worker_count" />
+        <result property="insuredCount" column="insured_count" />
+        <result property="injuryInsuredCount" column="injury_insured_count" />
+        <result property="injuryUninsuredCount" column="injury_uninsured_count" />
+        <result property="injuryStoppedCount" column="injury_stopped_count" />
+        <result property="warningCount" column="warning_count" />
+        <result property="averageIncome" column="average_income" />
+        <result property="incomeTotal" column="income_total" />
+        <result property="incomeRecordCount" column="income_record_count" />
+    </resultMap>
+
+    <sql id="selectNewformWorkerVo">
+        select worker_record_id, stat_month, enterprise_id, enterprise_name, person_id, person_name, id_card,
+               region_code, platform_name, employment_type, insurance_status, injury_insurance_status,
+               monthly_income, warning_status, source_serial_no, source_status, source_message, callback_time,
+               raw_payload, create_by, create_time, update_by, update_time, remark
+        from t_newform_worker
+    </sql>
+
+    <select id="selectNewformWorkerList" parameterType="YgbNewformWorker" resultMap="YgbNewformWorkerResult">
+        <include refid="selectNewformWorkerVo" />
+        <where>
+            <include refid="newformWorkerWhere" />
+        </where>
+        order by stat_month desc, worker_record_id desc
+    </select>
+
+    <select id="selectNewformPlatformList" parameterType="YgbNewformWorker" resultMap="YgbNewformPlatformStatResult">
+        select stat_month, region_code, platform_name,
+               count(1) as worker_count,
+               sum(case when insurance_status = '1' then 1 else 0 end) as insured_count,
+               sum(case when injury_insurance_status = '1' then 1 else 0 end) as injury_insured_count,
+               sum(case when warning_status = '1' then 1 else 0 end) as warning_count,
+               ifnull(sum(case when monthly_income is not null then monthly_income else 0 end), 0) as income_total,
+               sum(case when monthly_income is not null then 1 else 0 end) as income_record_count,
+               case
+                   when sum(case when monthly_income is not null then 1 else 0 end) = 0 then 0
+                   else round(
+                       ifnull(sum(case when monthly_income is not null then monthly_income else 0 end), 0)
+                       / sum(case when monthly_income is not null then 1 else 0 end), 2
+                   )
+               end as average_income
+        from t_newform_worker
+        <where>
+            <include refid="newformWorkerWhere" />
+        </where>
+        group by stat_month, region_code, platform_name
+        order by stat_month desc, region_code asc, platform_name asc
+    </select>
+
+    <select id="selectNewformInjuryMonitorList" parameterType="YgbNewformWorker" resultMap="YgbNewformPlatformStatResult">
+        select stat_month, region_code, platform_name,
+               count(1) as worker_count,
+               sum(case when injury_insurance_status = '1' then 1 else 0 end) as injury_insured_count,
+               sum(case when injury_insurance_status = '0' then 1 else 0 end) as injury_uninsured_count,
+               sum(case when injury_insurance_status = '2' then 1 else 0 end) as injury_stopped_count,
+               sum(case when warning_status = '1' then 1 else 0 end) as warning_count
+        from t_newform_worker
+        <where>
+            <include refid="newformWorkerWhere" />
+        </where>
+        group by stat_month, region_code, platform_name
+        order by stat_month desc, region_code asc, platform_name asc
+    </select>
+
+    <sql id="newformWorkerWhere">
+            del_flag = '0'
+            <if test="statMonth != null and statMonth != ''">
+                and stat_month = #{statMonth}
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="platformName != null and platformName != ''">
+                and platform_name like concat('%', #{platformName}, '%')
+            </if>
+            <if test="employmentType != null and employmentType != ''">
+                and employment_type = #{employmentType}
+            </if>
+            <if test="injuryInsuranceStatus != null and injuryInsuranceStatus != ''">
+                and injury_insurance_status = #{injuryInsuranceStatus}
+            </if>
+            <if test="warningStatus != null and warningStatus != ''">
+                and warning_status = #{warningStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+    </sql>
+
+    <insert id="insertNewformWorker" parameterType="YgbNewformWorker" useGeneratedKeys="true" keyProperty="workerRecordId">
+        insert into t_newform_worker (
+            stat_month, enterprise_id, enterprise_name, person_id, person_name, id_card, region_code,
+            platform_name, employment_type, insurance_status, injury_insurance_status, monthly_income,
+            warning_status, source_serial_no, source_status, source_message, callback_time, raw_payload,
+            create_by, create_time
+        ) values (
+            #{statMonth}, #{enterpriseId}, #{enterpriseName}, #{personId}, #{personName}, #{idCard}, #{regionCode},
+            #{platformName}, #{employmentType}, #{insuranceStatus}, #{injuryInsuranceStatus}, #{monthlyIncome},
+            #{warningStatus}, #{sourceSerialNo}, #{sourceStatus}, #{sourceMessage}, #{callbackTime}, #{rawPayload},
+            #{createBy}, sysdate()
+        )
+    </insert>
+
+    <delete id="deleteByScope">
+        delete from t_newform_worker
+        where stat_month = #{statMonth}
+        <if test="enterpriseId != null">
+            and enterprise_id = #{enterpriseId}
+        </if>
+    </delete>
+
+</mapper>

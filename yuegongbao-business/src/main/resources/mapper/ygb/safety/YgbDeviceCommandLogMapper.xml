@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.safety.mapper.YgbDeviceCommandLogMapper">
+
+    <resultMap type="YgbDeviceCommandLog" id="YgbDeviceCommandLogResult">
+        <id property="logId" column="log_id" />
+        <result property="deviceId" column="device_id" />
+        <result property="deviceCode" column="device_code" />
+        <result property="commandType" column="command_type" />
+        <result property="commandPayload" column="command_payload" />
+        <result property="commandResult" column="command_result" />
+        <result property="resultMessage" column="result_message" />
+        <result property="sourceSerialNo" column="source_serial_no" />
+        <result property="sourceStatus" column="source_status" />
+        <result property="sourceMessage" column="source_message" />
+        <result property="callbackTime" column="callback_time" />
+        <result property="rawPayload" column="raw_payload" />
+        <result property="operatorName" column="operator_name" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="selectDeviceCommandLogVo">
+        select log_id, device_id, device_code, command_type, command_payload, command_result, result_message,
+               source_serial_no, source_status, source_message, callback_time, raw_payload, operator_name,
+               create_by, create_time
+        from t_device_command_log
+    </sql>
+
+    <select id="selectDeviceCommandLogList" parameterType="YgbDeviceCommandLog" resultMap="YgbDeviceCommandLogResult">
+        <include refid="selectDeviceCommandLogVo" />
+        <where>
+            1 = 1
+            <if test="deviceId != null">
+                and device_id = #{deviceId}
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                and device_code = #{deviceCode}
+            </if>
+            <if test="commandType != null and commandType != ''">
+                and command_type = #{commandType}
+            </if>
+            <if test="commandResult != null and commandResult != ''">
+                and command_result = #{commandResult}
+            </if>
+        </where>
+        order by create_time desc, log_id desc
+    </select>
+
+    <insert id="insertDeviceCommandLog" parameterType="YgbDeviceCommandLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into t_device_command_log (
+            device_id, device_code, command_type, command_payload, command_result, result_message,
+            source_serial_no, source_status, source_message, callback_time, raw_payload, operator_name,
+            create_by, create_time
+        ) values (
+            #{deviceId}, #{deviceCode}, #{commandType}, #{commandPayload}, #{commandResult}, #{resultMessage},
+            #{sourceSerialNo}, #{sourceStatus}, #{sourceMessage}, #{callbackTime}, #{rawPayload}, #{operatorName},
+            #{createBy}, sysdate()
+        )
+    </insert>
+
+</mapper>

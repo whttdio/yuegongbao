@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.compliance.mapper.YgbContractTemplateMapper">
+
+    <resultMap id="YgbContractTemplateResult" type="YgbContractTemplate">
+        <id property="templateId" column="template_id" />
+        <result property="templateCode" column="template_code" />
+        <result property="templateName" column="template_name" />
+        <result property="templateVersion" column="template_version" />
+        <result property="templateType" column="template_type" />
+        <result property="applicableScope" column="applicable_scope" />
+        <result property="reviewStatus" column="review_status" />
+        <result property="status" column="status" />
+        <result property="regionCode" column="region_code" />
+        <result property="templateFileUrl" column="template_file_url" />
+        <result property="contentText" column="content_text" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectContractTemplateVo">
+        select template_id, template_code, template_name, template_version, template_type, applicable_scope,
+               review_status, status, region_code, template_file_url, content_text, create_by, create_time,
+               update_by, update_time, remark
+        from t_contract_template
+    </sql>
+
+    <select id="selectContractTemplateList" parameterType="YgbContractTemplate" resultMap="YgbContractTemplateResult">
+        <include refid="selectContractTemplateVo" />
+        <where>
+            del_flag = '0'
+            <if test="templateCode != null and templateCode != ''">
+                and template_code like concat('%', #{templateCode}, '%')
+            </if>
+            <if test="templateName != null and templateName != ''">
+                and template_name like concat('%', #{templateName}, '%')
+            </if>
+            <if test="templateType != null and templateType != ''">
+                and template_type = #{templateType}
+            </if>
+            <if test="reviewStatus != null and reviewStatus != ''">
+                and review_status = #{reviewStatus}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by update_time desc, template_id desc
+    </select>
+
+    <select id="selectEnabledTemplateOptions" resultMap="YgbContractTemplateResult">
+        <include refid="selectContractTemplateVo" />
+        where del_flag = '0'
+          and status = '1'
+          and review_status = 'approved'
+        <if test="templateType != null and templateType != ''">
+            and template_type = #{templateType}
+        </if>
+        <if test="regionCode != null and regionCode != ''">
+            and (region_code = #{regionCode} or region_code = '440000')
+        </if>
+        order by region_code desc, update_time desc, template_id desc
+    </select>
+
+    <select id="selectContractTemplateById" resultMap="YgbContractTemplateResult">
+        <include refid="selectContractTemplateVo" />
+        where template_id = #{templateId}
+          and del_flag = '0'
+    </select>
+
+    <select id="checkTemplateCodeUnique" resultMap="YgbContractTemplateResult">
+        <include refid="selectContractTemplateVo" />
+        where template_code = #{templateCode}
+          and del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertContractTemplate" parameterType="YgbContractTemplate" useGeneratedKeys="true" keyProperty="templateId">
+        insert into t_contract_template (
+            template_code, template_name, template_version, template_type, applicable_scope, review_status, status,
+            region_code, template_file_url, content_text, remark, create_by, create_time, update_by, update_time, del_flag
+        ) values (
+            #{templateCode}, #{templateName}, #{templateVersion}, #{templateType}, #{applicableScope}, #{reviewStatus},
+            #{status}, #{regionCode}, #{templateFileUrl}, #{contentText}, #{remark}, #{createBy}, sysdate(),
+            #{updateBy}, #{updateTime}, '0'
+        )
+    </insert>
+
+    <update id="updateContractTemplate" parameterType="YgbContractTemplate">
+        update t_contract_template
+        <set>
+            <if test="templateCode != null and templateCode != ''">template_code = #{templateCode},</if>
+            <if test="templateName != null and templateName != ''">template_name = #{templateName},</if>
+            <if test="templateVersion != null and templateVersion != ''">template_version = #{templateVersion},</if>
+            <if test="templateType != null and templateType != ''">template_type = #{templateType},</if>
+            <if test="applicableScope != null">applicable_scope = #{applicableScope},</if>
+            <if test="reviewStatus != null and reviewStatus != ''">review_status = #{reviewStatus},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="regionCode != null and regionCode != ''">region_code = #{regionCode},</if>
+            <if test="templateFileUrl != null">template_file_url = #{templateFileUrl},</if>
+            <if test="contentText != null">content_text = #{contentText},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where template_id = #{templateId}
+          and del_flag = '0'
+    </update>
+
+    <update id="updateTemplateStatus">
+        update t_contract_template
+        set status = #{status},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where template_id = #{templateId}
+          and del_flag = '0'
+    </update>
+
+    <update id="deleteContractTemplateByIds">
+        update t_contract_template
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and template_id in
+        <foreach collection="templateIds" item="templateId" open="(" separator="," close=")">
+            #{templateId}
+        </foreach>
+    </update>
+</mapper>

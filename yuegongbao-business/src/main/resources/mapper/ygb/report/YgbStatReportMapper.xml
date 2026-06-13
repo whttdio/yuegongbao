@@ -1,0 +1,580 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.report.mapper.YgbStatReportMapper">
+
+    <resultMap id="YgbStatReportResult" type="YgbStatReport">
+        <id property="reportId" column="report_id" />
+        <result property="reportCode" column="report_code" />
+        <result property="reportName" column="report_name" />
+        <result property="statMonth" column="stat_month" />
+        <result property="regionCode" column="region_code" />
+        <result property="reportStatus" column="report_status" />
+        <result property="metricCount" column="metric_count" />
+        <result property="metricAmount" column="metric_amount" />
+        <result property="metricRate" column="metric_rate" />
+        <result property="reportSummary" column="report_summary" />
+        <result property="attachmentUrl" column="attachment_url" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="generatedTime" column="generated_time" />
+    </resultMap>
+
+    <resultMap id="YgbStatReportItemResult" type="YgbStatReportItem">
+        <id property="itemId" column="item_id" />
+        <result property="reportId" column="report_id" />
+        <result property="itemCategory" column="item_category" />
+        <result property="itemName" column="item_name" />
+        <result property="itemDimension" column="item_dimension" />
+        <result property="metricCount" column="metric_count" />
+        <result property="metricValue" column="metric_value" />
+        <result property="metricRate" column="metric_rate" />
+        <result property="sortNo" column="sort_no" />
+    </resultMap>
+
+    <sql id="selectReportColumns">
+        select r.report_id, r.report_code, r.report_name, r.stat_month, r.region_code, r.report_status,
+               r.metric_count, r.metric_amount, r.metric_rate, r.report_summary, r.attachment_url,
+               r.source_mode, r.generated_time
+        from t_stat_report r
+    </sql>
+
+    <select id="selectStatReportList" parameterType="YgbStatReport" resultMap="YgbStatReportResult">
+        <include refid="selectReportColumns" />
+        <where>
+            r.del_flag = '0'
+            <if test="reportCode != null and reportCode != ''">
+                and r.report_code = #{reportCode}
+            </if>
+            <if test="statMonth != null and statMonth != ''">
+                and r.stat_month = #{statMonth}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and r.region_code = #{regionCode}
+            </if>
+            ${params.regionDataScope}
+            <if test="reportStatus != null and reportStatus != ''">
+                and r.report_status = #{reportStatus}
+            </if>
+            <if test="minMetricCount != null">
+                and r.metric_count <![CDATA[ >= ]]> #{minMetricCount}
+            </if>
+            <if test="maxMetricCount != null">
+                and r.metric_count <![CDATA[ <= ]]> #{maxMetricCount}
+            </if>
+            <if test="minMetricRate != null">
+                and r.metric_rate <![CDATA[ >= ]]> #{minMetricRate}
+            </if>
+            <if test="maxMetricRate != null">
+                and r.metric_rate <![CDATA[ <= ]]> #{maxMetricRate}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and exists (
+                    select 1
+                    from t_stat_report_item i
+                    where i.report_id = r.report_id
+                      and (
+                        i.item_name like concat('%', #{keyword}, '%')
+                        or i.item_dimension like concat('%', #{keyword}, '%')
+                      )
+                )
+            </if>
+            <if test="itemDimension != null and itemDimension != ''">
+                and exists (
+                    select 1
+                    from t_stat_report_item i
+                    where i.report_id = r.report_id
+                      and i.item_dimension like concat('%', #{itemDimension}, '%')
+                )
+            </if>
+            <if test="sourceModule != null and sourceModule != ''">
+                and exists (
+                    select 1
+                    from t_stat_report_item i
+                    where i.report_id = r.report_id
+                      and (i.item_dimension = #{sourceModule} or i.item_name like concat('%', #{sourceModule}, '%'))
+                )
+            </if>
+            <if test="riskCategory != null and riskCategory != ''">
+                and exists (
+                    select 1
+                    from t_stat_report_item i
+                    where i.report_id = r.report_id
+                      and (i.item_dimension = #{riskCategory} or i.item_name like concat('%', #{riskCategory}, '%'))
+                )
+            </if>
+            <if test="batchNo != null and batchNo != ''">
+                and exists (
+                    select 1
+                    from t_stat_report_item i
+                    where i.report_id = r.report_id
+                      and i.item_dimension like concat('%', #{batchNo}, '%')
+                )
+            </if>
+        </where>
+        order by r.generated_time desc, r.report_id desc
+    </select>
+
+    <select id="selectStatReportById" resultMap="YgbStatReportResult">
+        <include refid="selectReportColumns" />
+        where r.report_id = #{reportId}
+          and r.del_flag = '0'
+    </select>
+
+    <select id="selectStatReportByScope" resultMap="YgbStatReportResult">
+        <include refid="selectReportColumns" />
+        where r.report_code = #{reportCode}
+          and r.stat_month = #{statMonth}
+          and r.region_code = #{regionCode}
+          and r.del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectStatReportItemList" resultMap="YgbStatReportItemResult">
+        select item_id, report_id, item_category, item_name, item_dimension, metric_count, metric_value, metric_rate,
+               sort_no
+        from t_stat_report_item
+        where report_id = #{reportId}
+        order by sort_no asc, item_id asc
+    </select>
+
+    <insert id="insertStatReport" parameterType="YgbStatReport" useGeneratedKeys="true" keyProperty="reportId">
+        insert into t_stat_report (
+            report_code, report_name, stat_month, region_code, report_status, metric_count, metric_amount,
+            metric_rate, report_summary, attachment_url, source_mode, generated_time, del_flag,
+            create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{reportCode}, #{reportName}, #{statMonth}, #{regionCode}, #{reportStatus}, #{metricCount},
+            #{metricAmount}, #{metricRate}, #{reportSummary}, #{attachmentUrl}, #{sourceMode},
+            #{generatedTime}, '0', #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{remark}
+        )
+    </insert>
+
+    <update id="updateStatReport" parameterType="YgbStatReport">
+        update t_stat_report
+        set report_name = #{reportName},
+            report_status = #{reportStatus},
+            metric_count = #{metricCount},
+            metric_amount = #{metricAmount},
+            metric_rate = #{metricRate},
+            report_summary = #{reportSummary},
+            attachment_url = #{attachmentUrl},
+            source_mode = #{sourceMode},
+            generated_time = #{generatedTime},
+            update_by = #{updateBy},
+            update_time = #{updateTime},
+            remark = #{remark}
+        where report_id = #{reportId}
+    </update>
+
+    <delete id="deleteStatReportItemsByReportId">
+        delete from t_stat_report_item where report_id = #{reportId}
+    </delete>
+
+    <insert id="insertStatReportItem" parameterType="YgbStatReportItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into t_stat_report_item (
+            report_id, item_category, item_name, item_dimension, metric_count, metric_value, metric_rate, sort_no
+        ) values (
+            #{reportId}, #{itemCategory}, #{itemName}, #{itemDimension}, #{metricCount},
+            #{metricValue}, #{metricRate}, #{sortNo}
+        )
+    </insert>
+
+    <select id="selectInjuryRateItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'INJURY_RATE' as item_category,
+               ie.region_code as item_name,
+               ie.region_code as item_dimension,
+               count(1) as metric_count,
+               cast((
+                    select count(1)
+                    from t_person p
+                    where p.del_flag = '0'
+                      and p.insurance_status = '1'
+                      and p.region_code = ie.region_code
+               ) as decimal(16,2)) as metric_value,
+               case
+                   when (
+                       select count(1)
+                       from t_person p
+                       where p.del_flag = '0'
+                         and p.insurance_status = '1'
+                         and p.region_code = ie.region_code
+                   ) = 0 then 0
+                   else round(count(1) / (
+                       select count(1)
+                       from t_person p
+                       where p.del_flag = '0'
+                         and p.insurance_status = '1'
+                         and p.region_code = ie.region_code
+                   ) * 1000, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_injury_event ie
+        where date_format(ie.event_date, '%Y-%m') = #{statMonth}
+          and ie.del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and ie.region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by ie.region_code
+        order by ie.region_code
+    </select>
+
+    <select id="selectWarningOverviewItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'WARNING_OVERVIEW' as item_category,
+               w.source_module as item_name,
+               w.source_module as item_dimension,
+               count(1) as metric_count,
+               cast(sum(case when w.warn_status = '2' then 1 else 0 end) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when w.warn_status = '2' then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_warning w
+        where date_format(w.create_time, '%Y-%m') = #{statMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and w.region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by w.source_module
+        order by metric_count desc, w.source_module
+    </select>
+
+    <select id="selectSalaryPaymentItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'SALARY_PAYMENT' as item_category,
+               sb.dispatch_enterprise_name as item_name,
+               sb.batch_no as item_dimension,
+               sum(sb.total_person_count) as metric_count,
+               sum(sb.total_paid_amount) as metric_value,
+               case when sum(ifnull(sd.total_count, 0)) = 0 then 0
+                    else round(sum(ifnull(sd.success_count, 0)) / sum(ifnull(sd.total_count, 0)) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_salary_batch sb
+        left join (
+            select batch_id,
+                   count(1) as total_count,
+                   sum(case when pay_status = '2' then 1 else 0 end) as success_count
+            from t_salary_detail
+            where del_flag = '0'
+            group by batch_id
+        ) sd on sd.batch_id = sb.batch_id
+        where sb.stat_month = #{statMonth}
+          and sb.del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and sb.region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by sb.dispatch_enterprise_id, sb.dispatch_enterprise_name, sb.batch_no
+        order by sb.dispatch_enterprise_name
+    </select>
+
+    <select id="selectEmploymentItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'EMPLOYMENT' as item_category,
+               employer_enterprise_name as item_name,
+               cast(employer_enterprise_id as char) as item_dimension,
+               sum(ifnull(dispatch_count, 0)) as metric_count,
+               cast(sum(ifnull(formal_count, 0)) as decimal(16,2)) as metric_value,
+               round(avg(ifnull(ratio_value, 0)), 2) as metric_rate,
+               0 as sort_no
+        from t_employment_proportion
+        where stat_month = #{statMonth}
+          and del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by employer_enterprise_id, employer_enterprise_name
+        order by metric_rate desc, employer_enterprise_name
+    </select>
+
+    <select id="selectAttendanceItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'ATTENDANCE' as item_category,
+               dispatch_enterprise_name as item_name,
+               cast(dispatch_enterprise_id as char) as item_dimension,
+               count(1) as metric_count,
+               cast(sum(ifnull(total_hours, 0)) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when att_check = '1' then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_attendance_monthly
+        where stat_month = #{statMonth}
+          and del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by dispatch_enterprise_id, dispatch_enterprise_name
+        order by dispatch_enterprise_name
+    </select>
+
+    <select id="selectSocialItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'SOCIAL' as item_category,
+               enterprise_name as item_name,
+               cast(enterprise_id as char) as item_dimension,
+               count(1) as metric_count,
+               cast(sum(ifnull(paid_amount, 0)) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when payment_status = '1' then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_social_payment
+        where stat_month = #{statMonth}
+          and del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by enterprise_id, enterprise_name
+        order by enterprise_name
+    </select>
+
+    <select id="selectTaxItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'TAX' as item_category,
+               enterprise_name as item_name,
+               cast(enterprise_id as char) as item_dimension,
+               count(1) as metric_count,
+               cast(sum(abs(ifnull(salary_amount, 0) - ifnull(declared_amount, 0))) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when compare_result = '2' then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_tax_compare
+        where stat_month = #{statMonth}
+          and del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by enterprise_id, enterprise_name
+        order by enterprise_name
+    </select>
+
+    <select id="selectAqInsuranceItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'AQ_INSURANCE' as item_category,
+               enterprise_name as item_name,
+               cast(enterprise_id as char) as item_dimension,
+               sum(ifnull(insured_person_count, 0)) as metric_count,
+               cast(sum(ifnull(premium, 0)) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when policy_status = '1' then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_aq_insurance
+        where stat_month = #{statMonth}
+          and del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by enterprise_id, enterprise_name
+        order by enterprise_name
+    </select>
+
+    <select id="selectNewformItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'NEWFORM' as item_category,
+               platform_name as item_name,
+               platform_name as item_dimension,
+               count(1) as metric_count,
+               cast(sum(ifnull(monthly_income, 0)) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when injury_insurance_status = '1' then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_newform_worker
+        where stat_month = #{statMonth}
+          and del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by platform_name
+        order by metric_count desc, platform_name
+    </select>
+
+    <select id="selectOccupationItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'OCCUPATION' as item_category,
+               industry_type as item_name,
+               industry_type as item_dimension,
+               sum(ifnull(case_count, 0)) as metric_count,
+               cast(sum(ifnull(high_risk_enterprise_count, 0)) as decimal(16,2)) as metric_value,
+               round(avg(ifnull(incidence_rate, 0)), 2) as metric_rate,
+               0 as sort_no
+        from t_occupation_monitor
+        where stat_month = #{statMonth}
+          and del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by industry_type
+        order by metric_rate desc, industry_type
+    </select>
+
+    <select id="selectUnionSupervisionItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'UNION_SUPERVISION' as item_category,
+               source_name as item_name,
+               source_name as item_dimension,
+               count(1) as metric_count,
+               cast(sum(case when status in ('closed', 'done', 'processed', '1') then 1 else 0 end) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when status in ('closed', 'done', 'processed', '1') then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from (
+            select 'COMPLAINT' as source_name, status, create_time, del_flag, region_code
+            from ygb_worker_complaint
+            union all
+            select 'LEGAL' as source_name, status, create_time, del_flag, region_code
+            from ygb_worker_legal_consult
+            union all
+            select 'FEEDBACK' as source_name, status, create_time, del_flag, null as region_code
+            from ygb_worker_feedback
+        ) u
+        where u.del_flag = '0'
+          and date_format(u.create_time, '%Y-%m') = #{statMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and (u.region_code is null or u.region_code like concat(#{regionPrefix}, '%'))
+        </if>
+        group by source_name
+        order by metric_count desc, source_name
+    </select>
+
+    <select id="selectCustomItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'CUSTOM' as item_category,
+               item_name,
+               item_dimension,
+               metric_count,
+               metric_value,
+               metric_rate,
+               0 as sort_no
+        from (
+            select '风险企业' as item_name,
+                   'RISK_ENTERPRISE' as item_dimension,
+                   count(1) as metric_count,
+                   cast(sum(ifnull(credit_score, 0)) as decimal(16,2)) as metric_value,
+                   round(avg(ifnull(credit_score, 0)), 2) as metric_rate
+            from t_credit_score
+            where stat_month = #{statMonth}
+              and del_flag = '0'
+            <if test="regionPrefix != null and regionPrefix != ''">
+                and region_code like concat(#{regionPrefix}, '%')
+            </if>
+            union all
+            select '预警闭环' as item_name,
+                   'WARNING_CLOSED' as item_dimension,
+                   count(1) as metric_count,
+                   cast(sum(case when warn_status = '2' then 1 else 0 end) as decimal(16,2)) as metric_value,
+                   case when count(1) = 0 then 0
+                        else round(sum(case when warn_status = '2' then 1 else 0 end) / count(1) * 100, 2)
+                   end as metric_rate
+            from t_warning
+            where date_format(create_time, '%Y-%m') = #{statMonth}
+            <if test="regionPrefix != null and regionPrefix != ''">
+                and region_code like concat(#{regionPrefix}, '%')
+            </if>
+        ) c
+        order by metric_count desc, item_name
+    </select>
+
+    <select id="countSocialCompareTotal" resultType="int">
+        select count(1)
+        from t_social_base_compare
+        where stat_month = #{statMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countSocialCompareAbnormal" resultType="int">
+        select count(1)
+        from t_social_base_compare
+        where stat_month = #{statMonth}
+          and compare_result = '2'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countTaxCompareTotal" resultType="int">
+        select count(1)
+        from t_tax_compare
+        where stat_month = #{statMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countTaxCompareAbnormal" resultType="int">
+        select count(1)
+        from t_tax_compare
+        where stat_month = #{statMonth}
+          and compare_result = '2'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countUninsured" resultType="int">
+        select count(1)
+        from t_uninsured_list
+        where stat_month = #{statMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countEmploymentTotal" resultType="int">
+        select count(1)
+        from t_employment_proportion
+        where stat_month = #{statMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countEmploymentByLevel" resultType="int">
+        select count(1)
+        from t_employment_proportion
+        where stat_month = #{statMonth}
+          and warning_level = #{warningLevel}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countFakeOutsourcingTotal" resultType="int">
+        select count(1)
+        from t_fake_outsourcing_record
+        where stat_month = #{statMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countFakeOutsourcingSuspected" resultType="int">
+        select count(1)
+        from t_fake_outsourcing_record
+        where stat_month = #{statMonth}
+          and suspected_flag = '1'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+</mapper>

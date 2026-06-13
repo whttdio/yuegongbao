@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.worker.mapper.WorkerLegalConsultMapper">
+
+    <resultMap id="WorkerLegalConsultResult" type="com.yuegongbao.ygb.worker.domain.WorkerLegalConsult">
+        <id property="consultId" column="consult_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="consultType" column="consult_type" />
+        <result property="title" column="title" />
+        <result property="content" column="content" />
+        <result property="contactMobile" column="contact_mobile" />
+        <result property="attachments" column="attachments" />
+        <result property="status" column="status" />
+        <result property="replyContent" column="reply_content" />
+        <result property="replyTimeText" column="reply_time_text" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <sql id="WorkerLegalConsultColumns">
+        consult_id, user_id, person_id, person_name, enterprise_id, enterprise_name, consult_type, title, content,
+        contact_mobile, attachments, status, reply_content, reply_time_text, create_by, create_time, update_by,
+        update_time, remark, del_flag
+    </sql>
+
+    <insert id="insertWorkerLegalConsult" parameterType="com.yuegongbao.ygb.worker.domain.WorkerLegalConsult" useGeneratedKeys="true" keyProperty="consultId">
+        insert into ygb_worker_legal_consult (
+            user_id, person_id, person_name, enterprise_id, enterprise_name, consult_type, title, content,
+            contact_mobile, attachments, status, reply_content, reply_time_text, create_by, create_time, remark, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{enterpriseId}, #{enterpriseName}, #{consultType}, #{title},
+            #{content}, #{contactMobile}, #{attachments}, #{status}, #{replyContent}, #{replyTimeText},
+            #{createBy}, sysdate(), #{remark}, '0'
+        )
+    </insert>
+
+    <select id="selectWorkerLegalConsultList" resultMap="WorkerLegalConsultResult">
+        select <include refid="WorkerLegalConsultColumns" />
+        from ygb_worker_legal_consult
+        where del_flag = '0'
+          and user_id = #{userId}
+        <if test="status != null and status != ''">
+          and status = #{status}
+        </if>
+        order by consult_id desc
+    </select>
+
+    <select id="selectWorkerLegalConsultManageList" resultMap="WorkerLegalConsultResult">
+        select <include refid="WorkerLegalConsultColumns" />
+        from ygb_worker_legal_consult
+        where del_flag = '0'
+        <if test="status != null and status != ''">
+          and status = #{status}
+        </if>
+        <if test="consultType != null and consultType != ''">
+          and consult_type = #{consultType}
+        </if>
+        <if test="personName != null and personName != ''">
+          and person_name like concat('%', #{personName}, '%')
+        </if>
+        <if test="enterpriseName != null and enterpriseName != ''">
+          and enterprise_name like concat('%', #{enterpriseName}, '%')
+        </if>
+        <if test="title != null and title != ''">
+          and title like concat('%', #{title}, '%')
+        </if>
+        order by consult_id desc
+    </select>
+
+    <select id="selectWorkerLegalConsultById" resultMap="WorkerLegalConsultResult">
+        select <include refid="WorkerLegalConsultColumns" />
+        from ygb_worker_legal_consult
+        where del_flag = '0'
+          and consult_id = #{consultId}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectWorkerLegalConsultByIdForManage" resultMap="WorkerLegalConsultResult">
+        select <include refid="WorkerLegalConsultColumns" />
+        from ygb_worker_legal_consult
+        where del_flag = '0'
+          and consult_id = #{consultId}
+        limit 1
+    </select>
+
+    <update id="updateWorkerLegalConsultHandle" parameterType="com.yuegongbao.ygb.worker.domain.WorkerLegalConsult">
+        update ygb_worker_legal_consult
+        set status = #{status},
+            reply_content = #{replyContent},
+            reply_time_text = #{replyTimeText},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where consult_id = #{consultId}
+          and del_flag = '0'
+    </update>
+
+    <update id="updateWorkerLegalConsultSyncResult" parameterType="com.yuegongbao.ygb.worker.domain.WorkerLegalConsult">
+        update ygb_worker_legal_consult
+        set remark = #{remark},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where consult_id = #{consultId}
+          and del_flag = '0'
+    </update>
+
+</mapper>

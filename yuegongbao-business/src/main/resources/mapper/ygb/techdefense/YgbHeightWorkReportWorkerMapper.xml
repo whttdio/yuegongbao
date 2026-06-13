@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.techdefense.mapper.YgbHeightWorkReportWorkerMapper">
+
+    <resultMap type="YgbHeightWorkReportWorker" id="YgbHeightWorkReportWorkerResult">
+        <id property="rowId" column="row_id" />
+        <result property="reportId" column="report_id" />
+        <result property="workerName" column="worker_name" />
+        <result property="idCard" column="id_card" />
+        <result property="certNo" column="cert_no" />
+        <result property="certPhotoUrl" column="cert_photo_url" />
+        <result property="certValidStatus" column="cert_valid_status" />
+        <result property="certValidMessage" column="cert_valid_message" />
+        <result property="sortOrder" column="sort_order" />
+    </resultMap>
+
+    <select id="selectWorkersByReportId" parameterType="Long" resultMap="YgbHeightWorkReportWorkerResult">
+        select row_id, report_id, worker_name, id_card, cert_no, cert_photo_url, cert_valid_status,
+               cert_valid_message, sort_order
+        from t_height_work_report_worker
+        where report_id = #{reportId}
+        order by sort_order asc, row_id asc
+    </select>
+
+    <insert id="insertHeightWorkReportWorkers">
+        insert into t_height_work_report_worker (
+            report_id, worker_name, id_card, cert_no, cert_photo_url, cert_valid_status, cert_valid_message, sort_order
+        ) values
+        <foreach collection="workers" item="item" separator=",">
+            (
+                #{reportId}, #{item.workerName}, #{item.idCard}, #{item.certNo}, #{item.certPhotoUrl},
+                #{item.certValidStatus}, #{item.certValidMessage}, #{item.sortOrder}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteWorkersByReportId" parameterType="Long">
+        delete from t_height_work_report_worker where report_id = #{reportId}
+    </delete>
+
+</mapper>

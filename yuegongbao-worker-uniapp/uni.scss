@@ -1,0 +1,31 @@
+/* 设计令牌 — 供页面 scoped 样式引用 */
+$ygb-primary: #0f766e;
+$ygb-primary-light: #14b8a6;
+$ygb-primary-dark: #0c4a44;
+$ygb-primary-soft: #e6f2ef;
+
+$ygb-text: #122d42;
+$ygb-text-body: #183247;
+$ygb-text-secondary: #536b7d;
+$ygb-text-tertiary: #627789;
+$ygb-text-muted: #607789;
+
+$ygb-bg: #edf4f7;
+$ygb-surface: #ffffff;
+$ygb-surface-muted: #f4f8fa;
+$ygb-border: #dde8ee;
+$ygb-border-light: #e4edf2;
+
+$ygb-warning: #c08a00;
+$ygb-danger: #b4232c;
+$ygb-danger-soft: #fde7e9;
+$ygb-success: #1f7a3f;
+$ygb-success-soft: #e8f5ea;
+$ygb-info: #225a9a;
+
+$ygb-radius-md: 18rpx;
+$ygb-radius-lg: 24rpx;
+$ygb-ease: cubic-bezier(0.22, 1, 0.36, 1);
+$ygb-duration: 0.22s;
+
+$ygb-gradient-hero: linear-gradient(145deg, #0c4a44 0%, #0f766e 58%, #14b8a6 100%);

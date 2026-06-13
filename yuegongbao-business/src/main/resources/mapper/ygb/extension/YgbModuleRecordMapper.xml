@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.extension.mapper.YgbModuleRecordMapper">
+
+    <resultMap id="YgbModuleRecordResult" type="com.yuegongbao.ygb.extension.domain.YgbModuleRecord">
+        <id property="recordId" column="record_id" />
+        <result property="recordType" column="record_type" />
+        <result property="recordName" column="record_name" />
+        <result property="categoryCode" column="category_code" />
+        <result property="statMonth" column="stat_month" />
+        <result property="portalCode" column="portal_code" />
+        <result property="workflowStatus" column="workflow_status" />
+        <result property="status" column="status" />
+        <result property="regionCode" column="region_code" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="relatedId" column="related_id" />
+        <result property="relatedCode" column="related_code" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="sourceLabel" column="source_label" />
+        <result property="payloadJson" column="payload_json" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectModuleRecordVo">
+        select record_id, record_type, record_name, category_code, stat_month, portal_code, workflow_status, status,
+               region_code, enterprise_id, enterprise_name, person_id, person_name, related_id, related_code,
+               sort_order, source_label, payload_json, remark, create_by, create_time, update_by, update_time
+        from ygb_module_record
+    </sql>
+
+    <select id="selectModuleRecordList" resultMap="YgbModuleRecordResult">
+        <include refid="selectModuleRecordVo" />
+        <where>
+            del_flag = '0'
+            <if test="recordType != null and recordType != ''">
+                and record_type = #{recordType}
+            </if>
+            <if test="recordName != null and recordName != ''">
+                and record_name like concat('%', #{recordName}, '%')
+            </if>
+            <if test="categoryCode != null and categoryCode != ''">
+                and category_code = #{categoryCode}
+            </if>
+            <if test="statMonth != null and statMonth != ''">
+                and stat_month = #{statMonth}
+            </if>
+            <if test="portalCode != null and portalCode != ''">
+                and portal_code = #{portalCode}
+            </if>
+            <if test="workflowStatus != null and workflowStatus != ''">
+                and workflow_status = #{workflowStatus}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="enterpriseName != null and enterpriseName != ''">
+                and enterprise_name like concat('%', #{enterpriseName}, '%')
+            </if>
+            <if test="personId != null">
+                and person_id = #{personId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="platformName != null and platformName != ''">
+                and payload_json like concat('%\"platformName\":\"', #{platformName}, '\"%')
+            </if>
+            <if test="industryType != null and industryType != ''">
+                and payload_json like concat('%\"industryType\":\"', #{industryType}, '\"%')
+            </if>
+            <if test="warningLevel != null and warningLevel != ''">
+                and payload_json like concat('%\"warningLevel\":\"', #{warningLevel}, '\"%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by sort_order asc, record_id desc
+    </select>
+
+    <select id="selectModuleRecordById" resultMap="YgbModuleRecordResult">
+        <include refid="selectModuleRecordVo" />
+        where record_id = #{recordId}
+          and del_flag = '0'
+    </select>
+
+    <insert id="insertModuleRecord" parameterType="com.yuegongbao.ygb.extension.domain.YgbModuleRecord" useGeneratedKeys="true" keyProperty="recordId">
+        insert into ygb_module_record (
+            record_type, record_name, category_code, stat_month, portal_code, workflow_status, status, region_code,
+            enterprise_id, enterprise_name, person_id, person_name, related_id, related_code, sort_order, source_label,
+            payload_json, remark, create_by, create_time, del_flag
+        ) values (
+            #{recordType}, #{recordName}, #{categoryCode}, #{statMonth}, #{portalCode}, #{workflowStatus}, #{status}, #{regionCode},
+            #{enterpriseId}, #{enterpriseName}, #{personId}, #{personName}, #{relatedId}, #{relatedCode}, #{sortOrder}, #{sourceLabel},
+            #{payloadJson}, #{remark}, #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <update id="updateModuleRecord" parameterType="com.yuegongbao.ygb.extension.domain.YgbModuleRecord">
+        update ygb_module_record
+        <set>
+            <if test="recordName != null">record_name = #{recordName},</if>
+            <if test="categoryCode != null">category_code = #{categoryCode},</if>
+            <if test="statMonth != null">stat_month = #{statMonth},</if>
+            <if test="portalCode != null">portal_code = #{portalCode},</if>
+            <if test="workflowStatus != null">workflow_status = #{workflowStatus},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="enterpriseId != null">enterprise_id = #{enterpriseId},</if>
+            <if test="enterpriseName != null">enterprise_name = #{enterpriseName},</if>
+            <if test="personId != null">person_id = #{personId},</if>
+            <if test="personName != null">person_name = #{personName},</if>
+            <if test="relatedId != null">related_id = #{relatedId},</if>
+            <if test="relatedCode != null">related_code = #{relatedCode},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="sourceLabel != null">source_label = #{sourceLabel},</if>
+            <if test="payloadJson != null">payload_json = #{payloadJson},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where record_id = #{recordId}
+          and del_flag = '0'
+    </update>
+
+    <update id="deleteModuleRecordByIds">
+        update ygb_module_record
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and record_id in
+        <foreach collection="recordIds" item="recordId" open="(" separator="," close=")">
+            #{recordId}
+        </foreach>
+    </update>
+</mapper>

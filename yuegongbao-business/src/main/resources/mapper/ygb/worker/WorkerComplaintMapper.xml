@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.worker.mapper.WorkerComplaintMapper">
+
+    <resultMap id="WorkerComplaintResult" type="com.yuegongbao.ygb.worker.domain.WorkerComplaint">
+        <id property="complaintId" column="complaint_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="complaintType" column="complaint_type" />
+        <result property="title" column="title" />
+        <result property="content" column="content" />
+        <result property="contactMobile" column="contact_mobile" />
+        <result property="anonymousFlag" column="anonymous_flag" />
+        <result property="syncUnionFlag" column="sync_union_flag" />
+        <result property="attachments" column="attachments" />
+        <result property="status" column="status" />
+        <result property="replyContent" column="reply_content" />
+        <result property="handleTimeText" column="handle_time_text" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <sql id="WorkerComplaintColumns">
+        complaint_id, user_id, person_id, person_name, enterprise_id, enterprise_name, complaint_type, title,
+        content, contact_mobile, anonymous_flag, sync_union_flag, attachments, status, reply_content, handle_time_text, create_by,
+        create_time, update_by, update_time, remark, del_flag
+    </sql>
+
+    <insert id="insertWorkerComplaint" parameterType="com.yuegongbao.ygb.worker.domain.WorkerComplaint" useGeneratedKeys="true" keyProperty="complaintId">
+        insert into ygb_worker_complaint (
+            user_id, person_id, person_name, enterprise_id, enterprise_name, complaint_type, title, content,
+            contact_mobile, anonymous_flag, sync_union_flag, attachments, status, reply_content, handle_time_text, create_by, create_time,
+            remark, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{enterpriseId}, #{enterpriseName}, #{complaintType}, #{title},
+            #{content}, #{contactMobile}, #{anonymousFlag}, #{syncUnionFlag}, #{attachments}, #{status}, #{replyContent},
+            #{handleTimeText}, #{createBy}, sysdate(), #{remark}, '0'
+        )
+    </insert>
+
+    <select id="selectWorkerComplaintList" resultMap="WorkerComplaintResult">
+        select <include refid="WorkerComplaintColumns" />
+        from ygb_worker_complaint
+        where del_flag = '0'
+          and user_id = #{userId}
+        <if test="status != null and status != ''">
+          and status = #{status}
+        </if>
+        order by complaint_id desc
+    </select>
+
+    <select id="selectWorkerComplaintManageList" resultMap="WorkerComplaintResult">
+        select <include refid="WorkerComplaintColumns" />
+        from ygb_worker_complaint
+        where del_flag = '0'
+        <if test="status != null and status != ''">
+          and status = #{status}
+        </if>
+        <if test="complaintType != null and complaintType != ''">
+          and complaint_type = #{complaintType}
+        </if>
+        <if test="personName != null and personName != ''">
+          and person_name like concat('%', #{personName}, '%')
+        </if>
+        <if test="enterpriseName != null and enterpriseName != ''">
+          and enterprise_name like concat('%', #{enterpriseName}, '%')
+        </if>
+        <if test="title != null and title != ''">
+          and title like concat('%', #{title}, '%')
+        </if>
+        order by complaint_id desc
+    </select>
+
+    <select id="selectWorkerComplaintById" resultMap="WorkerComplaintResult">
+        select <include refid="WorkerComplaintColumns" />
+        from ygb_worker_complaint
+        where del_flag = '0'
+          and complaint_id = #{complaintId}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectWorkerComplaintByIdForManage" resultMap="WorkerComplaintResult">
+        select <include refid="WorkerComplaintColumns" />
+        from ygb_worker_complaint
+        where del_flag = '0'
+          and complaint_id = #{complaintId}
+        limit 1
+    </select>
+
+    <update id="updateWorkerComplaintHandle" parameterType="com.yuegongbao.ygb.worker.domain.WorkerComplaint">
+        update ygb_worker_complaint
+        set status = #{status},
+            reply_content = #{replyContent},
+            handle_time_text = #{handleTimeText},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where complaint_id = #{complaintId}
+          and del_flag = '0'
+    </update>
+
+    <update id="updateWorkerComplaintSyncResult" parameterType="com.yuegongbao.ygb.worker.domain.WorkerComplaint">
+        update ygb_worker_complaint
+        set sync_union_flag = #{syncUnionFlag},
+            remark = #{remark},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where complaint_id = #{complaintId}
+          and del_flag = '0'
+    </update>
+
+</mapper>

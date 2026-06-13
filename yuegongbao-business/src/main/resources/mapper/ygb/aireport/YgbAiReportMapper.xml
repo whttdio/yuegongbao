@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.aireport.mapper.YgbAiReportMapper">
+
+    <resultMap id="YgbAiReportResult" type="YgbAiReport">
+        <id property="reportId" column="report_id" />
+        <result property="reportType" column="report_type" />
+        <result property="regionCode" column="region_code" />
+        <result property="periodStart" column="period_start" />
+        <result property="periodEnd" column="period_end" />
+        <result property="enterpriseType" column="enterprise_type" />
+        <result property="selectedDimensions" column="selected_dimensions" />
+        <result property="totalScore" column="total_score" />
+        <result property="riskLevel" column="risk_level" />
+        <result property="rankingNo" column="ranking_no" />
+        <result property="configVersion" column="config_version" />
+        <result property="reportSummary" column="report_summary" />
+        <result property="reportPdfUrl" column="report_pdf_url" />
+        <result property="reportHtml" column="report_html" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="generatedTime" column="generated_time" />
+    </resultMap>
+
+    <resultMap id="YgbAiReportItemResult" type="YgbAiReportItem">
+        <id property="itemId" column="item_id" />
+        <result property="reportId" column="report_id" />
+        <result property="dimensionCode" column="dimension_code" />
+        <result property="dimensionName" column="dimension_name" />
+        <result property="metricLabel" column="metric_label" />
+        <result property="metricValue" column="metric_value" />
+        <result property="targetValue" column="target_value" />
+        <result property="dimensionWeight" column="dimension_weight" />
+        <result property="dimensionScore" column="dimension_score" />
+        <result property="riskLevel" column="risk_level" />
+        <result property="suggestionText" column="suggestion_text" />
+        <result property="detailJson" column="detail_json" />
+        <result property="sortNo" column="sort_no" />
+    </resultMap>
+
+    <resultMap id="YgbAiReportConfigResult" type="YgbAiReportConfig">
+        <id property="configId" column="config_id" />
+        <result property="regionCode" column="region_code" />
+        <result property="version" column="version" />
+        <result property="configStatus" column="config_status" />
+        <result property="dimensionWeights" column="dimension_weights" />
+        <result property="targetValues" column="target_values" />
+        <result property="effectiveDate" column="effective_date" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectAiReportColumns">
+        select report_id, report_type, region_code, period_start, period_end, enterprise_type, selected_dimensions,
+               total_score, risk_level, ranking_no, config_version, report_summary, report_pdf_url, report_html,
+               source_mode, generated_time
+        from t_ai_report
+    </sql>
+
+    <select id="selectAiReportList" parameterType="YgbAiReport" resultMap="YgbAiReportResult">
+        <include refid="selectAiReportColumns" />
+        <where>
+            del_flag = '0'
+            <if test="reportType != null and reportType != ''">
+                and report_type = #{reportType}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code = #{regionCode}
+            </if>
+            ${params.regionDataScope}
+            <if test="riskLevel != null and riskLevel != ''">
+                and risk_level = #{riskLevel}
+            </if>
+            <if test="enterpriseType != null and enterpriseType != ''">
+                and enterprise_type = #{enterpriseType}
+            </if>
+            <if test="periodStart != null">
+                and period_start &gt;= #{periodStart}
+            </if>
+            <if test="periodEnd != null">
+                and period_end &lt;= #{periodEnd}
+            </if>
+        </where>
+        order by generated_time desc, total_score desc, report_id desc
+    </select>
+
+    <select id="selectAiReportById" resultMap="YgbAiReportResult">
+        <include refid="selectAiReportColumns" />
+        where report_id = #{reportId}
+          and del_flag = '0'
+    </select>
+
+    <select id="selectAiReportByScope" resultMap="YgbAiReportResult">
+        <include refid="selectAiReportColumns" />
+        where report_type = #{reportType}
+          and region_code = #{regionCode}
+          and period_start = #{periodStart}
+          and period_end = #{periodEnd}
+          and enterprise_type = #{enterpriseType}
+          and del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectAiReportItemList" resultMap="YgbAiReportItemResult">
+        select item_id, report_id, dimension_code, dimension_name, metric_label, metric_value, target_value,
+               dimension_weight, dimension_score, risk_level, suggestion_text, detail_json, sort_no
+        from t_ai_report_item
+        where report_id = #{reportId}
+        order by sort_no asc, item_id asc
+    </select>
+
+    <insert id="insertAiReport" parameterType="YgbAiReport" useGeneratedKeys="true" keyProperty="reportId">
+        insert into t_ai_report (
+            report_type, region_code, period_start, period_end, enterprise_type, selected_dimensions, total_score,
+            risk_level, ranking_no, config_version, report_summary, report_pdf_url, report_html, source_mode,
+            generated_time, del_flag, create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{reportType}, #{regionCode}, #{periodStart}, #{periodEnd}, #{enterpriseType}, #{selectedDimensions},
+            #{totalScore}, #{riskLevel}, #{rankingNo}, #{configVersion}, #{reportSummary}, #{reportPdfUrl},
+            #{reportHtml}, #{sourceMode}, #{generatedTime}, '0', #{createBy}, #{createTime}, #{updateBy},
+            #{updateTime}, #{remark}
+        )
+    </insert>
+
+    <update id="updateAiReport" parameterType="YgbAiReport">
+        update t_ai_report
+        set report_type = #{reportType},
+            region_code = #{regionCode},
+            period_start = #{periodStart},
+            period_end = #{periodEnd},
+            enterprise_type = #{enterpriseType},
+            selected_dimensions = #{selectedDimensions},
+            total_score = #{totalScore},
+            risk_level = #{riskLevel},
+            ranking_no = #{rankingNo},
+            config_version = #{configVersion},
+            report_summary = #{reportSummary},
+            report_pdf_url = #{reportPdfUrl},
+            report_html = #{reportHtml},
+            source_mode = #{sourceMode},
+            generated_time = #{generatedTime},
+            update_by = #{updateBy},
+            update_time = #{updateTime},
+            remark = #{remark}
+        where report_id = #{reportId}
+    </update>
+
+    <update id="updateAiReportRankingSummary">
+        update t_ai_report
+        set ranking_no = #{rankingNo},
+            report_summary = #{reportSummary}
+        where report_id = #{reportId}
+    </update>
+
+    <delete id="deleteAiReportItemsByReportId">
+        delete from t_ai_report_item where report_id = #{reportId}
+    </delete>
+
+    <insert id="insertAiReportItem" parameterType="YgbAiReportItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into t_ai_report_item (
+            report_id, dimension_code, dimension_name, metric_label, metric_value, target_value, dimension_weight,
+            dimension_score, risk_level, suggestion_text, detail_json, sort_no
+        ) values (
+            #{reportId}, #{dimensionCode}, #{dimensionName}, #{metricLabel}, #{metricValue}, #{targetValue},
+            #{dimensionWeight}, #{dimensionScore}, #{riskLevel}, #{suggestionText}, #{detailJson}, #{sortNo}
+        )
+    </insert>
+
+    <select id="selectAiReportConfigList" parameterType="YgbAiReportConfig" resultMap="YgbAiReportConfigResult">
+        select config_id, region_code, version, config_status, dimension_weights, target_values, effective_date,
+               source_mode, create_by, create_time, update_by, update_time, remark
+        from t_ai_report_config
+        <where>
+            1 = 1
+            <if test="regionCode != null and regionCode != ''">
+                and region_code = #{regionCode}
+            </if>
+            ${params.regionDataScope}
+            <if test="configStatus != null and configStatus != ''">
+                and config_status = #{configStatus}
+            </if>
+            <if test="effectiveDate != null">
+                and effective_date = #{effectiveDate}
+            </if>
+        </where>
+        order by effective_date desc, config_id desc
+    </select>
+
+    <select id="selectAiReportConfigById" resultMap="YgbAiReportConfigResult">
+        select config_id, region_code, version, config_status, dimension_weights, target_values, effective_date,
+               source_mode, create_by, create_time, update_by, update_time, remark
+        from t_ai_report_config
+        where config_id = #{configId}
+    </select>
+
+    <select id="selectActiveConfigByRegion" resultMap="YgbAiReportConfigResult">
+        select config_id, region_code, version, config_status, dimension_weights, target_values, effective_date,
+               source_mode, create_by, create_time, update_by, update_time, remark
+        from t_ai_report_config
+        where region_code = #{regionCode}
+          and config_status = '1'
+          and effective_date &lt;= #{effectiveDate}
+        order by effective_date desc, config_id desc
+        limit 1
+    </select>
+
+    <insert id="insertAiReportConfig" parameterType="YgbAiReportConfig" useGeneratedKeys="true" keyProperty="configId">
+        insert into t_ai_report_config (
+            region_code, version, config_status, dimension_weights, target_values, effective_date, source_mode,
+            create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{regionCode}, #{version}, #{configStatus}, #{dimensionWeights}, #{targetValues}, #{effectiveDate},
+            #{sourceMode}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{remark}
+        )
+    </insert>
+
+    <update id="updateAiReportConfig" parameterType="YgbAiReportConfig">
+        update t_ai_report_config
+        set region_code = #{regionCode},
+            version = #{version},
+            config_status = #{configStatus},
+            dimension_weights = #{dimensionWeights},
+            target_values = #{targetValues},
+            effective_date = #{effectiveDate},
+            source_mode = #{sourceMode},
+            update_by = #{updateBy},
+            update_time = #{updateTime},
+            remark = #{remark}
+        where config_id = #{configId}
+    </update>
+
+    <update id="deactivateConfigsByRegion">
+        update t_ai_report_config
+        set config_status = '0',
+            update_by = #{updateBy},
+            update_time = now()
+        where region_code = #{regionCode}
+        <if test="excludeConfigId != null">
+            and config_id &lt;&gt; #{excludeConfigId}
+        </if>
+    </update>
+
+    <select id="countHigherScoreReports" resultType="int">
+        select count(1)
+        from t_ai_report
+        where report_type = #{reportType}
+          and period_start = #{periodStart}
+          and period_end = #{periodEnd}
+          and total_score &gt; #{totalScore}
+          and del_flag = '0'
+        <if test="excludeReportId != null">
+            and report_id &lt;&gt; #{excludeReportId}
+        </if>
+    </select>
+
+    <select id="countContractTotal" resultType="int">
+        select count(1)
+        from t_labor_contract
+        where del_flag = '0'
+          and start_date &lt;= #{periodEnd}
+          and end_date &gt;= #{periodStart}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countContractFiled" resultType="int">
+        select count(1)
+        from t_labor_contract
+        where del_flag = '0'
+          and start_date &lt;= #{periodEnd}
+          and end_date &gt;= #{periodStart}
+          and contract_status = '2'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countAttendanceTotal" resultType="int">
+        select count(1)
+        from t_attendance_monthly
+        where del_flag = '0'
+          and stat_month between #{startMonth} and #{endMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countAttendancePassed" resultType="int">
+        select count(1)
+        from t_attendance_monthly
+        where del_flag = '0'
+          and stat_month between #{startMonth} and #{endMonth}
+          and att_check = '1'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countSalaryTotal" resultType="int">
+        select count(1)
+        from t_salary_detail
+        where del_flag = '0'
+          and stat_month between #{startMonth} and #{endMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countSalarySuccess" resultType="int">
+        select count(1)
+        from t_salary_detail
+        where del_flag = '0'
+          and stat_month between #{startMonth} and #{endMonth}
+          and pay_status = '2'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countDeviceTotal" resultType="int">
+        select count(1)
+        from t_device
+        where del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countDeviceOnline" resultType="int">
+        select count(1)
+        from t_device
+        where del_flag = '0'
+          and device_status = '1'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countInjuryTotal" resultType="int">
+        select count(1)
+        from t_injury_event
+        where del_flag = '0'
+          and event_date between #{periodStart} and #{periodEnd}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countInsuredPerson" resultType="int">
+        select count(1)
+        from t_person
+        where del_flag = '0'
+          and insurance_status = '1'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countWarningTotal" resultType="int">
+        select count(1)
+        from t_warning
+        where create_time between #{periodStart} and date_add(#{periodEnd}, interval 1 day)
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+    <select id="countWarningClosed" resultType="int">
+        select count(1)
+        from t_warning
+        where create_time between #{periodStart} and date_add(#{periodEnd}, interval 1 day)
+          and warn_status = '2'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+    </select>
+
+</mapper>

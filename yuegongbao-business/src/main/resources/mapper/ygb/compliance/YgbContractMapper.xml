@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.compliance.mapper.YgbContractMapper">
+
+    <resultMap type="YgbContract" id="YgbContractResult">
+        <id property="contractId" column="contract_id" />
+        <result property="contractNo" column="contract_no" />
+        <result property="dispatchEnterpriseId" column="dispatch_enterprise_id" />
+        <result property="dispatchEnterpriseName" column="dispatch_enterprise_name" />
+        <result property="employerEnterpriseId" column="employer_enterprise_id" />
+        <result property="employerEnterpriseName" column="employer_enterprise_name" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="idCard" column="id_card" />
+        <result property="regionCode" column="region_code" />
+        <result property="contractType" column="contract_type" />
+        <result property="contractStatus" column="contract_status" />
+        <result property="signDate" column="sign_date" />
+        <result property="startDate" column="start_date" />
+        <result property="endDate" column="end_date" />
+        <result property="monthlyWage" column="monthly_wage" />
+        <result property="filingNo" column="filing_no" />
+        <result property="filingTime" column="filing_time" />
+        <result property="ocrStatus" column="ocr_status" />
+        <result property="clauseCheckStatus" column="clause_check_status" />
+        <result property="blockchainHash" column="blockchain_hash" />
+        <result property="contractFileUrl" column="contract_file_url" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectContractVo">
+        select c.contract_id, c.contract_no, c.dispatch_enterprise_id,
+               de.enterprise_name as dispatch_enterprise_name,
+               c.employer_enterprise_id, ee.enterprise_name as employer_enterprise_name,
+               c.person_id, c.person_name, c.id_card, c.region_code, c.contract_type,
+               c.contract_status, c.sign_date, c.start_date, c.end_date, c.monthly_wage,
+               c.filing_no, c.filing_time, c.ocr_status, c.clause_check_status,
+               c.blockchain_hash, c.contract_file_url, c.create_by, c.create_time,
+               c.update_by, c.update_time, c.remark
+        from t_labor_contract c
+        left join t_enterprise de on c.dispatch_enterprise_id = de.enterprise_id
+        left join t_enterprise ee on c.employer_enterprise_id = ee.enterprise_id
+    </sql>
+
+    <select id="selectContractList" parameterType="YgbContract" resultMap="YgbContractResult">
+        <include refid="selectContractVo" />
+        <where>
+            c.del_flag = '0'
+            <if test="contractNo != null and contractNo != ''">
+                and c.contract_no like concat('%', #{contractNo}, '%')
+            </if>
+            <if test="dispatchEnterpriseId != null">
+                and c.dispatch_enterprise_id = #{dispatchEnterpriseId}
+            </if>
+            <if test="employerEnterpriseId != null">
+                and c.employer_enterprise_id = #{employerEnterpriseId}
+            </if>
+            <if test="personId != null">
+                and c.person_id = #{personId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and c.person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="contractType != null and contractType != ''">
+                and c.contract_type = #{contractType}
+            </if>
+            <if test="contractStatus != null and contractStatus != ''">
+                and c.contract_status = #{contractStatus}
+            </if>
+            <if test="ocrStatus != null and ocrStatus != ''">
+                and c.ocr_status = #{ocrStatus}
+            </if>
+            <if test="clauseCheckStatus != null and clauseCheckStatus != ''">
+                and c.clause_check_status = #{clauseCheckStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and c.region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by c.create_time desc, c.contract_id desc
+    </select>
+
+    <select id="selectContractOptions" resultMap="YgbContractResult">
+        <include refid="selectContractVo" />
+        where c.del_flag = '0'
+        order by c.contract_status asc, c.contract_id desc
+    </select>
+
+    <select id="selectContractById" parameterType="Long" resultMap="YgbContractResult">
+        <include refid="selectContractVo" />
+        where c.contract_id = #{contractId} and c.del_flag = '0'
+    </select>
+
+    <select id="selectEffectiveContractByPersonId" resultMap="YgbContractResult">
+        <include refid="selectContractVo" />
+        where c.person_id = #{personId}
+          and c.del_flag = '0'
+          and c.contract_status in ('1', '2')
+          and (c.start_date is null or c.start_date &lt;= #{workDate})
+          and (c.end_date is null or c.end_date &gt;= #{workDate})
+        order by c.start_date desc, c.contract_id desc
+        limit 1
+    </select>
+
+    <select id="checkContractNoUnique" parameterType="String" resultMap="YgbContractResult">
+        <include refid="selectContractVo" />
+        where c.contract_no = #{contractNo} and c.del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertContract" parameterType="YgbContract" useGeneratedKeys="true" keyProperty="contractId">
+        insert into t_labor_contract (
+            contract_no, dispatch_enterprise_id, dispatch_enterprise_name,
+            employer_enterprise_id, employer_enterprise_name, person_id, person_name,
+            id_card, region_code, contract_type, contract_status, sign_date, start_date,
+            end_date, monthly_wage, filing_no, filing_time, ocr_status, clause_check_status,
+            blockchain_hash, contract_file_url, remark, create_by, create_time
+        ) values (
+            #{contractNo}, #{dispatchEnterpriseId}, #{dispatchEnterpriseName},
+            #{employerEnterpriseId}, #{employerEnterpriseName}, #{personId}, #{personName},
+            #{idCard}, #{regionCode}, #{contractType}, #{contractStatus}, #{signDate}, #{startDate},
+            #{endDate}, #{monthlyWage}, #{filingNo}, #{filingTime}, #{ocrStatus}, #{clauseCheckStatus},
+            #{blockchainHash}, #{contractFileUrl}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateContract" parameterType="YgbContract">
+        update t_labor_contract
+        <set>
+            <if test="contractNo != null and contractNo != ''">contract_no = #{contractNo},</if>
+            <if test="dispatchEnterpriseId != null">dispatch_enterprise_id = #{dispatchEnterpriseId},</if>
+            <if test="dispatchEnterpriseName != null">dispatch_enterprise_name = #{dispatchEnterpriseName},</if>
+            <if test="employerEnterpriseId != null">employer_enterprise_id = #{employerEnterpriseId},</if>
+            <if test="employerEnterpriseName != null">employer_enterprise_name = #{employerEnterpriseName},</if>
+            <if test="personId != null">person_id = #{personId},</if>
+            <if test="personName != null">person_name = #{personName},</if>
+            <if test="idCard != null">id_card = #{idCard},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="contractType != null and contractType != ''">contract_type = #{contractType},</if>
+            <if test="contractStatus != null and contractStatus != ''">contract_status = #{contractStatus},</if>
+            <if test="signDate != null">sign_date = #{signDate},</if>
+            <if test="startDate != null">start_date = #{startDate},</if>
+            <if test="endDate != null">end_date = #{endDate},</if>
+            <if test="monthlyWage != null">monthly_wage = #{monthlyWage},</if>
+            <if test="filingNo != null">filing_no = #{filingNo},</if>
+            <if test="filingTime != null">filing_time = #{filingTime},</if>
+            <if test="ocrStatus != null and ocrStatus != ''">ocr_status = #{ocrStatus},</if>
+            <if test="clauseCheckStatus != null and clauseCheckStatus != ''">clause_check_status = #{clauseCheckStatus},</if>
+            <if test="blockchainHash != null">blockchain_hash = #{blockchainHash},</if>
+            <if test="contractFileUrl != null">contract_file_url = #{contractFileUrl},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where contract_id = #{contractId} and del_flag = '0'
+    </update>
+
+    <update id="deleteContractByIds">
+        update t_labor_contract
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and contract_id in
+        <foreach collection="contractIds" item="contractId" open="(" separator="," close=")">
+            #{contractId}
+        </foreach>
+    </update>
+
+</mapper>

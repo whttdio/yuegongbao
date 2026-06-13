@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.worker.mapper.WorkerProfileMapper">
+
+    <resultMap id="WorkerResumeResult" type="com.yuegongbao.ygb.worker.domain.WorkerResume">
+        <id property="resumeId" column="resume_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="mobile" column="mobile" />
+        <result property="jobType" column="job_type" />
+        <result property="expectedJob" column="expected_job" />
+        <result property="expectedCity" column="expected_city" />
+        <result property="expectedSalary" column="expected_salary" />
+        <result property="skillTags" column="skill_tags" />
+        <result property="certificateText" column="certificate_text" />
+        <result property="intro" column="intro" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <resultMap id="WorkerSettingResult" type="com.yuegongbao.ygb.worker.domain.WorkerSetting">
+        <id property="settingId" column="setting_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="notifyEnabled" column="notify_enabled" />
+        <result property="pushClientId" column="push_client_id" />
+        <result property="notificationPermission" column="notification_permission" />
+        <result property="pushPlatform" column="push_platform" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <resultMap id="WorkerPointLedgerResult" type="com.yuegongbao.ygb.worker.domain.WorkerPointLedger">
+        <id property="ledgerId" column="ledger_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="changeType" column="change_type" />
+        <result property="title" column="title" />
+        <result property="summary" column="summary" />
+        <result property="scoreDelta" column="score_delta" />
+        <result property="balanceAfter" column="balance_after" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <resultMap id="WorkerPointGoodsResult" type="com.yuegongbao.ygb.worker.domain.WorkerPointGoods">
+        <id property="goodsId" column="goods_id" />
+        <result property="goodsKey" column="goods_key" />
+        <result property="goodsName" column="goods_name" />
+        <result property="goodsDesc" column="goods_desc" />
+        <result property="requiredScore" column="required_score" />
+        <result property="goodsType" column="goods_type" />
+        <result property="status" column="status" />
+        <result property="stockCount" column="stock_count" />
+        <result property="sortNum" column="sort_num" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <resultMap id="WorkerPointExchangeResult" type="com.yuegongbao.ygb.worker.domain.WorkerPointExchange">
+        <id property="exchangeId" column="exchange_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="goodsKey" column="goods_key" />
+        <result property="goodsName" column="goods_name" />
+        <result property="goodsType" column="goods_type" />
+        <result property="scoreCost" column="score_cost" />
+        <result property="exchangeStatus" column="exchange_status" />
+        <result property="deliveryRemark" column="delivery_remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <resultMap id="WorkerUploadRecordResult" type="com.yuegongbao.ygb.worker.domain.WorkerUploadRecord">
+        <id property="uploadId" column="upload_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="categoryCode" column="category_code" />
+        <result property="categoryName" column="category_name" />
+        <result property="fileUrl" column="file_url" />
+        <result property="fileName" column="file_name" />
+        <result property="originalFilename" column="original_filename" />
+        <result property="fileSize" column="file_size" />
+        <result property="contentType" column="content_type" />
+        <result property="sourceModule" column="source_module" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <resultMap id="WorkerPushTestRecordResult" type="com.yuegongbao.ygb.worker.domain.WorkerPushTestRecord">
+        <id property="recordId" column="record_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="traceId" column="trace_id" />
+        <result property="pushClientIdMasked" column="push_client_id_masked" />
+        <result property="pushPlatform" column="push_platform" />
+        <result property="notificationPermission" column="notification_permission" />
+        <result property="notifyEnabled" column="notify_enabled" />
+        <result property="gatewayProvider" column="gateway_provider" />
+        <result property="gatewayUrl" column="gateway_url" />
+        <result property="targetPath" column="target_path" />
+        <result property="targetQueryText" column="target_query_text" />
+        <result property="actionLabel" column="action_label" />
+        <result property="sourceLabel" column="source_label" />
+        <result property="requestBody" column="request_body" />
+        <result property="responseBody" column="response_body" />
+        <result property="testStatus" column="test_status" />
+        <result property="statusMessage" column="status_message" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <resultMap id="WorkerRealnameApplyResult" type="com.yuegongbao.ygb.worker.domain.WorkerRealnameApply">
+        <id property="applyId" column="apply_id" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="mobile" column="mobile" />
+        <result property="idCard" column="id_card" />
+        <result property="applyStatus" column="apply_status" />
+        <result property="rejectReason" column="reject_reason" />
+        <result property="idCardFrontUrl" column="id_card_front_url" />
+        <result property="idCardBackUrl" column="id_card_back_url" />
+        <result property="selfieUrl" column="selfie_url" />
+        <result property="sourceModule" column="source_module" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <select id="selectWorkerResume" resultMap="WorkerResumeResult">
+        select
+            resume_id, user_id, person_id, person_name, mobile, job_type, expected_job, expected_city,
+            expected_salary, skill_tags, certificate_text, intro, create_by, create_time, update_by, update_time,
+            remark, del_flag
+        from ygb_worker_resume
+        where del_flag = '0'
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectAdminWorkerResumeList" resultMap="WorkerResumeResult">
+        select
+            resume_id, user_id, person_id, person_name, mobile, job_type, expected_job, expected_city,
+            expected_salary, skill_tags, certificate_text, intro, create_by, create_time, update_by, update_time,
+            remark, del_flag
+        from ygb_worker_resume
+        <where>
+            del_flag = '0'
+            <if test="personName != null and personName != ''">
+                and person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="mobile != null and mobile != ''">
+                and mobile like concat('%', #{mobile}, '%')
+            </if>
+            <if test="jobType != null and jobType != ''">
+                and job_type = #{jobType}
+            </if>
+            <if test="expectedJob != null and expectedJob != ''">
+                and expected_job like concat('%', #{expectedJob}, '%')
+            </if>
+            <if test="expectedCity != null and expectedCity != ''">
+                and expected_city like concat('%', #{expectedCity}, '%')
+            </if>
+        </where>
+        order by resume_id desc
+    </select>
+
+    <select id="selectWorkerResumeById" resultMap="WorkerResumeResult">
+        select
+            resume_id, user_id, person_id, person_name, mobile, job_type, expected_job, expected_city,
+            expected_salary, skill_tags, certificate_text, intro, create_by, create_time, update_by, update_time,
+            remark, del_flag
+        from ygb_worker_resume
+        where del_flag = '0'
+          and resume_id = #{resumeId}
+        limit 1
+    </select>
+
+    <insert id="insertWorkerResume" parameterType="com.yuegongbao.ygb.worker.domain.WorkerResume" useGeneratedKeys="true" keyProperty="resumeId">
+        insert into ygb_worker_resume (
+            user_id, person_id, person_name, mobile, job_type, expected_job, expected_city, expected_salary,
+            skill_tags, certificate_text, intro, create_by, create_time, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{mobile}, #{jobType}, #{expectedJob}, #{expectedCity},
+            #{expectedSalary}, #{skillTags}, #{certificateText}, #{intro}, #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <update id="updateWorkerResume" parameterType="com.yuegongbao.ygb.worker.domain.WorkerResume">
+        update ygb_worker_resume
+        set expected_job = #{expectedJob},
+            expected_city = #{expectedCity},
+            expected_salary = #{expectedSalary},
+            skill_tags = #{skillTags},
+            certificate_text = #{certificateText},
+            intro = #{intro},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where resume_id = #{resumeId}
+    </update>
+
+    <insert id="insertWorkerFeedback" parameterType="com.yuegongbao.ygb.worker.domain.WorkerFeedback" useGeneratedKeys="true" keyProperty="feedbackId">
+        insert into ygb_worker_feedback (
+            user_id, person_id, person_name, mobile, title, content, contact_mobile, status, create_by, create_time, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{mobile}, #{title}, #{content}, #{contactMobile}, #{status},
+            #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <select id="selectLatestWorkerRealnameApply" resultMap="WorkerRealnameApplyResult">
+        select
+            apply_id, user_id, person_id, person_name, mobile, id_card, apply_status, reject_reason,
+            id_card_front_url, id_card_back_url, selfie_url, source_module, create_by, create_time,
+            update_by, update_time, remark, del_flag
+        from ygb_worker_realname_apply
+        where del_flag = '0'
+          and user_id = #{userId}
+        order by apply_id desc
+        limit 1
+    </select>
+
+    <insert id="insertWorkerRealnameApply" parameterType="com.yuegongbao.ygb.worker.domain.WorkerRealnameApply" useGeneratedKeys="true" keyProperty="applyId">
+        insert into ygb_worker_realname_apply (
+            user_id, person_id, person_name, mobile, id_card, apply_status, reject_reason, id_card_front_url,
+            id_card_back_url, selfie_url, source_module, create_by, create_time, remark, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{mobile}, #{idCard}, #{applyStatus}, #{rejectReason}, #{idCardFrontUrl},
+            #{idCardBackUrl}, #{selfieUrl}, #{sourceModule}, #{createBy}, sysdate(), #{remark}, '0'
+        )
+    </insert>
+
+    <select id="selectWorkerFeedbackManageList" resultType="com.yuegongbao.ygb.worker.domain.WorkerFeedback">
+        select
+            feedback_id, user_id, person_id, person_name, mobile, title, content, contact_mobile, status,
+            create_by, create_time, update_by, update_time, remark, del_flag
+        from ygb_worker_feedback
+        <where>
+            del_flag = '0'
+            <if test="title != null and title != ''">
+                and title like concat('%', #{title}, '%')
+            </if>
+            <if test="personName != null and personName != ''">
+                and person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="mobile != null and mobile != ''">
+                and mobile like concat('%', #{mobile}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+        </where>
+        order by feedback_id desc
+    </select>
+
+    <select id="selectWorkerFeedbackById" resultType="com.yuegongbao.ygb.worker.domain.WorkerFeedback">
+        select
+            feedback_id, user_id, person_id, person_name, mobile, title, content, contact_mobile, status,
+            create_by, create_time, update_by, update_time, remark, del_flag
+        from ygb_worker_feedback
+        where del_flag = '0'
+          and feedback_id = #{feedbackId}
+        limit 1
+    </select>
+
+    <select id="selectWorkerSetting" resultMap="WorkerSettingResult">
+        select
+            setting_id, user_id, person_id, notify_enabled, push_client_id, notification_permission, push_platform,
+            create_by, create_time, update_by, update_time, remark, del_flag
+        from ygb_worker_setting
+        where del_flag = '0'
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectWorkerSettingByPersonId" resultMap="WorkerSettingResult">
+        select
+            setting_id, user_id, person_id, notify_enabled, push_client_id, notification_permission, push_platform,
+            create_by, create_time, update_by, update_time, remark, del_flag
+        from ygb_worker_setting
+        where del_flag = '0'
+          and person_id = #{personId}
+        order by setting_id desc
+        limit 1
+    </select>
+
+    <insert id="insertWorkerSetting" parameterType="com.yuegongbao.ygb.worker.domain.WorkerSetting" useGeneratedKeys="true" keyProperty="settingId">
+        insert into ygb_worker_setting (
+            user_id, person_id, notify_enabled, push_client_id, notification_permission, push_platform, create_by, create_time, del_flag
+        ) values (
+            #{userId}, #{personId}, #{notifyEnabled}, #{pushClientId}, #{notificationPermission}, #{pushPlatform},
+            #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <update id="updateWorkerSetting" parameterType="com.yuegongbao.ygb.worker.domain.WorkerSetting">
+        update ygb_worker_setting
+        set notify_enabled = #{notifyEnabled},
+            push_client_id = #{pushClientId},
+            notification_permission = #{notificationPermission},
+            push_platform = #{pushPlatform},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where setting_id = #{settingId}
+    </update>
+
+    <select id="countPointLedger" resultType="int">
+        select count(1)
+        from ygb_worker_point_ledger
+        where del_flag = '0'
+          and user_id = #{userId}
+    </select>
+
+    <insert id="insertWorkerPointLedger" parameterType="com.yuegongbao.ygb.worker.domain.WorkerPointLedger" useGeneratedKeys="true" keyProperty="ledgerId">
+        insert into ygb_worker_point_ledger (
+            user_id, person_id, person_name, change_type, title, summary, score_delta, balance_after, create_by, create_time, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{changeType}, #{title}, #{summary}, #{scoreDelta}, #{balanceAfter}, #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <select id="selectWorkerPointLedgerList" resultMap="WorkerPointLedgerResult">
+        select
+            ledger_id, user_id, person_id, person_name, change_type, title, summary, score_delta, balance_after,
+            create_by, create_time, update_by, update_time, remark, del_flag
+        from ygb_worker_point_ledger
+        where del_flag = '0'
+          and user_id = #{userId}
+        order by ledger_id desc
+    </select>
+
+    <select id="countPointGoods" resultType="int">
+        select count(1)
+        from ygb_worker_point_goods
+        where del_flag = '0'
+    </select>
+
+    <insert id="insertWorkerPointGoods" parameterType="com.yuegongbao.ygb.worker.domain.WorkerPointGoods" useGeneratedKeys="true" keyProperty="goodsId">
+        insert into ygb_worker_point_goods (
+            goods_key, goods_name, goods_desc, required_score, goods_type, status, stock_count, sort_num,
+            create_by, create_time, del_flag
+        ) values (
+            #{goodsKey}, #{goodsName}, #{goodsDesc}, #{requiredScore}, #{goodsType}, #{status}, #{stockCount},
+            #{sortNum}, #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <select id="selectWorkerPointGoodsList" resultMap="WorkerPointGoodsResult">
+        select
+            goods_id, goods_key, goods_name, goods_desc, required_score, goods_type, status, stock_count, sort_num,
+            create_by, create_time, update_by, update_time, remark, del_flag
+        from ygb_worker_point_goods
+        where del_flag = '0'
+          and status = '1'
+        order by sort_num asc, goods_id asc
+    </select>
+
+    <select id="selectWorkerPointGoodsByKey" resultMap="WorkerPointGoodsResult">
+        select
+            goods_id, goods_key, goods_name, goods_desc, required_score, goods_type, status, stock_count, sort_num,
+            create_by, create_time, update_by, update_time, remark, del_flag
+        from ygb_worker_point_goods
+        where del_flag = '0'
+          and goods_key = #{goodsKey}
+        limit 1
+    </select>
+
+    <update id="updateWorkerPointGoodsStock">
+        update ygb_worker_point_goods
+        set stock_count = #{stockCount},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where goods_id = #{goodsId}
+    </update>
+
+    <insert id="insertWorkerPointExchange" parameterType="com.yuegongbao.ygb.worker.domain.WorkerPointExchange" useGeneratedKeys="true" keyProperty="exchangeId">
+        insert into ygb_worker_point_exchange (
+            user_id, person_id, person_name, goods_key, goods_name, goods_type, score_cost, exchange_status,
+            delivery_remark, create_by, create_time, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{goodsKey}, #{goodsName}, #{goodsType}, #{scoreCost},
+            #{exchangeStatus}, #{deliveryRemark}, #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <select id="selectWorkerPointExchangeList" resultMap="WorkerPointExchangeResult">
+        select
+            exchange_id, user_id, person_id, person_name, goods_key, goods_name, goods_type, score_cost,
+            exchange_status, delivery_remark, create_by, create_time, update_by, update_time, remark, del_flag
+        from ygb_worker_point_exchange
+        where del_flag = '0'
+          and user_id = #{userId}
+        order by exchange_id desc
+    </select>
+
+    <insert id="insertWorkerUploadRecord" parameterType="com.yuegongbao.ygb.worker.domain.WorkerUploadRecord" useGeneratedKeys="true" keyProperty="uploadId">
+        insert into ygb_worker_upload_record (
+            user_id, person_id, person_name, category_code, category_name, file_url, file_name, original_filename,
+            file_size, content_type, source_module, create_by, create_time, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{categoryCode}, #{categoryName}, #{fileUrl}, #{fileName},
+            #{originalFilename}, #{fileSize}, #{contentType}, #{sourceModule}, #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <select id="selectWorkerUploadRecordList" resultMap="WorkerUploadRecordResult">
+        select
+            upload_id, user_id, person_id, person_name, category_code, category_name, file_url, file_name,
+            original_filename, file_size, content_type, source_module, create_by, create_time, update_by, update_time,
+            remark, del_flag
+        from ygb_worker_upload_record
+        where del_flag = '0'
+          and user_id = #{userId}
+        <if test="categoryCode != null and categoryCode != ''">
+          and category_code = #{categoryCode}
+        </if>
+        order by upload_id desc
+    </select>
+
+    <select id="selectWorkerUploadRecordManageList" resultMap="WorkerUploadRecordResult">
+        select
+            upload_id, user_id, person_id, person_name, category_code, category_name, file_url, file_name,
+            original_filename, file_size, content_type, source_module, create_by, create_time, update_by, update_time,
+            remark, del_flag
+        from ygb_worker_upload_record
+        <where>
+            del_flag = '0'
+            <if test="personName != null and personName != ''">
+                and person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="categoryCode != null and categoryCode != ''">
+                and category_code = #{categoryCode}
+            </if>
+            <if test="categoryName != null and categoryName != ''">
+                and category_name like concat('%', #{categoryName}, '%')
+            </if>
+            <if test="sourceModule != null and sourceModule != ''">
+                and source_module = #{sourceModule}
+            </if>
+            <if test="fileName != null and fileName != ''">
+                and (file_name like concat('%', #{fileName}, '%') or original_filename like concat('%', #{fileName}, '%'))
+            </if>
+        </where>
+        order by upload_id desc
+    </select>
+
+    <select id="selectWorkerUploadRecordById" resultMap="WorkerUploadRecordResult">
+        select
+            upload_id, user_id, person_id, person_name, category_code, category_name, file_url, file_name,
+            original_filename, file_size, content_type, source_module, create_by, create_time, update_by, update_time,
+            remark, del_flag
+        from ygb_worker_upload_record
+        where del_flag = '0'
+          and upload_id = #{uploadId}
+        limit 1
+    </select>
+
+    <insert id="insertWorkerPushTestRecord" parameterType="com.yuegongbao.ygb.worker.domain.WorkerPushTestRecord" useGeneratedKeys="true" keyProperty="recordId">
+        insert into ygb_worker_push_test_record (
+            user_id, person_id, person_name, trace_id, push_client_id_masked, push_platform, notification_permission,
+            notify_enabled, gateway_provider, gateway_url, target_path, target_query_text, action_label, source_label,
+            request_body, response_body, test_status, status_message, create_by, create_time, del_flag
+        ) values (
+            #{userId}, #{personId}, #{personName}, #{traceId}, #{pushClientIdMasked}, #{pushPlatform}, #{notificationPermission},
+            #{notifyEnabled}, #{gatewayProvider}, #{gatewayUrl}, #{targetPath}, #{targetQueryText}, #{actionLabel}, #{sourceLabel},
+            #{requestBody}, #{responseBody}, #{testStatus}, #{statusMessage}, #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <select id="selectLatestWorkerPushTestRecord" resultMap="WorkerPushTestRecordResult">
+        select
+            record_id, user_id, person_id, person_name, trace_id, push_client_id_masked, push_platform,
+            notification_permission, notify_enabled, gateway_provider, gateway_url, target_path, target_query_text,
+            action_label, source_label, request_body, response_body, test_status, status_message, create_by, create_time,
+            update_by, update_time, remark, del_flag
+        from ygb_worker_push_test_record
+        where del_flag = '0'
+          and user_id = #{userId}
+        order by record_id desc
+        limit 1
+    </select>
+
+    <select id="selectWorkerPushTestRecordList" resultMap="WorkerPushTestRecordResult">
+        select
+            record_id, user_id, person_id, person_name, trace_id, push_client_id_masked, push_platform,
+            notification_permission, notify_enabled, gateway_provider, gateway_url, target_path, target_query_text,
+            action_label, source_label, request_body, response_body, test_status, status_message, create_by, create_time,
+            update_by, update_time, remark, del_flag
+        from ygb_worker_push_test_record
+        where del_flag = '0'
+          and user_id = #{userId}
+        order by record_id desc
+        <if test="limit != null and limit > 0">
+          limit #{limit}
+        </if>
+    </select>
+
+</mapper>

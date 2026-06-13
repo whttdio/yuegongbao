@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.techdefense.mapper.YgbHeightWorkReportMapper">
+
+    <resultMap type="YgbHeightWorkReport" id="YgbHeightWorkReportResult">
+        <id property="reportId" column="report_id" />
+        <result property="reportNo" column="report_no" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="reporterType" column="reporter_type" />
+        <result property="applicantName" column="applicant_name" />
+        <result property="applicantPhone" column="applicant_phone" />
+        <result property="workLocation" column="work_location" />
+        <result property="longitude" column="longitude" />
+        <result property="latitude" column="latitude" />
+        <result property="startTime" column="start_time" />
+        <result property="endTime" column="end_time" />
+        <result property="workHeightM" column="work_height_m" />
+        <result property="workerCount" column="worker_count" />
+        <result property="guardianName" column="guardian_name" />
+        <result property="guardianPhone" column="guardian_phone" />
+        <result property="safetyMeasuresJson" column="safety_measures_json" />
+        <result property="certValidStatus" column="cert_valid_status" />
+        <result property="certValidCount" column="cert_valid_count" />
+        <result property="certInvalidCount" column="cert_invalid_count" />
+        <result property="reportStatus" column="report_status" />
+        <result property="sourceMode" column="source_mode" />
+        <result property="sourcePlatform" column="source_platform" />
+        <result property="sourceSerialNo" column="source_serial_no" />
+        <result property="voucherToken" column="voucher_token" />
+        <result property="actualEndTime" column="actual_end_time" />
+        <result property="endPhotoUrl" column="end_photo_url" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectHeightWorkReportVo">
+        select report_id, report_no, enterprise_id, enterprise_name, reporter_type, applicant_name, applicant_phone,
+               work_location, longitude, latitude, start_time, end_time, work_height_m, worker_count,
+               guardian_name, guardian_phone, safety_measures_json, cert_valid_status, cert_valid_count,
+               cert_invalid_count, report_status, source_mode, source_platform, source_serial_no, voucher_token,
+               actual_end_time, end_photo_url, create_by, create_time, update_by, update_time, remark
+        from t_height_work_report
+    </sql>
+
+    <select id="selectHeightWorkReportList" parameterType="YgbHeightWorkReport" resultMap="YgbHeightWorkReportResult">
+        <include refid="selectHeightWorkReportVo" />
+        <where>
+            del_flag = '0'
+            <if test="reportNo != null and reportNo != ''">
+                and report_no like concat('%', #{reportNo}, '%')
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="enterpriseName != null and enterpriseName != ''">
+                and enterprise_name like concat('%', #{enterpriseName}, '%')
+            </if>
+            <if test="reportStatus != null and reportStatus != ''">
+                and report_status = #{reportStatus}
+            </if>
+            <if test="certValidStatus != null and certValidStatus != ''">
+                and cert_valid_status = #{certValidStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and exists (
+                    select 1
+                    from t_enterprise e
+                    where e.enterprise_id = t_height_work_report.enterprise_id
+                      and e.region_code like concat(#{regionCode}, '%')
+                )
+            </if>
+            <if test="params.regionDataScope != null and params.regionDataScope != ''">
+                and exists (
+                    select 1
+                    from t_enterprise e
+                    where e.enterprise_id = t_height_work_report.enterprise_id
+                    ${params.regionDataScope}
+                )
+            </if>
+            <if test="startTimeBegin != null and startTimeBegin != ''">
+                and start_time <![CDATA[>=]]> #{startTimeBegin}
+            </if>
+            <if test="startTimeEnd != null and startTimeEnd != ''">
+                and start_time <![CDATA[<=]]> #{startTimeEnd}
+            </if>
+        </where>
+        order by start_time desc, report_id desc
+    </select>
+
+    <select id="selectHeightWorkReportById" parameterType="Long" resultMap="YgbHeightWorkReportResult">
+        <include refid="selectHeightWorkReportVo" />
+        where report_id = #{reportId} and del_flag = '0'
+    </select>
+
+    <insert id="insertHeightWorkReport" parameterType="YgbHeightWorkReport" useGeneratedKeys="true" keyProperty="reportId">
+        insert into t_height_work_report (
+            report_no, enterprise_id, enterprise_name, reporter_type, applicant_name, applicant_phone,
+            work_location, longitude, latitude, start_time, end_time, work_height_m, worker_count,
+            guardian_name, guardian_phone, safety_measures_json, cert_valid_status, cert_valid_count,
+            cert_invalid_count, report_status, source_mode, source_platform, source_serial_no, voucher_token,
+            actual_end_time, end_photo_url, create_by, create_time, remark
+        ) values (
+            #{reportNo}, #{enterpriseId}, #{enterpriseName}, #{reporterType}, #{applicantName}, #{applicantPhone},
+            #{workLocation}, #{longitude}, #{latitude}, #{startTime}, #{endTime}, #{workHeightM}, #{workerCount},
+            #{guardianName}, #{guardianPhone}, #{safetyMeasuresJson}, #{certValidStatus}, #{certValidCount},
+            #{certInvalidCount}, #{reportStatus}, #{sourceMode}, #{sourcePlatform}, #{sourceSerialNo}, #{voucherToken},
+            #{actualEndTime}, #{endPhotoUrl}, #{createBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updateHeightWorkReport" parameterType="YgbHeightWorkReport">
+        update t_height_work_report
+        <set>
+            enterprise_id = #{enterpriseId},
+            enterprise_name = #{enterpriseName},
+            reporter_type = #{reporterType},
+            applicant_name = #{applicantName},
+            applicant_phone = #{applicantPhone},
+            work_location = #{workLocation},
+            longitude = #{longitude},
+            latitude = #{latitude},
+            start_time = #{startTime},
+            end_time = #{endTime},
+            work_height_m = #{workHeightM},
+            worker_count = #{workerCount},
+            guardian_name = #{guardianName},
+            guardian_phone = #{guardianPhone},
+            safety_measures_json = #{safetyMeasuresJson},
+            cert_valid_status = #{certValidStatus},
+            cert_valid_count = #{certValidCount},
+            cert_invalid_count = #{certInvalidCount},
+            source_mode = #{sourceMode},
+            source_platform = #{sourcePlatform},
+            source_serial_no = #{sourceSerialNo},
+            <if test="actualEndTime != null">actual_end_time = #{actualEndTime},</if>
+            <if test="endPhotoUrl != null">end_photo_url = #{endPhotoUrl},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_by = #{updateBy},
+            update_time = sysdate()
+        </set>
+        where report_id = #{reportId} and del_flag = '0'
+    </update>
+
+    <update id="finishHeightWorkReport" parameterType="YgbHeightWorkReport">
+        update t_height_work_report
+        set report_status = #{reportStatus},
+            actual_end_time = #{actualEndTime},
+            end_photo_url = #{endPhotoUrl},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where report_id = #{reportId} and del_flag = '0'
+    </update>
+
+</mapper>

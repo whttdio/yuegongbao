@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.regulation.mapper.YgbUninsuredListMapper">
+
+    <resultMap type="YgbUninsuredList" id="YgbUninsuredListResult">
+        <id property="listId" column="list_id" />
+        <result property="batchNo" column="batch_no" />
+        <result property="statMonth" column="stat_month" />
+        <result property="listType" column="list_type" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="idCard" column="id_card" />
+        <result property="regionCode" column="region_code" />
+        <result property="salaryAmount" column="salary_amount" />
+        <result property="detectedReason" column="detected_reason" />
+        <result property="disposalStatus" column="disposal_status" />
+        <result property="warningStatus" column="warning_status" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectUninsuredVo">
+        select list_id, batch_no, stat_month, list_type, enterprise_id, enterprise_name, person_id,
+               person_name, id_card, region_code, salary_amount, detected_reason, disposal_status, warning_status,
+               remark, create_by, create_time, update_by, update_time
+        from t_uninsured_list
+    </sql>
+
+    <select id="selectUninsuredList" parameterType="YgbUninsuredList" resultMap="YgbUninsuredListResult">
+        <include refid="selectUninsuredVo" />
+        <where>
+            del_flag = '0'
+            <if test="batchNo != null and batchNo != ''">
+                and batch_no like concat('%', #{batchNo}, '%')
+            </if>
+            <if test="statMonth != null and statMonth != ''">
+                and stat_month = #{statMonth}
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="personName != null and personName != ''">
+                and person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="listType != null and listType != ''">
+                and list_type = #{listType}
+            </if>
+            <if test="disposalStatus != null and disposalStatus != ''">
+                and disposal_status = #{disposalStatus}
+            </if>
+            <if test="warningStatus != null and warningStatus != ''">
+                and warning_status = #{warningStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by create_time desc, list_id desc
+    </select>
+
+    <select id="selectUninsuredById" parameterType="Long" resultMap="YgbUninsuredListResult">
+        <include refid="selectUninsuredVo" />
+        where list_id = #{listId} and del_flag = '0'
+    </select>
+
+    <insert id="insertUninsured" parameterType="YgbUninsuredList" useGeneratedKeys="true" keyProperty="listId">
+        insert into t_uninsured_list (
+            batch_no, stat_month, list_type, enterprise_id, enterprise_name, person_id, person_name, id_card,
+            region_code, salary_amount, detected_reason, disposal_status, warning_status, remark, create_by, create_time
+        ) values (
+            #{batchNo}, #{statMonth}, #{listType}, #{enterpriseId}, #{enterpriseName}, #{personId}, #{personName},
+            #{idCard}, #{regionCode}, #{salaryAmount}, #{detectedReason}, #{disposalStatus}, #{warningStatus},
+            #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateUninsuredHandle" parameterType="YgbUninsuredList">
+        update t_uninsured_list
+        <set>
+            <if test="disposalStatus != null and disposalStatus != ''">disposal_status = #{disposalStatus},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where list_id = #{listId} and del_flag = '0'
+    </update>
+
+    <delete id="deleteByScope">
+        delete from t_uninsured_list
+        where stat_month = #{statMonth}
+        <if test="enterpriseId != null">
+            and enterprise_id = #{enterpriseId}
+        </if>
+    </delete>
+
+</mapper>

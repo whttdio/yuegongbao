@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.safety.mapper.YgbDeviceMapper">
+
+    <resultMap type="YgbDevice" id="YgbDeviceResult">
+        <id property="deviceId" column="device_id" />
+        <result property="deviceCode" column="device_code" />
+        <result property="deviceName" column="device_name" />
+        <result property="deviceType" column="device_type" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="chipId" column="chip_id" />
+        <result property="simCardNo" column="sim_card_no" />
+        <result property="deviceStatus" column="device_status" />
+        <result property="authStatus" column="auth_status" />
+        <result property="lastHeartbeat" column="last_heartbeat" />
+        <result property="installLocation" column="install_location" />
+        <result property="firmwareVersion" column="firmware_version" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectDeviceVo">
+        select device_id, device_code, device_name, device_type, enterprise_id, enterprise_name, region_code,
+               chip_id, sim_card_no, device_status, auth_status, last_heartbeat, install_location,
+               firmware_version, remark, create_by, create_time, update_by, update_time
+        from t_device
+    </sql>
+
+    <select id="selectDeviceList" parameterType="YgbDevice" resultMap="YgbDeviceResult">
+        <include refid="selectDeviceVo" />
+        <where>
+            del_flag = '0'
+            <if test="deviceCode != null and deviceCode != ''">
+                and device_code like concat('%', #{deviceCode}, '%')
+            </if>
+            <if test="deviceName != null and deviceName != ''">
+                and device_name like concat('%', #{deviceName}, '%')
+            </if>
+            <if test="deviceType != null and deviceType != ''">
+                and device_type = #{deviceType}
+            </if>
+            <if test="enterpriseId != null">
+                and enterprise_id = #{enterpriseId}
+            </if>
+            <if test="deviceStatus != null and deviceStatus != ''">
+                and device_status = #{deviceStatus}
+            </if>
+            <if test="authStatus != null and authStatus != ''">
+                and auth_status = #{authStatus}
+            </if>
+            <if test="regionCode != null and regionCode != ''">
+                and region_code like concat(#{regionCode}, '%')
+            </if>
+            ${params.regionDataScope}
+        </where>
+        order by create_time desc, device_id desc
+    </select>
+
+    <select id="selectDeviceById" parameterType="Long" resultMap="YgbDeviceResult">
+        <include refid="selectDeviceVo" />
+        where device_id = #{deviceId} and del_flag = '0'
+    </select>
+
+    <select id="selectDeviceByCode" parameterType="String" resultMap="YgbDeviceResult">
+        <include refid="selectDeviceVo" />
+        where device_code = #{deviceCode} and del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insertDevice" parameterType="YgbDevice" useGeneratedKeys="true" keyProperty="deviceId">
+        insert into t_device (
+            device_code, device_name, device_type, enterprise_id, enterprise_name, region_code, chip_id, sim_card_no,
+            device_status, auth_status, last_heartbeat, install_location, firmware_version, remark, create_by, create_time
+        ) values (
+            #{deviceCode}, #{deviceName}, #{deviceType}, #{enterpriseId}, #{enterpriseName}, #{regionCode},
+            #{chipId}, #{simCardNo}, #{deviceStatus}, #{authStatus}, #{lastHeartbeat}, #{installLocation},
+            #{firmwareVersion}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateDevice" parameterType="YgbDevice">
+        update t_device
+        <set>
+            <if test="deviceCode != null and deviceCode != ''">device_code = #{deviceCode},</if>
+            <if test="deviceName != null">device_name = #{deviceName},</if>
+            <if test="deviceType != null and deviceType != ''">device_type = #{deviceType},</if>
+            <if test="enterpriseId != null">enterprise_id = #{enterpriseId},</if>
+            <if test="enterpriseName != null">enterprise_name = #{enterpriseName},</if>
+            <if test="regionCode != null">region_code = #{regionCode},</if>
+            <if test="chipId != null">chip_id = #{chipId},</if>
+            <if test="simCardNo != null">sim_card_no = #{simCardNo},</if>
+            <if test="deviceStatus != null and deviceStatus != ''">device_status = #{deviceStatus},</if>
+            <if test="authStatus != null and authStatus != ''">auth_status = #{authStatus},</if>
+            <if test="lastHeartbeat != null">last_heartbeat = #{lastHeartbeat},</if>
+            <if test="installLocation != null">install_location = #{installLocation},</if>
+            <if test="firmwareVersion != null">firmware_version = #{firmwareVersion},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where device_id = #{deviceId} and del_flag = '0'
+    </update>
+
+    <update id="deleteDeviceByIds">
+        update t_device
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and device_id in
+        <foreach collection="deviceIds" item="deviceId" open="(" separator="," close=")">
+            #{deviceId}
+        </foreach>
+    </update>
+
+    <update id="updateDeviceStatus">
+        update t_device
+        set device_status = #{deviceStatus},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where device_id = #{deviceId} and del_flag = '0'
+    </update>
+
+    <update id="updateAuthStatus">
+        update t_device
+        set auth_status = #{authStatus},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where device_id = #{deviceId} and del_flag = '0'
+    </update>
+
+    <update id="updateHeartbeat">
+        update t_device
+        set device_status = #{deviceStatus},
+            last_heartbeat = sysdate(),
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where device_id = #{deviceId} and del_flag = '0'
+    </update>
+
+</mapper>

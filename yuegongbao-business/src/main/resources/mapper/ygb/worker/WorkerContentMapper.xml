@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.worker.mapper.WorkerContentMapper">
+
+    <resultMap id="WorkerActivityJoinResult" type="com.yuegongbao.ygb.worker.domain.WorkerActivityJoin">
+        <id property="joinId" column="join_id" />
+        <result property="activityKey" column="activity_key" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="mobile" column="mobile" />
+        <result property="status" column="status" />
+        <result property="remark" column="remark" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <resultMap id="WorkerVideoProgressResult" type="com.yuegongbao.ygb.worker.domain.WorkerVideoProgress">
+        <id property="progressId" column="progress_id" />
+        <result property="videoKey" column="video_key" />
+        <result property="userId" column="user_id" />
+        <result property="personId" column="person_id" />
+        <result property="watchedSeconds" column="watched_seconds" />
+        <result property="totalSeconds" column="total_seconds" />
+        <result property="completedFlag" column="completed_flag" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <select id="countActivityJoin" resultType="long">
+        select count(1)
+        from ygb_worker_activity_join
+        where del_flag = '0'
+          and activity_key = #{activityKey}
+          and user_id = #{userId}
+    </select>
+
+    <insert id="insertActivityJoin" parameterType="com.yuegongbao.ygb.worker.domain.WorkerActivityJoin" useGeneratedKeys="true" keyProperty="joinId">
+        insert into ygb_worker_activity_join (
+            activity_key, user_id, person_id, person_name, mobile, status, remark, create_by, create_time, del_flag
+        ) values (
+            #{activityKey}, #{userId}, #{personId}, #{personName}, #{mobile}, #{status}, #{remark}, #{createBy}, sysdate(), '0'
+        )
+    </insert>
+
+    <update id="updateActivityJoin" parameterType="com.yuegongbao.ygb.worker.domain.WorkerActivityJoin">
+        update ygb_worker_activity_join
+        set status = #{status},
+            remark = #{remark},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where join_id = #{joinId}
+    </update>
+
+    <select id="selectActivityJoinList" resultMap="WorkerActivityJoinResult">
+        select
+            join_id, activity_key, user_id, person_id, person_name, mobile, status, remark, del_flag, create_time
+        from ygb_worker_activity_join
+        where del_flag = '0'
+          and user_id = #{userId}
+        order by create_time desc, join_id desc
+    </select>
+
+    <select id="selectLatestActivityJoin" resultMap="WorkerActivityJoinResult">
+        select
+            join_id, activity_key, user_id, person_id, person_name, mobile, status, remark, del_flag, create_time
+        from ygb_worker_activity_join
+        where del_flag = '0'
+          and activity_key = #{activityKey}
+          and user_id = #{userId}
+        order by create_time desc, join_id desc
+        limit 1
+    </select>
+
+    <select id="selectActivityJoinManageList" resultMap="WorkerActivityJoinResult">
+        select
+            join_id, activity_key, user_id, person_id, person_name, mobile, status, remark, del_flag, create_time, update_by, update_time
+        from ygb_worker_activity_join
+        <where>
+            del_flag = '0'
+            <if test="activityKey != null and activityKey != ''">
+                and activity_key = #{activityKey}
+            </if>
+            <if test="personName != null and personName != ''">
+                and person_name like concat('%', #{personName}, '%')
+            </if>
+            <if test="mobile != null and mobile != ''">
+                and mobile like concat('%', #{mobile}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+        </where>
+        order by create_time desc, join_id desc
+    </select>
+
+    <select id="selectActivityJoinByIdForManage" resultMap="WorkerActivityJoinResult">
+        select
+            join_id, activity_key, user_id, person_id, person_name, mobile, status, remark, del_flag, create_time, update_by, update_time
+        from ygb_worker_activity_join
+        where del_flag = '0'
+          and join_id = #{joinId}
+        limit 1
+    </select>
+
+    <select id="selectVideoProgress" resultMap="WorkerVideoProgressResult">
+        select
+            progress_id, video_key, user_id, person_id, watched_seconds, total_seconds, completed_flag, del_flag
+        from ygb_worker_video_progress
+        where del_flag = '0'
+          and video_key = #{videoKey}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <insert id="insertVideoProgress" parameterType="com.yuegongbao.ygb.worker.domain.WorkerVideoProgress" useGeneratedKeys="true" keyProperty="progressId">
+        insert into ygb_worker_video_progress (
+            video_key, user_id, person_id, watched_seconds, total_seconds, completed_flag, create_time, del_flag
+        ) values (
+            #{videoKey}, #{userId}, #{personId}, #{watchedSeconds}, #{totalSeconds}, #{completedFlag}, sysdate(), '0'
+        )
+    </insert>
+
+    <update id="updateVideoProgress" parameterType="com.yuegongbao.ygb.worker.domain.WorkerVideoProgress">
+        update ygb_worker_video_progress
+        set watched_seconds = #{watchedSeconds},
+            total_seconds = #{totalSeconds},
+            completed_flag = #{completedFlag},
+            update_time = sysdate()
+        where progress_id = #{progressId}
+    </update>
+
+</mapper>
