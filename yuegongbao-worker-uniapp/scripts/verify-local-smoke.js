@@ -42,7 +42,10 @@ const smokeCases = [
   { name: 'unionNotices', method: 'GET', path: '/app/worker/union-service/notices' },
   { name: 'unionContracts', method: 'GET', path: '/app/worker/union-service/contracts' },
   { name: 'trainingProgress', method: 'GET', path: '/app/worker/training/progress' },
-  { name: 'trainingCourses', method: 'GET', path: '/app/worker/training/courses' }
+  { name: 'trainingCourses', method: 'GET', path: '/app/worker/training/courses' },
+  { name: 'trainingHistory', method: 'GET', path: '/app/worker/training/history' },
+  { name: 'trainingCourseDetail', method: 'GET', path: '/app/worker/training/course-detail?courseKey=heatstroke-course' },
+  { name: 'trainingHistoryDetail', method: 'GET', path: '/app/worker/training/history-detail?month=202606' }
 ]
 
 function parseArgs(argv) {

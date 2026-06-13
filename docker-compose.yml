@@ -1,0 +1,71 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: ygb-backend
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      JAVA_OPTS: ${YGB_JAVA_OPTS:--Xms512m -Xmx1024m}
+      SERVER_PORT: 8080
+      YUEGONGBAO_PROFILE: /data/uploadPath
+      SPRING_DATASOURCE_DRUID_MASTER_URL: jdbc:mysql://${YGB_DB_HOST:-192.168.1.182}:${YGB_DB_PORT:-3306}/${YGB_DB_NAME:-yuegongbao}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_DRUID_MASTER_USERNAME: ${YGB_DB_USER:-yuegongbao}
+      SPRING_DATASOURCE_DRUID_MASTER_PASSWORD: ${YGB_DB_PASSWORD:-yuegongbao}
+      SPRING_DATA_REDIS_HOST: ${YGB_REDIS_HOST:-host.docker.internal}
+      SPRING_DATA_REDIS_PORT: ${YGB_REDIS_PORT:-6379}
+      SPRING_DATA_REDIS_DATABASE: ${YGB_REDIS_DATABASE:-0}
+      SPRING_DATA_REDIS_PASSWORD: ${YGB_REDIS_PASSWORD:-}
+    ports:
+      - "18080:8080"
+    volumes:
+      - ygb_upload_data:/data/uploadPath
+
+  admin-ui:
+    build:
+      context: .
+      dockerfile: docker/admin-ui/Dockerfile
+      args:
+        PORTAL_MODE: ${YGB_PORTAL_MODE:-ygb}
+    container_name: ygb-admin-ui
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${YGB_ADMIN_PORT:-8081}:80"
+
+  worker-seed:
+    build:
+      context: .
+      dockerfile: docker/worker-seed/Dockerfile
+    container_name: ygb-worker-seed
+    profiles: ["worker"]
+    environment:
+      TZ: Asia/Shanghai
+      YGB_DB_HOST: ${YGB_DB_HOST:-192.168.1.182}
+      YGB_DB_PORT: ${YGB_DB_PORT:-3306}
+      YGB_DB_USER: ${YGB_DB_USER:-yuegongbao}
+      YGB_DB_PASSWORD: ${YGB_DB_PASSWORD:-yuegongbao}
+      YGB_DB_NAME: ${YGB_DB_NAME:-yuegongbao}
+      YGB_DB_RETRY_TIMES: 30
+      YGB_DB_RETRY_DELAY_MS: 3000
+    restart: "no"
+
+  worker-h5:
+    build:
+      context: .
+      dockerfile: docker/worker-h5/Dockerfile
+      args:
+        VITE_WORKER_API_BASE_URL: /prod-api
+    container_name: ygb-worker-h5
+    profiles: ["worker"]
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - worker-seed
+    ports:
+      - "${YGB_WORKER_H5_PORT:-8082}:80"
+
+volumes:
+  ygb_upload_data:

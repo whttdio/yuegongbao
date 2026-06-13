@@ -208,6 +208,7 @@ import { decoratePortalExplanationItems, openPortalExplanationAction } from '@/u
 import { useRoleViewMode } from "@/utils/roleView"
 import { useRoute, useRouter } from "vue-router"
 import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQuery } from "@/utils/workbenchLink"
+import { useWorkbenchAssist } from "@/composables/useWorkbenchAssist"
 
 const { proxy } = getCurrentInstance()
 const { isReadOnlyRole, readOnlyRoleLabel, readOnlyRoleDescription } = useRoleViewMode()

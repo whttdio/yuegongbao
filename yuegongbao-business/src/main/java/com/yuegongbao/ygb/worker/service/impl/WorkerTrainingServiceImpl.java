@@ -108,14 +108,51 @@ public class WorkerTrainingServiceImpl implements WorkerTrainingService
     {
         List<Map<String, Object>> rows = new ArrayList<>();
         LocalDate now = LocalDate.now();
-        rows.add(historyRow(worker, now.minusMonths(2), 10, 10));
-        rows.add(historyRow(worker, now.minusMonths(1), 10, 10));
-        WorkerTrainingProgress current = getProgress(worker);
-        rows.add(historyRow(worker, now, current.getCompleted(), current.getTotal()));
+        int total = resolveTotalQuestions();
+        for (int offset = 2; offset >= 0; offset--)
+        {
+            LocalDate month = now.minusMonths(offset);
+            rows.add(historyRow(worker, month, total));
+        }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("rows", rows);
         result.put("total", rows.size());
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> getHistoryDetail(YgbPerson worker, String month)
+    {
+        if (StringUtils.isEmpty(month))
+        {
+            throw new ServiceException("月份不能为空。");
+        }
+        int total = resolveTotalQuestions();
+        Map<String, Integer> answered = getAnsweredMap(worker.getPersonId(), month);
+        int completed = answered == null ? 0 : answered.size();
+
+        List<Map<String, Object>> questionRows = new ArrayList<>();
+        for (Map<String, Object> item : resolveQuestionBank())
+        {
+            String questionId = (String) item.get("id");
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("questionId", questionId);
+            row.put("title", item.get("title"));
+            row.put("completed", answered != null && answered.containsKey(questionId));
+            questionRows.add(row);
+        }
+
+        List<Map<String, Object>> courseRows = buildCourseProgressRows(worker);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("month", month);
+        result.put("monthLabel", formatMonthLabel(month));
+        result.put("completed", completed);
+        result.put("total", total);
+        result.put("passed", completed >= total);
+        result.put("questions", questionRows);
+        result.put("courses", courseRows);
         return result;
     }
 
@@ -154,11 +191,14 @@ public class WorkerTrainingServiceImpl implements WorkerTrainingService
         Map<String, Object> detail = switch (courseKey)
         {
             case "course-1" -> courseDetail(worker, "course-1", "入场安全基础课", 420,
-                "围绕入场、劳保用品和现场纪律的基础培训。", Arrays.asList("入场前核验身份与工种。", "按工种佩戴安全帽、反光衣和劳保用品。", "现场发现异常立即留痕并上报。"));
+                "围绕入场、劳保用品和现场纪律的基础培训。", Arrays.asList("入场前核验身份与工种。", "按工种佩戴安全帽、反光衣和劳保用品。", "现场发现异常立即留痕并上报。"),
+                null, null);
             case "course-2" -> courseDetail(worker, "course-2", "高处作业风险提示", 560,
-                "重点提示安全带、临边防护和监护要求。", Arrays.asList("作业前先检查安全带与挂点。", "临边、洞口区域必须设置围栏。", "高处作业应有现场监护。"));
+                "重点提示安全带、临边防护和监护要求。", Arrays.asList("作业前先检查安全带与挂点。", "临边、洞口区域必须设置围栏。", "高处作业应有现场监护。"),
+                null, null);
             case "course-3" -> courseDetail(worker, "course-3", "工伤报案与留痕", 360,
-                "发生工伤后，如何固定证据并启动报案流程。", Arrays.asList("第一时间就医并保留病历。", "补齐现场照片、考勤和证人信息。", "通过平台发起法律咨询或投诉。"));
+                "发生工伤后，如何固定证据并启动报案流程。", Arrays.asList("第一时间就医并保留病历。", "补齐现场照片、考勤和证人信息。", "通过平台发起法律咨询或投诉。"),
+                null, null);
             default -> null;
         };
         if (detail == null)
@@ -299,10 +339,14 @@ public class WorkerTrainingServiceImpl implements WorkerTrainingService
         return item;
     }
 
-    private Map<String, Object> historyRow(YgbPerson worker, LocalDate month, int completed, int total)
+    private Map<String, Object> historyRow(YgbPerson worker, LocalDate month, int total)
     {
+        String monthKey = month.format(MONTH_FORMATTER);
+        Map<String, Integer> answered = getAnsweredMap(worker.getPersonId(), monthKey);
+        int completed = answered == null ? 0 : answered.size();
         Map<String, Object> row = new LinkedHashMap<>();
-        row.put("month", month.format(MONTH_FORMATTER));
+        row.put("month", monthKey);
+        row.put("monthLabel", formatMonthLabel(monthKey));
         row.put("completed", completed);
         row.put("total", total);
         row.put("passed", completed >= total);
@@ -325,7 +369,7 @@ public class WorkerTrainingServiceImpl implements WorkerTrainingService
     }
 
     private Map<String, Object> courseDetail(YgbPerson worker, String courseKey, String title, int totalSeconds,
-        String summary, List<String> outlines)
+        String summary, List<String> outlines, YgbPortalContent item, JSONObject extra)
     {
         int studiedSeconds = getCourseProgress(worker.getPersonId(), courseKey);
         Map<String, Object> row = new LinkedHashMap<>();
@@ -337,6 +381,7 @@ public class WorkerTrainingServiceImpl implements WorkerTrainingService
         row.put("studiedSeconds", Math.min(studiedSeconds, totalSeconds));
         row.put("completed", studiedSeconds >= totalSeconds);
         row.put("outlineList", outlines);
+        enrichCourseDetailFields(row, item, extra, outlines);
         return row;
     }
 
@@ -362,6 +407,8 @@ public class WorkerTrainingServiceImpl implements WorkerTrainingService
             row.put("durationText", formatDuration(totalSeconds));
             row.put("studiedSeconds", Math.min(studiedSeconds, totalSeconds));
             row.put("completed", studiedSeconds >= totalSeconds);
+            row.put("coverUrl", firstNonBlank(item.getCoverUrl(), jsonString(extra, "coverUrl")));
+            applyDefaultCourseMedia(row, courseKey);
             rows.add(row);
         }
         return rows;
@@ -391,6 +438,7 @@ public class WorkerTrainingServiceImpl implements WorkerTrainingService
             row.put("studiedSeconds", Math.min(studiedSeconds, totalSeconds));
             row.put("completed", studiedSeconds >= totalSeconds);
             row.put("outlineList", outlineList(item, extra));
+            enrichCourseDetailFields(row, item, extra, (List<String>) row.get("outlineList"));
             return row;
         }
         return null;
@@ -398,6 +446,14 @@ public class WorkerTrainingServiceImpl implements WorkerTrainingService
 
     private int courseTotalSeconds(String courseKey)
     {
+        for (YgbPortalContent item : selectPublishedContent(SECTION_TRAINING_COURSE, 20))
+        {
+            JSONObject extra = parseExtraJson(item.getExtraJson());
+            if (courseKey.equals(resolveCourseKey(item, extra)))
+            {
+                return resolveCourseTotalSeconds(extra);
+            }
+        }
         return switch (courseKey)
         {
             case "course-1" -> 420;
@@ -405,6 +461,134 @@ public class WorkerTrainingServiceImpl implements WorkerTrainingService
             case "course-3" -> 360;
             default -> 300;
         };
+    }
+
+    private int resolveTotalQuestions()
+    {
+        int total = resolveQuestionBank().size();
+        return total <= 0 ? TOTAL_QUESTIONS : total;
+    }
+
+    private String formatMonthLabel(String month)
+    {
+        if (StringUtils.isEmpty(month) || month.length() != 6)
+        {
+            return month;
+        }
+        return month.substring(0, 4) + "年" + month.substring(4, 6) + "月";
+    }
+
+    private void enrichCourseDetailFields(Map<String, Object> row, YgbPortalContent item, JSONObject extra,
+        List<String> outlines)
+    {
+        String contentHtml = firstNonBlank(item == null ? null : item.getContent(), "");
+        if (StringUtils.isEmpty(contentHtml) && outlines != null && !outlines.isEmpty())
+        {
+            StringBuilder html = new StringBuilder();
+            for (String line : outlines)
+            {
+                html.append("<p>").append(line).append("</p>");
+            }
+            contentHtml = html.toString();
+        }
+        row.put("contentHtml", contentHtml);
+        row.put("coverUrl", firstNonBlank(item == null ? null : item.getCoverUrl(), jsonString(extra, "coverUrl")));
+        row.put("videoUrl", jsonString(extra, "videoUrl"));
+        row.put("posterUrl", firstNonBlank(jsonString(extra, "posterUrl"), item == null ? null : item.getCoverUrl()));
+        row.put("sourceText", firstNonBlank(item == null ? null : item.getSourceName(), "粤工宝培训中心"));
+        List<String> keyPoints = stringList(extra, "keyPoints");
+        if (keyPoints.isEmpty() && outlines != null && !outlines.isEmpty())
+        {
+            keyPoints = outlines;
+        }
+        row.put("keyPoints", keyPoints);
+        List<String> fallbackTips = stringList(extra, "fallbackTips");
+        if (fallbackTips.isEmpty())
+        {
+            fallbackTips = Arrays.asList("如视频暂时无法播放，可先阅读课程正文和关键学习点。",
+                "完成学习后建议保存进度，并结合培训题目巩固要点。");
+        }
+        row.put("fallbackTips", fallbackTips);
+        applyDefaultCourseMedia(row, (String) row.get("courseKey"));
+    }
+
+    private void applyDefaultCourseMedia(Map<String, Object> row, String courseKey)
+    {
+        if (StringUtils.isEmpty(courseKey) || row == null)
+        {
+            return;
+        }
+        String[] media = resolveDefaultCourseMedia(courseKey);
+        if (media == null)
+        {
+            return;
+        }
+        row.put("coverUrl", media[0]);
+        row.put("posterUrl", media[0]);
+        row.put("videoUrl", media[1]);
+    }
+
+    private String[] resolveDefaultCourseMedia(String courseKey)
+    {
+        return switch (courseKey)
+        {
+            case "heatstroke-course" -> mediaPair(
+                "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1200&q=80",
+                "https://www.w3schools.com/html/mov_bbb.mp4");
+            case "rights-course" -> mediaPair(
+                "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=80",
+                "https://www.w3schools.com/html/movie.mp4");
+            case "course-1" -> mediaPair(
+                "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1200&q=80",
+                "https://www.w3schools.com/html/mov_bbb.mp4");
+            case "course-2" -> mediaPair(
+                "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80",
+                "https://www.w3schools.com/html/movie.mp4");
+            case "course-3" -> mediaPair(
+                "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
+                "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
+            default -> null;
+        };
+    }
+
+    private String[] mediaPair(String coverUrl, String videoUrl)
+    {
+        return new String[] { coverUrl, videoUrl };
+    }
+
+    private boolean isBlankOrLocalMock(String value)
+    {
+        return StringUtils.isEmpty(value) || value.contains("cdn.ygb.local");
+    }
+
+    private String asString(Object value)
+    {
+        return value == null ? null : String.valueOf(value).trim();
+    }
+
+    private List<Map<String, Object>> buildCourseProgressRows(YgbPerson worker)
+    {
+        List<Map<String, Object>> courseRows = new ArrayList<>();
+        Object rowsObj = getCourses(worker).get("rows");
+        if (!(rowsObj instanceof List<?> list))
+        {
+            return courseRows;
+        }
+        for (Object item : list)
+        {
+            if (!(item instanceof Map<?, ?> course))
+            {
+                continue;
+            }
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("courseKey", course.get("courseKey"));
+            row.put("title", course.get("title"));
+            row.put("studiedSeconds", course.get("studiedSeconds"));
+            row.put("durationText", course.get("durationText"));
+            row.put("completed", course.get("completed"));
+            courseRows.add(row);
+        }
+        return courseRows;
     }
 
     private String formatDuration(int totalSeconds)

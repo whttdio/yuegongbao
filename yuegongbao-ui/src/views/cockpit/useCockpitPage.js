@@ -157,7 +157,10 @@ export function useCockpitPage(options = {}) {
       ENTERPRISE: '#1d4ed8',
       DEVICE: '#059669',
       FENCE: '#f59e0b'
-    }
+    },
+    createTrendChartOption,
+    createDistributionChartOption,
+    createMapChartOption
   } = options
 
   const { proxy } = getCurrentInstance()
@@ -262,48 +265,57 @@ export function useCockpitPage(options = {}) {
       trendChartInstance = echarts.init(trendChartRef.value)
     }
 
-    trendChartInstance.setOption({
-      color: trendColors,
-      tooltip: { trigger: 'axis' },
-      legend: { top: 0, textStyle: { color: '#475569' } },
-      grid: { left: 44, right: 52, top: 48, bottom: 32 },
-      xAxis: {
-        type: 'category',
-        data: trendList.value.map(item => formatTrendDate(item.statDate)),
-        axisLine: { lineStyle: { color: '#cbd5e1' } },
-        axisLabel: { color: '#64748b' }
-      },
-      yAxis: [
-        {
-          type: 'value',
-          name: '数量',
-          minInterval: 1,
-          axisLine: { show: false },
-          splitLine: { lineStyle: { color: '#e2e8f0' } },
-          axisLabel: { color: '#64748b' }
-        },
-        {
-          type: 'value',
-          name: '比率',
-          axisLabel: { formatter: '{value}%', color: '#64748b' },
-          splitLine: { show: false }
+    const option = typeof createTrendChartOption === 'function'
+      ? createTrendChartOption({
+          trendList: trendList.value,
+          trendColors,
+          trendSeries,
+          formatTrendDate
+        })
+      : {
+          color: trendColors,
+          tooltip: { trigger: 'axis' },
+          legend: { top: 0, textStyle: { color: '#475569' } },
+          grid: { left: 44, right: 52, top: 48, bottom: 32 },
+          xAxis: {
+            type: 'category',
+            data: trendList.value.map(item => formatTrendDate(item.statDate)),
+            axisLine: { lineStyle: { color: '#cbd5e1' } },
+            axisLabel: { color: '#64748b' }
+          },
+          yAxis: [
+            {
+              type: 'value',
+              name: '数量',
+              minInterval: 1,
+              axisLine: { show: false },
+              splitLine: { lineStyle: { color: '#e2e8f0' } },
+              axisLabel: { color: '#64748b' }
+            },
+            {
+              type: 'value',
+              name: '比率',
+              axisLabel: { formatter: '{value}%', color: '#64748b' },
+              splitLine: { show: false }
+            }
+          ],
+          series: trendSeries.map(item => {
+            const series = {
+              name: item.name,
+              type: item.type || 'line',
+              data: trendList.value.map(row => Number(row[item.dataKey] || 0)),
+              yAxisIndex: item.yAxisIndex || 0
+            }
+            if (series.type === 'bar') {
+              series.barMaxWidth = item.barMaxWidth || 24
+            } else {
+              series.smooth = item.smooth !== false
+            }
+            return series
+          })
         }
-      ],
-      series: trendSeries.map(item => {
-        const series = {
-          name: item.name,
-          type: item.type || 'line',
-          data: trendList.value.map(row => Number(row[item.dataKey] || 0)),
-          yAxisIndex: item.yAxisIndex || 0
-        }
-        if (series.type === 'bar') {
-          series.barMaxWidth = item.barMaxWidth || 24
-        } else {
-          series.smooth = item.smooth !== false
-        }
-        return series
-      })
-    })
+
+    trendChartInstance.setOption(option, true)
   }
 
   function renderDistributionChart() {
@@ -314,39 +326,47 @@ export function useCockpitPage(options = {}) {
       distributionChartInstance = echarts.init(distributionChartRef.value)
     }
 
-    distributionChartInstance.setOption({
-      color: [distributionColor],
-      tooltip: { trigger: 'axis' },
-      grid: { left: 46, right: 18, top: 24, bottom: 48 },
-      xAxis: {
-        type: 'category',
-        axisLabel: { color: '#64748b', interval: 0, rotate: 18 },
-        axisLine: { lineStyle: { color: '#cbd5e1' } },
-        data: distributionList.value.map(item => distributionLabelFormatter(item))
-      },
-      yAxis: {
-        type: 'value',
-        minInterval: 1,
-        axisLabel: { color: '#64748b' },
-        splitLine: { lineStyle: { color: '#e2e8f0' } }
-      },
-      series: [
-        {
-          type: 'bar',
-          barMaxWidth: 36,
-          data: distributionList.value.map(item => ({
-            value: item.metricCount || 0,
-            label: `${item.metricRate || 0}%`
-          })),
-          label: {
-            show: true,
-            position: 'top',
-            color: '#475569',
-            formatter: params => params.data.label
-          }
+    const option = typeof createDistributionChartOption === 'function'
+      ? createDistributionChartOption({
+          distributionList: distributionList.value,
+          distributionColor,
+          distributionLabelFormatter
+        })
+      : {
+          color: [distributionColor],
+          tooltip: { trigger: 'axis' },
+          grid: { left: 46, right: 18, top: 24, bottom: 48 },
+          xAxis: {
+            type: 'category',
+            axisLabel: { color: '#64748b', interval: 0, rotate: 18 },
+            axisLine: { lineStyle: { color: '#cbd5e1' } },
+            data: distributionList.value.map(item => distributionLabelFormatter(item))
+          },
+          yAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLabel: { color: '#64748b' },
+            splitLine: { lineStyle: { color: '#e2e8f0' } }
+          },
+          series: [
+            {
+              type: 'bar',
+              barMaxWidth: 36,
+              data: distributionList.value.map(item => ({
+                value: item.metricCount || 0,
+                label: `${item.metricRate || 0}%`
+              })),
+              label: {
+                show: true,
+                position: 'top',
+                color: '#475569',
+                formatter: params => params.data.label
+              }
+            }
+          ]
         }
-      ]
-    })
+
+    distributionChartInstance.setOption(option, true)
   }
 
   function renderMapChart() {
@@ -376,35 +396,47 @@ export function useCockpitPage(options = {}) {
       data: (item.geometry.coordinates?.[0] || []).map(coord => [coord[0], coord[1]])
     }))
 
-    mapChartInstance.setOption({
-      tooltip: {
-        trigger: 'item',
-        formatter: params => {
-          if (params.seriesType === 'line') {
-            return `${params.seriesName}<br/>围栏边界`
-          }
-          const chartData = params.data || {}
-          return `${chartData.name}<br/>${chartData.featureType}<br/>经纬度：${chartData.value[0]}, ${chartData.value[1]}`
+    const option = typeof createMapChartOption === 'function'
+      ? createMapChartOption({
+          features,
+          pointFeatures,
+          polygonFeatures,
+          pointBounds,
+          pointSeries,
+          polygonSeries,
+          pointColors
+        })
+      : {
+          tooltip: {
+            trigger: 'item',
+            formatter: params => {
+              if (params.seriesType === 'line') {
+                return `${params.seriesName}<br/>围栏边界`
+              }
+              const chartData = params.data || {}
+              return `${chartData.name}<br/>${chartData.featureType}<br/>经纬度：${chartData.value[0]}, ${chartData.value[1]}`
+            }
+          },
+          legend: { top: 0, textStyle: { color: '#475569' } },
+          grid: { left: 42, right: 18, top: 42, bottom: 30 },
+          xAxis: {
+            type: 'value',
+            min: pointBounds.minLng,
+            max: pointBounds.maxLng,
+            axisLabel: { color: '#64748b' },
+            splitLine: { lineStyle: { color: '#eef2ff' } }
+          },
+          yAxis: {
+            type: 'value',
+            min: pointBounds.minLat,
+            max: pointBounds.maxLat,
+            axisLabel: { color: '#64748b' },
+            splitLine: { lineStyle: { color: '#eef2ff' } }
+          },
+          series: [...pointSeries, ...polygonSeries]
         }
-      },
-      legend: { top: 0, textStyle: { color: '#475569' } },
-      grid: { left: 42, right: 18, top: 42, bottom: 30 },
-      xAxis: {
-        type: 'value',
-        min: pointBounds.minLng,
-        max: pointBounds.maxLng,
-        axisLabel: { color: '#64748b' },
-        splitLine: { lineStyle: { color: '#eef2ff' } }
-      },
-      yAxis: {
-        type: 'value',
-        min: pointBounds.minLat,
-        max: pointBounds.maxLat,
-        axisLabel: { color: '#64748b' },
-        splitLine: { lineStyle: { color: '#eef2ff' } }
-      },
-      series: [...pointSeries, ...polygonSeries]
-    })
+
+    mapChartInstance.setOption(option, true)
   }
 
   function resizeCharts() {
@@ -478,6 +510,9 @@ export function useCockpitPage(options = {}) {
     queryParams,
     dashboardData,
     indicators,
+    trendList,
+    distributionList,
+    featureCollection,
     featureTableList,
     trendChartRef,
     distributionChartRef,

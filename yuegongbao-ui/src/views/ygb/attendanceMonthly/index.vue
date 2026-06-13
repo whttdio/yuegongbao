@@ -257,6 +257,7 @@ import { parseTime } from "@/utils/yuegongbao"
 import { useRoute, useRouter } from "vue-router"
 import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQuery } from "@/utils/workbenchLink"
 import { formatRegionName } from "@/views/warning/useWarningPage"
+import { useWorkbenchAssist } from "@/composables/useWorkbenchAssist"
 
 const { proxy } = getCurrentInstance()
 const { isReadOnlyRole, readOnlyRoleLabel, readOnlyRoleDescription } = useRoleViewMode()

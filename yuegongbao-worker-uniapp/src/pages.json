@@ -61,6 +61,12 @@
       }
     },
     {
+      "path": "pages/training/history-detail",
+      "style": {
+        "navigationBarTitleText": "月度培训记录"
+      }
+    },
+    {
       "path": "pages/profile/index",
       "style": {
         "navigationBarTitleText": "我的"

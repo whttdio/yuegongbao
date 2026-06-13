@@ -154,27 +154,30 @@ INSERT INTO ygb_portal_content (
     'ygb', 'worker_training_course', 'course-1', '入场安全基础课',
     '围绕入场、劳保用品和现场纪律的基础培训。',
     '<p>入场前核验身份与工种。</p><p>按工种佩戴安全帽、反光衣和劳保用品。</p><p>现场发现异常立即留痕并上报。</p>',
-    NULL, NULL, 'worker_seed',
+    'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1200&q=80',
+    NULL, 'worker_seed',
     NOW(), 10, '0',
-    '{"courseKey":"course-1","durationSeconds":420,"outlineList":["入场前核验身份与工种。","按工种佩戴安全帽、反光衣和劳保用品。","现场发现异常立即留痕并上报。"]}',
+    '{"courseKey":"course-1","durationSeconds":420,"videoUrl":"https://www.w3schools.com/html/mov_bbb.mp4","posterUrl":"https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1200&q=80","outlineList":["入场前核验身份与工种。","按工种佩戴安全帽、反光衣和劳保用品。","现场发现异常立即留痕并上报。"]}',
     'portal_seed', NOW(), '0'
 ),
 (
     'ygb', 'worker_training_course', 'course-2', '高处作业风险提示',
     '重点提示安全带、临边防护和现场监护要求。',
     '<p>作业前先检查安全带与挂点。</p><p>临边、洞口区域必须设置围栏。</p><p>高处作业应有现场监护。</p>',
-    NULL, NULL, 'worker_seed',
+    'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80',
+    NULL, 'worker_seed',
     NOW(), 20, '0',
-    '{"courseKey":"course-2","durationSeconds":560,"outlineList":["作业前先检查安全带与挂点。","临边、洞口区域必须设置围栏。","高处作业应有现场监护。"]}',
+    '{"courseKey":"course-2","durationSeconds":560,"videoUrl":"https://www.w3schools.com/html/movie.mp4","posterUrl":"https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80","outlineList":["作业前先检查安全带与挂点。","临边、洞口区域必须设置围栏。","高处作业应有现场监护。"]}',
     'portal_seed', NOW(), '0'
 ),
 (
     'ygb', 'worker_training_course', 'course-3', '工伤报案与留痕',
     '发生工伤后，如何固定证据并启动报案流程。',
     '<p>第一时间就医并保留病历。</p><p>补齐现场照片、考勤和证人信息。</p><p>通过平台发起法律咨询或投诉。</p>',
-    NULL, NULL, 'worker_seed',
+    'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80',
+    NULL, 'worker_seed',
     NOW(), 30, '0',
-    '{"courseKey":"course-3","durationSeconds":360,"outlineList":["第一时间就医并保留病历。","补齐现场照片、考勤和证人信息。","通过平台发起法律咨询或投诉。"]}',
+    '{"courseKey":"course-3","durationSeconds":360,"videoUrl":"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4","posterUrl":"https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80","outlineList":["第一时间就医并保留病历。","补齐现场照片、考勤和证人信息。","通过平台发起法律咨询或投诉。"]}',
     'portal_seed', NOW(), '0'
 ),
 (

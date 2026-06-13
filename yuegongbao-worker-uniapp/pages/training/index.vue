@@ -1,5 +1,10 @@
 <template>
   <view class="worker-page">
+    <view v-if="loading" class="worker-card worker-empty worker-empty--panel">
+      <view class="worker-empty__title">培训数据加载中...</view>
+    </view>
+
+    <template v-else>
     <view class="worker-card worker-hero">
       <view class="worker-title worker-title--display">安全培训</view>
       <view class="worker-subtitle">
@@ -36,11 +41,26 @@
         <view class="worker-tag">{{ courses.length }} 门</view>
       </view>
       <view v-if="courses.length">
-        <view v-for="item in courses" :key="item.courseKey" class="list-row" @click="openCourse(item)">
-          <view>
+        <view v-for="item in courses" :key="item.courseKey" class="course-row" @click="openCourse(item)">
+          <image
+            v-if="resolveCourseCoverUrl(item) && !brokenCoverKeys[item.courseKey]"
+            :src="resolveCourseCoverUrl(item)"
+            mode="aspectFill"
+            class="course-row__cover"
+            @error="handleCoverError(item)"
+          />
+          <view v-else class="course-row__cover course-row__cover--placeholder">课程</view>
+          <view class="course-row__body">
             <view class="list-row__title">{{ item.title }}</view>
             <view class="list-row__subtitle">
-              {{ item.summary || '暂无课程摘要' }} 已学 {{ item.studiedSeconds || 0 }} 秒
+              {{ item.summary || '暂无课程摘要' }}
+            </view>
+            <view class="course-row__meta">
+              <text>已学 {{ item.studiedSeconds || 0 }} 秒</text>
+              <text>{{ courseProgressPercentText(item) }}</text>
+            </view>
+            <view class="course-row__bar">
+              <view class="course-row__fill" :style="{ width: courseProgressPercentText(item) }" />
             </view>
           </view>
           <view class="worker-tag">{{ item.completed ? '已完成' : (item.durationText || '继续学习') }}</view>
@@ -64,9 +84,9 @@
         <view class="notice-link" @click="goHistory">全部</view>
       </view>
       <view v-if="historyRows.length">
-        <view v-for="item in historyRows" :key="item.month" class="list-row">
+        <view v-for="item in historyRows" :key="item.month" class="list-row" @click="openHistoryDetail(item)">
           <view>
-            <view class="list-row__title">{{ item.month }}</view>
+            <view class="list-row__title">{{ item.monthLabel || formatTrainingMonth(item.month) }}</view>
             <view class="list-row__subtitle">完成 {{ item.completed || 0 }}/{{ item.total || 0 }}</view>
           </view>
           <view class="worker-tag">{{ item.passed ? '已通过' : '进行中' }}</view>
@@ -79,6 +99,7 @@
         </view>
       </view>
     </view>
+    </template>
   </view>
 </template>
 
@@ -91,11 +112,15 @@ import {
   getTrainingProgress,
   getTrainingQuestions
 } from '../../api/worker'
+import { courseProgressPercentText, formatTrainingMonth } from '../../utils/training-format'
+import { normalizeCourseMediaList, resolveCourseCoverUrl } from '../../utils/training-media'
 
 const progress = ref({})
 const questions = ref([])
 const courses = ref([])
 const historyRows = ref([])
+const loading = ref(true)
+const brokenCoverKeys = ref({})
 const trainingLastLoadedAt = ref('')
 const trainingLastActionAt = ref('')
 const trainingLastMessage = ref('')
@@ -139,11 +164,12 @@ const trainingSnapshotText = computed(() => {
 })
 
 async function loadData() {
+  loading.value = true
   try {
     progress.value = await getTrainingProgress()
     questions.value = await getTrainingQuestions()
     const [courseData, historyData] = await Promise.all([getTrainingCourses(), getTrainingHistory()])
-    courses.value = courseData?.rows || []
+    courses.value = normalizeCourseMediaList(courseData?.rows || [])
     historyRows.value = historyData?.rows || []
     trainingLastLoadedAt.value = new Date().toLocaleString()
     trainingLastMessage.value = progress.value.completed >= (progress.value.total || 10)
@@ -153,6 +179,8 @@ async function loadData() {
     trainingLastLoadedAt.value = new Date().toLocaleString()
     trainingLastMessage.value = error.message || '加载培训失败'
     uni.showToast({ title: error.message || '加载培训失败', icon: 'none' })
+  } finally {
+    loading.value = false
   }
 }
 
@@ -179,6 +207,24 @@ function goHistory() {
   uni.navigateTo({ url: '/pages/training/history' })
 }
 
+function openHistoryDetail(item) {
+  if (!item?.month) {
+    return
+  }
+  recordTrainingAction(`打开月度记录：${item.monthLabel || item.month}`, `month=${item.month}`)
+  uni.navigateTo({ url: `/pages/training/history-detail?month=${item.month}` })
+}
+
+function handleCoverError(item) {
+  if (!item?.courseKey) {
+    return
+  }
+  brokenCoverKeys.value = {
+    ...brokenCoverKeys.value,
+    [item.courseKey]: true
+  }
+}
+
 function goAiTraining() {
   recordTrainingAction('进入 AI 培训', '课程为空时转入 AI 培训补充学习')
   uni.navigateTo({ url: '/pages/ai-training/detail' })
@@ -202,5 +248,61 @@ onShow(loadData)
 <style lang="scss">
 .worker-empty__actions button {
   flex: 1;
+}
+
+.course-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #edf2f7;
+}
+
+.course-row:last-child {
+  border-bottom: none;
+}
+
+.course-row__cover {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 16rpx;
+  flex-shrink: 0;
+}
+
+.course-row__cover--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  color: #fff;
+  font-size: 24rpx;
+}
+
+.course-row__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.course-row__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: #5f7893;
+}
+
+.course-row__bar {
+  height: 8rpx;
+  margin-top: 12rpx;
+  border-radius: 999rpx;
+  background: #edf2f7;
+  overflow: hidden;
+}
+
+.course-row__fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #0f766e, #14b8a6);
 }
 </style>

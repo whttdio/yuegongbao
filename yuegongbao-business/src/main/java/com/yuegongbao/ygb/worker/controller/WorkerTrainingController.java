@@ -53,6 +53,13 @@ public class WorkerTrainingController
         return AjaxResult.success(workerTrainingService.getHistory(worker));
     }
 
+    @GetMapping("/history-detail")
+    public AjaxResult historyDetail(@RequestParam String month)
+    {
+        YgbPerson worker = workerCurrentUserService.getCurrentWorker();
+        return AjaxResult.success(workerTrainingService.getHistoryDetail(worker, month));
+    }
+
     @GetMapping("/courses")
     public AjaxResult courses()
     {

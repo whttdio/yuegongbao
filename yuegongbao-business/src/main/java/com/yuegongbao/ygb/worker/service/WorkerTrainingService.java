@@ -16,6 +16,8 @@ public interface WorkerTrainingService
 
     Map<String, Object> getHistory(YgbPerson worker);
 
+    Map<String, Object> getHistoryDetail(YgbPerson worker, String month);
+
     Map<String, Object> getCourses(YgbPerson worker);
 
     Map<String, Object> getCourseDetail(YgbPerson worker, String courseKey);

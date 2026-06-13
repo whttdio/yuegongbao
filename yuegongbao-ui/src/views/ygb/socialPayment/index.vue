@@ -137,6 +137,7 @@ import { decoratePortalExplanationItems, openPortalExplanationAction } from '@/u
 import { useRoute, useRouter } from "vue-router"
 import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQuery } from "@/utils/workbenchLink"
 import { useRoleViewMode } from "@/utils/roleView"
+import { useWorkbenchAssist } from "@/composables/useWorkbenchAssist"
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()

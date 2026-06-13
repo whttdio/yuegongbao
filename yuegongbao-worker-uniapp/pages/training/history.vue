@@ -1,5 +1,10 @@
 <template>
   <view class="worker-page">
+    <view v-if="loading" class="worker-card worker-empty worker-empty--panel">
+      <view class="worker-empty__title">记录加载中...</view>
+    </view>
+
+    <template v-else>
     <view class="worker-card worker-hero">
       <view class="worker-title worker-title--display">学习记录</view>
       <view class="worker-subtitle">查看近月培训完成情况和课程学习进度</view>
@@ -24,9 +29,9 @@
         <view class="worker-title">月度完成记录</view>
       </view>
       <view v-if="historyRows.length">
-        <view v-for="item in historyRows" :key="item.month" class="list-row">
+        <view v-for="item in historyRows" :key="item.month" class="list-row" @click="openHistoryDetail(item)">
           <view>
-            <view class="list-row__title">{{ item.month }}</view>
+            <view class="list-row__title">{{ item.monthLabel || formatTrainingMonth(item.month) }}</view>
             <view class="list-row__subtitle">完成 {{ item.completed || 0 }}/{{ item.total || 0 }}</view>
           </view>
           <view class="worker-tag">{{ item.passed ? '已通过' : '进行中' }}</view>
@@ -61,6 +66,7 @@
         </view>
       </view>
     </view>
+    </template>
   </view>
 </template>
 
@@ -68,11 +74,13 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getTrainingCourses, getTrainingHistory } from '../../api/worker'
+import { formatTrainingMonth } from '../../utils/training-format'
 
 const historyRows = ref([])
 const courseRows = computed(() => courses.value)
 const passedMonthCount = computed(() => historyRows.value.filter((item) => item.passed).length)
 const courses = ref([])
+const loading = ref(true)
 const historyLastLoadedAt = ref('')
 const historyLastActionAt = ref('')
 const historyLastMessage = ref('')
@@ -111,6 +119,7 @@ const historySnapshotText = computed(() => {
 })
 
 async function loadData() {
+  loading.value = true
   try {
     const [historyData, courseData] = await Promise.all([getTrainingHistory(), getTrainingCourses()])
     historyRows.value = historyData?.rows || []
@@ -123,6 +132,8 @@ async function loadData() {
     historyLastLoadedAt.value = new Date().toLocaleString()
     historyLastMessage.value = error.message || '加载记录失败'
     uni.showToast({ title: error.message || '加载记录失败', icon: 'none' })
+  } finally {
+    loading.value = false
   }
 }
 
@@ -137,6 +148,14 @@ function openCourse(item) {
   }
   recordHistoryAction(`打开课程详情：${item.title || '-'}`, `courseKey=${item.courseKey}`)
   uni.navigateTo({ url: `/pages/training/course-detail?courseKey=${item.courseKey}` })
+}
+
+function openHistoryDetail(item) {
+  if (!item?.month) {
+    return
+  }
+  recordHistoryAction(`打开月度记录：${item.monthLabel || item.month}`, `month=${item.month}`)
+  uni.navigateTo({ url: `/pages/training/history-detail?month=${item.month}` })
 }
 
 function goTraining() {

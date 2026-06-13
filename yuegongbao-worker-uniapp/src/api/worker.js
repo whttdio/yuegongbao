@@ -42,8 +42,13 @@ export function getTrainingCourses() {
 
 export function getTrainingCourseDetail(courseKey) {
   return request({
-    url: '/app/worker/training/course-detail',
-    data: { courseKey }
+    url: `/app/worker/training/course-detail?courseKey=${encodeURIComponent(courseKey)}`
+  })
+}
+
+export function getTrainingHistoryDetail(month) {
+  return request({
+    url: `/app/worker/training/history-detail?month=${encodeURIComponent(month)}`
   })
 }
 
