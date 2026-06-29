@@ -16,6 +16,9 @@ import com.yuegongbao.ygb.compliance.mapper.YgbSalaryDetailMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbSocialBaseCompareMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbSocialPaymentMapper;
 import com.yuegongbao.ygb.regulation.service.IYgbSocialBaseCompareService;
+import com.yuegongbao.ygb.util.EnterpriseScopeMode;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.util.YgbRiskCalculator;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
@@ -35,6 +38,12 @@ public class YgbSocialBaseCompareServiceImpl implements IYgbSocialBaseCompareSer
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
 
     @Override
     public List<YgbSocialBaseCompare> selectSocialBaseCompareList(YgbSocialBaseCompare socialBaseCompare)
@@ -82,8 +91,14 @@ public class YgbSocialBaseCompareServiceImpl implements IYgbSocialBaseCompareSer
         YgbSocialPayment query = new YgbSocialPayment();
         query.setStatMonth(statMonth);
         query.setEnterpriseId(enterpriseId);
+        applyScope(query);
         List<YgbSocialPayment> paymentList = socialPaymentMapper.selectSocialPaymentList(query);
-        socialBaseCompareMapper.deleteByScope(statMonth, enterpriseId);
+
+        YgbSocialBaseCompare deleteScope = new YgbSocialBaseCompare();
+        deleteScope.setStatMonth(statMonth);
+        deleteScope.setEnterpriseId(enterpriseId);
+        applyScope(deleteScope);
+        socialBaseCompareMapper.deleteByScope(deleteScope);
 
         int rows = 0;
         for (YgbSocialPayment payment : paymentList)
@@ -131,6 +146,16 @@ public class YgbSocialBaseCompareServiceImpl implements IYgbSocialBaseCompareSer
             }
         }
         return rows;
+    }
+
+    private void applyScope(com.yuegongbao.common.core.domain.BaseEntity query)
+    {
+        if (enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            enterpriseScopeHelper.applyEnterpriseDataScope(query, EnterpriseScopeMode.SINGLE, "enterprise_id");
+            return;
+        }
+        regionScopeHelper.applyRegionDataScope(query, "region_code");
     }
 
     private void validateMonth(String statMonth)

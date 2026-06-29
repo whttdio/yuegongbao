@@ -46,7 +46,7 @@ public class YgbSocialBaseCompare extends BaseEntity
     @Excel(name = "差异率")
     private BigDecimal diffRatio;
 
-    @Excel(name = "比对结果", readConverterExp = "1=正常,2=异常")
+    @Excel(name = "比对结果", readConverterExp = "1=正常,2=异常,3=待复核")
     private String compareResult;
 
     @Excel(name = "预警状态", readConverterExp = "0=未预警,1=已预警")

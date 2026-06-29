@@ -10,7 +10,7 @@ public interface YgbTaxCompareMapper
 
     public int insertTaxCompare(YgbTaxCompare taxCompare);
 
-    public int deleteByScope(@Param("statMonth") String statMonth, @Param("enterpriseId") Long enterpriseId);
+    public int deleteByScope(YgbTaxCompare taxCompare);
 
     public List<YgbTaxCompare> selectWorkerTaxCompareList(@Param("personId") Long personId,
         @Param("yearPrefix") String yearPrefix);

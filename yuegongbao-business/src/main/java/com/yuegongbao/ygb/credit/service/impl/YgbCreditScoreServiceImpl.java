@@ -23,7 +23,8 @@ import com.yuegongbao.ygb.credit.mapper.YgbCreditScoreMapper;
 import com.yuegongbao.ygb.credit.service.IYgbCreditScoreService;
 import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
 import com.yuegongbao.ygb.foundation.domain.YgbEnterprise;
-import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
+import com.yuegongbao.ygb.foundation.service.IYgbEnterpriseService;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
 import com.yuegongbao.ygb.util.YgbRegionHelper;
 import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
@@ -47,13 +48,19 @@ public class YgbCreditScoreServiceImpl implements IYgbCreditScoreService
     private YgbCreditScoreMapper creditScoreMapper;
 
     @Autowired
-    private YgbEnterpriseMapper enterpriseMapper;
+    private IYgbEnterpriseService enterpriseService;
 
     @Autowired
     private IYgbWarningService warningService;
 
     @Autowired
     private YgbRegionScopeHelper regionScopeHelper;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
+    @Autowired
+    private com.yuegongbao.ygb.util.YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbCreditScore> selectCreditScoreList(YgbCreditScore creditScore)
@@ -116,6 +123,7 @@ public class YgbCreditScoreServiceImpl implements IYgbCreditScoreService
             throw new ServiceException("信用评分记录不存在。");
         }
         hydrateRegionName(score);
+        dataScopeGuard.assertEntityAllowed(score);
         return score;
     }
 
@@ -136,17 +144,26 @@ public class YgbCreditScoreServiceImpl implements IYgbCreditScoreService
     {
         String statMonth = normalizeMonth(request.getStatMonth());
         String regionCode = regionScopeHelper.resolveAuthorizedRegionCode(request.getRegionCode());
+        if (request.getEnterpriseId() != null)
+        {
+            enterpriseScopeHelper.assertEnterpriseAuthorized(request.getEnterpriseId());
+        }
+        Long scopedEnterpriseId = enterpriseScopeHelper.isEnterpriseScopedUser()
+            ? enterpriseScopeHelper.resolveScopedEnterpriseId()
+            : null;
+        Long targetEnterpriseId = scopedEnterpriseId == null ? request.getEnterpriseId() : scopedEnterpriseId;
         YearMonth month = YearMonth.parse(statMonth, MONTH_FORMATTER);
         Date periodStart = java.sql.Date.valueOf(month.atDay(1));
         Date periodEnd = java.sql.Date.valueOf(month.atEndOfMonth());
         String regionPrefix = YgbRegionHelper.toRegionPrefix(regionCode);
 
-        List<YgbEnterprise> enterprises = enterpriseMapper.selectEnterpriseOptions().stream()
+        List<YgbEnterprise> enterprises = enterpriseService.selectEnterpriseOptions().stream()
             .filter(enterprise -> !"4".equals(enterprise.getEnterpriseType()))
-            .filter(enterprise -> request.getEnterpriseId() == null
-                || request.getEnterpriseId().equals(enterprise.getEnterpriseId()))
+            .filter(enterprise -> targetEnterpriseId == null
+                || targetEnterpriseId.equals(enterprise.getEnterpriseId()))
             .filter(enterprise -> StringUtils.isEmpty(regionPrefix)
                 || enterprise.getRegionCode().startsWith(regionPrefix))
+            .filter(enterprise -> isEnterpriseInScope(enterprise, scopedEnterpriseId))
             .collect(Collectors.toList());
         if (enterprises.isEmpty())
         {
@@ -161,8 +178,32 @@ public class YgbCreditScoreServiceImpl implements IYgbCreditScoreService
             createLowScoreWarningIfNeeded(context, operator);
             rows++;
         }
-        refreshRanks(statMonth, operator);
+        if (scopedEnterpriseId == null)
+        {
+            refreshRanks(statMonth, operator);
+        }
         return rows;
+    }
+
+    private boolean isEnterpriseInScope(YgbEnterprise enterprise, Long scopedEnterpriseId)
+    {
+        if (enterprise == null)
+        {
+            return false;
+        }
+        if (scopedEnterpriseId != null && !scopedEnterpriseId.equals(enterprise.getEnterpriseId()))
+        {
+            return false;
+        }
+        try
+        {
+            dataScopeGuard.assertEntityAllowed(enterprise);
+            return true;
+        }
+        catch (ServiceException e)
+        {
+            return false;
+        }
     }
 
     private ScoreContext buildScoreContext(String statMonth, Date periodStart, Date periodEnd, YgbEnterprise enterprise)
@@ -375,7 +416,10 @@ public class YgbCreditScoreServiceImpl implements IYgbCreditScoreService
         {
             return query;
         }
-        query.put("statMonth", normalizeMonth(creditScore.getStatMonth()));
+        if (StringUtils.isNotEmpty(creditScore.getStatMonth()))
+        {
+            query.put("statMonth", normalizeMonth(creditScore.getStatMonth()));
+        }
         if (creditScore.getEnterpriseId() != null)
         {
             query.put("enterpriseId", creditScore.getEnterpriseId());

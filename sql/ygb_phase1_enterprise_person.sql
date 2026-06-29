@@ -1,5 +1,7 @@
 -- 粤工保一期主数据初始化脚本
 -- 导入顺序：先执行 yuegongbao_20260417.sql，再执行本脚本
+set names utf8mb4;
+
 create table if not exists t_enterprise (
   enterprise_id      bigint(20)      not null auto_increment,
   enterprise_name    varchar(100)    not null,

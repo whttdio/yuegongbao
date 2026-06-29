@@ -202,28 +202,51 @@ public class YgbRegionScopeHelper
         }
     }
 
+    public void assertRegionAuthorized(String regionCode)
+    {
+        if (StringUtils.isEmpty(regionCode))
+        {
+            return;
+        }
+        List<String> allowedRegionCodes = selectAllowedRegionCodes();
+        if (!isRegionAllowed(regionCode, allowedRegionCodes))
+        {
+            throw new ServiceException("无权访问该区域数据");
+        }
+    }
+
+    public void assertEntityRegionAllowed(Object entity)
+    {
+        if (entity == null)
+        {
+            return;
+        }
+        try
+        {
+            java.lang.reflect.Method getter = entity.getClass().getMethod("getRegionCode");
+            Object value = getter.invoke(entity);
+            if (value instanceof String)
+            {
+                assertRegionAuthorized((String) value);
+            }
+        }
+        catch (ReflectiveOperationException ignored)
+        {
+            // entity has no region field
+        }
+    }
+
     private String resolveRegionCode(Long deptId)
     {
         if (deptId == null)
         {
             return null;
         }
-        if (deptId == 110L)
+        SysDept dept = deptMapper.selectDeptById(deptId);
+        if (dept == null || StringUtils.isEmpty(dept.getRegionCode()))
         {
-            return "440000";
+            return null;
         }
-        if (deptId == 111L || deptId == 114L || deptId == 118L)
-        {
-            return "440106";
-        }
-        if (deptId == 112L || deptId == 115L || deptId == 119L)
-        {
-            return "440305";
-        }
-        if (deptId == 113L || deptId == 116L || deptId == 120L)
-        {
-            return "440606";
-        }
-        return null;
+        return dept.getRegionCode();
     }
 }

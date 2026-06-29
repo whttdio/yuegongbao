@@ -10,8 +10,8 @@ const viewCode = 'AI'
 const config = {
   title: 'AI 设备',
   eyebrow: '设备子视图',
-  description: '从统一设备底表拆出 AI 设备视图，聚焦 AI 采集、在线和异常留痕。',
-  tip: '不拆设备主表，直接通过 viewCode=AI 过滤设备类型。',
+  description: '聚焦 AI 设备采集、在线、授权和异常留痕。',
+  tip: '聚焦 AI 智能监测设备的接入、在线、授权和预警联动状态。',
   permPrefix: 'ygb:device',
   filePrefix: 'device_ai',
   defaultQueryParams: { deviceType: '3' },

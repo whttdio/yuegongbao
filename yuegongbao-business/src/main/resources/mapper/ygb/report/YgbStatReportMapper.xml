@@ -53,6 +53,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and r.region_code = #{regionCode}
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
             <if test="reportStatus != null and reportStatus != ''">
                 and r.report_status = #{reportStatus}
             </if>
@@ -203,13 +204,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                          and p.region_code = ie.region_code
                    ) = 0 then 0
                    else round(count(1) / (
-                       select count(1)
-                       from t_person p
-                       where p.del_flag = '0'
-                         and p.insurance_status = '1'
-                         and p.region_code = ie.region_code
-                   ) * 1000, 2)
-               end as metric_rate,
+                        select count(1)
+                        from t_person p
+                        where p.del_flag = '0'
+                          and p.insurance_status = '1'
+                          and p.region_code = ie.region_code
+                    ) * 100, 2)
+                end as metric_rate,
                0 as sort_no
         from t_injury_event ie
         where date_format(ie.event_date, '%Y-%m') = #{statMonth}
@@ -277,7 +278,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                null as report_id,
                'EMPLOYMENT' as item_category,
                employer_enterprise_name as item_name,
-               cast(employer_enterprise_id as char) as item_dimension,
+               employer_enterprise_name as item_dimension,
                sum(ifnull(dispatch_count, 0)) as metric_count,
                cast(sum(ifnull(formal_count, 0)) as decimal(16,2)) as metric_value,
                round(avg(ifnull(ratio_value, 0)), 2) as metric_rate,
@@ -297,7 +298,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                null as report_id,
                'ATTENDANCE' as item_category,
                dispatch_enterprise_name as item_name,
-               cast(dispatch_enterprise_id as char) as item_dimension,
+               dispatch_enterprise_name as item_dimension,
                count(1) as metric_count,
                cast(sum(ifnull(total_hours, 0)) as decimal(16,2)) as metric_value,
                case when count(1) = 0 then 0
@@ -319,7 +320,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                null as report_id,
                'SOCIAL' as item_category,
                enterprise_name as item_name,
-               cast(enterprise_id as char) as item_dimension,
+               enterprise_name as item_dimension,
                count(1) as metric_count,
                cast(sum(ifnull(paid_amount, 0)) as decimal(16,2)) as metric_value,
                case when count(1) = 0 then 0
@@ -341,7 +342,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                null as report_id,
                'TAX' as item_category,
                enterprise_name as item_name,
-               cast(enterprise_id as char) as item_dimension,
+               enterprise_name as item_dimension,
                count(1) as metric_count,
                cast(sum(abs(ifnull(salary_amount, 0) - ifnull(declared_amount, 0))) as decimal(16,2)) as metric_value,
                case when count(1) = 0 then 0
@@ -363,7 +364,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                null as report_id,
                'AQ_INSURANCE' as item_category,
                enterprise_name as item_name,
-               cast(enterprise_id as char) as item_dimension,
+               enterprise_name as item_dimension,
                sum(ifnull(insured_person_count, 0)) as metric_count,
                cast(sum(ifnull(premium, 0)) as decimal(16,2)) as metric_value,
                case when count(1) = 0 then 0
@@ -575,6 +576,72 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <if test="regionPrefix != null and regionPrefix != ''">
             and region_code like concat(#{regionPrefix}, '%')
         </if>
+    </select>
+
+    <select id="selectDeviceStatsItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'DEVICE_STATS' as item_category,
+               enterprise_name as item_name,
+               enterprise_name as item_dimension,
+               count(1) as metric_count,
+               cast(sum(case when device_status = '1' then 1 else 0 end) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when device_status = '1' then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_device
+        where del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by enterprise_id, enterprise_name
+        order by metric_count desc, enterprise_name
+    </select>
+
+    <select id="selectExpansionReductionItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'EXPANSION_REDUCTION' as item_category,
+               region_code as item_name,
+               region_code as item_dimension,
+               count(1) as metric_count,
+               cast(sum(ifnull(salary_amount, 0)) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when disposal_status = '3' then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from t_uninsured_list
+        where stat_month = #{statMonth}
+          and del_flag = '0'
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by region_code
+        order by metric_count desc, region_code
+    </select>
+
+    <select id="selectSpecialRectificationItems" resultMap="YgbStatReportItemResult">
+        select null as item_id,
+               null as report_id,
+               'SPECIAL_RECTIFICATION' as item_category,
+               coalesce(nullif(enterprise_name, ''), nullif(person_name, ''), region_code) as item_name,
+               coalesce(nullif(business_type, ''), nullif(risk_level, ''), 'SPECIAL_RECTIFICATION') as item_dimension,
+               count(1) as metric_count,
+               cast(sum(case when workflow_status in ('closed','done','processed','3','2') or status in ('1','closed','done','processed') then 1 else 0 end) as decimal(16,2)) as metric_value,
+               case when count(1) = 0 then 0
+                    else round(sum(case when workflow_status in ('closed','done','processed','3','2') or status in ('1','closed','done','processed') then 1 else 0 end) / count(1) * 100, 2)
+               end as metric_rate,
+               0 as sort_no
+        from ygb_br_special_rectification
+        where del_flag = '0'
+          and stat_month = #{statMonth}
+        <if test="regionPrefix != null and regionPrefix != ''">
+            and region_code like concat(#{regionPrefix}, '%')
+        </if>
+        group by coalesce(nullif(business_type, ''), nullif(risk_level, ''), 'SPECIAL_RECTIFICATION'),
+                 coalesce(nullif(enterprise_name, ''), nullif(person_name, ''), region_code)
+        order by metric_count desc, item_name
     </select>
 
 </mapper>

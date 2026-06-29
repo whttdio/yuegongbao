@@ -1,20 +1,11 @@
 import { computed, getCurrentInstance, reactive, ref, toRefs } from 'vue'
 import { getPreventionFund, getPreventionFundSummary, listPreventionFund, updatePreventionFund } from '@/api/ygb/preventionFund'
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
+import { gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
-export const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const regionOptions = gdRegionOptions
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440106': '广州市天河区',
-  '440305': '深圳市南山区',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
 export const fundStatusOptions = [
   { label: '待计提', value: '0' },
@@ -70,10 +61,20 @@ export function focusQueue(key, title, count, unit, desc, actionText) {
 export function sourceModeLabel(value) {
   const sourceMode = String(value || '').toLowerCase()
   if (!sourceMode) return '-'
-  if (sourceMode.includes('stub')) return 'Stub'
+  if (sourceMode.includes('stub')) return '接口同步'
   if (sourceMode.includes('manual')) return '人工维护'
   if (sourceMode.includes('sync')) return '同步回写'
+  if (sourceMode.includes('system')) return '系统生成'
   return value
+}
+
+export function isManualSourceMode(value) {
+  return String(value || '').toLowerCase().includes('manual')
+}
+
+export function isFormalSourceMode(value) {
+  const sourceMode = String(value || '').toLowerCase()
+  return Boolean(sourceMode) && !sourceMode.includes('manual')
 }
 
 export function isLowBalance(accruedAmount, remainingAmount) {
@@ -99,8 +100,7 @@ export function matchFundFocus(fund, focusKey) {
     return !fund.evidenceUrl
   }
   if (focusKey === 'nonStub') {
-    const mode = sourceModeLabel(fund.sourceMode)
-    return mode !== 'Stub' && mode !== '-'
+    return isFormalSourceMode(fund.sourceMode)
   }
   if (focusKey === 'all') {
     return true
@@ -304,8 +304,16 @@ export function usePreventionFundPage(options = {}) {
     }
     const accruedAmount = Number(form.value.accruedAmount || 0)
     const usedAmount = Number(form.value.usedAmount || 0)
+    if (usedAmount < 0) {
+      proxy.$modal.msgWarning('已使用金额不能小于 0')
+      return
+    }
     if (usedAmount > accruedAmount) {
       proxy.$modal.msgWarning('已使用金额不能大于计提金额')
+      return
+    }
+    if (usedAmount > 0 && (!form.value.usagePurpose || !form.value.evidenceUrl)) {
+      proxy.$modal.msgWarning('使用预防资金时请填写用途和凭证地址')
       return
     }
     proxy.$refs.fundRef.validate(valid => {

@@ -37,6 +37,6 @@ const pageConfig = {
   ],
   permissionPrefix: 'ygb:statReport:tax',
   printTitle: '用工保障月报台账 - 税务月报',
-  routePath: '/ygb-report/statReport/tax'
+  routePath: '/statistical-report/tax'
 }
 </script>

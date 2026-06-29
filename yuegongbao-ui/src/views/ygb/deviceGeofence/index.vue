@@ -1,35 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  addDeviceGeofence,
-  delDeviceGeofence,
-  getDeviceGeofence,
-  getDeviceGeofenceSummary,
-  listDeviceGeofence,
-  updateDeviceGeofence
-} from '@/api/ygb/device'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const config = {
+const config = createBusinessRecordPageConfig({
+  module: 'deviceGeofence',
   title: '电子围栏',
-  description: '以扩展台账维护围栏名称、区域范围、关联企业和启停状态。',
-  permPrefix: 'ygb:device',
-  filePrefix: 'device_geofence',
-  defaultCategoryCode: 'geofence',
-  defaultSourceLabel: '设备管理',
-  recordNameLabel: '围栏名称',
-  recordNamePlaceholder: '请输入围栏名称',
-  filters: ['regionCode', 'enterpriseId', 'recordName', 'workflowStatus', 'status'],
-  routeQueryFields: ['regionCode', 'enterpriseId'],
-  listApi: query => listDeviceGeofence(query),
-  summaryApi: query => getDeviceGeofenceSummary(query),
-  detailApi: id => getDeviceGeofence(id),
-  addApi: data => addDeviceGeofence(data),
-  updateApi: data => updateDeviceGeofence(data),
-  deleteApi: ids => delDeviceGeofence(ids),
-  exportUrl: 'ygb/device/geofence/export'
-}
+  description: '围绕设备越界告警、轨迹回放和围栏规则管理开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '围栏名称',
+  businessNamePlaceholder: '请输入围栏名称',
+  defaultSourceLabel: '电子围栏',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

@@ -1,8 +1,20 @@
 <template>
   <view class="worker-page">
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">活动参与记录</view>
+      <view class="worker-subtitle">查看福利活动报名状态、处理进度和最近参与情况</view>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ rows.length }}</view>
+          <view class="hero-stat__label">参与次数</view>
+        </view>
+      </view>
+    </view>
+
     <view class="worker-card">
-      <view class="worker-title">活动参与记录</view>
-      <view class="worker-subtitle">查看福利活动报名状态、处理进度和最近参与情况。</view>
+      <view class="section-head">
+        <view class="worker-title">参与列表</view>
+      </view>
       <view v-if="rows.length">
         <view v-for="item in rows" :key="item.joinId" class="list-row">
           <view>
@@ -102,91 +114,3 @@ function copyText(content, successTitle) {
 onShow(loadData)
 </script>
 
-<style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  line-height: 1.7;
-  color: #16324f;
-}
-
-.result-block {
-  margin-top: 20rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 24rpx;
-  color: #5f7893;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.8;
-  color: #36506b;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-</style>

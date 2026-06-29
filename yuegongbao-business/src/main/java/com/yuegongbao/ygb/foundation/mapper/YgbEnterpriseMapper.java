@@ -13,7 +13,7 @@ public interface YgbEnterpriseMapper
 {
     public List<YgbEnterprise> selectEnterpriseList(YgbEnterprise enterprise);
 
-    public List<YgbEnterprise> selectEnterpriseOptions();
+    public List<YgbEnterprise> selectEnterpriseOptions(YgbEnterprise enterprise);
 
     public YgbEnterprise selectEnterpriseById(Long enterpriseId);
 

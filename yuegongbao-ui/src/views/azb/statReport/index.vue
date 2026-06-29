@@ -46,8 +46,8 @@
           <el-date-picker v-model="queryParams.statMonth" type="month" value-format="YYYY-MM" format="YYYY-MM" style="width: 180px" />
         </el-form-item>
         <el-form-item label="报表类型">
-          <el-select v-model="queryParams.reportCode" clearable style="width: 220px">
-            <el-option v-for="item in azbReportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+          <el-select v-model="queryParams.reportCode" style="width: 220px">
+            <el-option v-for="item in authorizedQueryReportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="报表状态">
@@ -64,13 +64,13 @@
 
     <el-card class="toolbar-card azb-toolbar-card" shadow="never">
       <el-row :gutter="10">
-        <el-col v-if="!isReadOnlyRole" :span="1.5">
-          <el-button type="primary" plain icon="DocumentAdd" @click="openGenerateDialog()" v-hasPermi="['ygb:statReport:generate']">生成报表</el-button>
+        <el-col v-if="canGenerate" :span="1.5">
+          <el-button type="primary" plain icon="DocumentAdd" @click="guardedOpenGenerateDialog()">生成报表</el-button>
         </el-col>
-        <el-col :span="1.5">
-          <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:statReport:export']">导出</el-button>
+        <el-col v-if="canExportCurrentReport" :span="1.5">
+          <el-button type="warning" plain icon="Download" @click="handleExport">导出</el-button>
         </el-col>
-        <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
+        <right-toolbar v-model:showSearch="showSearch" @queryTable="guardedGetList" />
       </el-row>
     </el-card>
 
@@ -120,11 +120,11 @@
         <el-table-column label="操作" fixed="right" align="center" width="200" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-button link type="info" icon="View" @click.stop="openDetail(scope.row)">详情</el-button>
-            <el-button v-if="!isReadOnlyRole" link type="primary" icon="RefreshRight" @click.stop="openGenerateDialog(scope.row)" v-hasPermi="['ygb:statReport:generate']">重生成</el-button>
+            <el-button v-if="canGenerateReport(scope.row.reportCode)" link type="primary" icon="RefreshRight" @click.stop="guardedOpenGenerateDialog(scope.row)">重生成</el-button>
           </template>
         </el-table-column>
       </el-table>
-      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="guardedGetList" />
     </el-card>
 
     <el-dialog v-if="!isReadOnlyRole" title="生成统计报表" v-model="generateOpen" width="520px" append-to-body>
@@ -139,13 +139,13 @@
         </el-form-item>
         <el-form-item label="报表类型" prop="reportCode">
           <el-select v-model="generateForm.reportCode" style="width: 100%">
-            <el-option v-for="item in azbReportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in authorizedGenerateReportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitGenerate">生成</el-button>
+          <el-button type="primary" @click="guardedSubmitGenerate">生成</el-button>
           <el-button @click="generateOpen = false">取消</el-button>
         </div>
       </template>
@@ -179,12 +179,24 @@
         <div class="azb-detail-block">
           <h3>明细项</h3>
           <el-table :data="reportItems" size="small">
-            <el-table-column label="分类" prop="itemCategory" width="150" />
+            <el-table-column label="分类" width="150">
+              <template #default="scope">
+                {{ formatStatReportItemCategory(scope.row.itemCategory) }}
+              </template>
+            </el-table-column>
             <el-table-column label="名称" prop="itemName" min-width="160" />
-            <el-table-column label="维度编码" prop="itemDimension" width="160" />
+            <el-table-column label="维度" width="160">
+              <template #default="scope">
+                {{ formatStatReportItemDimension(scope.row.itemDimension, scope.row) }}
+              </template>
+            </el-table-column>
             <el-table-column label="数量" prop="metricCount" width="90" />
             <el-table-column label="数值" prop="metricValue" width="120" />
-            <el-table-column label="比率" prop="metricRate" width="100" />
+            <el-table-column label="比率" width="100">
+              <template #default="scope">
+                {{ formatMetricRate(scope.row.metricRate, reportDetail.reportCode) }}
+              </template>
+            </el-table-column>
           </el-table>
         </div>
       </template>
@@ -193,7 +205,7 @@
 </template>
 
 <script setup name="AzbStatReport">
-import { computed, ref, watchEffect } from 'vue'
+import { computed, getCurrentInstance, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useWorkbenchAssist } from '@/composables/useWorkbenchAssist'
 import useUserStore from '@/store/modules/user'
@@ -207,6 +219,8 @@ import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQue
 import { useAuthorizedRegionOptions } from '@/utils/regionScope'
 import {
   formatMetricRate,
+  formatStatReportItemCategory,
+  formatStatReportItemDimension,
   statReportRegionNameMap as regionNameMap,
   statReportRegionOptions as allRegionOptions,
   statReportStatusOptions as statusOptions,
@@ -215,7 +229,9 @@ import {
   useStatReportPage,
   valueOrDefault
 } from '@/views/statReport/useStatReportPage'
+import { resolveStatReportTypeKeyByReportCode } from '@/views/statReport/reportConfigs'
 
+const { proxy } = getCurrentInstance()
 const route = useRoute()
 const { setPageGuide } = useWorkbenchAssist()
 const regionOptions = useAuthorizedRegionOptions(allRegionOptions)
@@ -241,6 +257,30 @@ const azbReportTypeOptions = computed(() => rawReportTypeOptions.map(item => (
     : item
 )))
 
+function hasExactPermission(permissions, permission) {
+  return Array.isArray(permissions) && permissions.some(item => item === '*:*:*' || item === permission)
+}
+
+function resolveKnownStatReportTypeKey(reportCode) {
+  if (!rawReportTypeOptions.some(item => item.value === reportCode)) {
+    return ''
+  }
+  return resolveStatReportTypeKeyByReportCode(reportCode)
+}
+
+function hasStatReportPermission(reportCode, action) {
+  const typeKey = resolveKnownStatReportTypeKey(reportCode)
+  if (!typeKey) {
+    return false
+  }
+  return hasExactPermission(userStore.permissions || [], `azb:statReport:${typeKey}:${action}`)
+}
+
+const authorizedQueryReportTypeOptions = computed(() => azbReportTypeOptions.value.filter(item => hasStatReportPermission(item.value, 'query')))
+const authorizedGenerateReportTypeOptions = computed(() => azbReportTypeOptions.value.filter(item => hasStatReportPermission(item.value, 'generate')))
+const canGenerate = computed(() => !isReadOnlyRole.value && authorizedGenerateReportTypeOptions.value.length > 0)
+const canExportCurrentReport = computed(() => hasStatReportPermission(queryParams.value.reportCode, 'export'))
+
 const {
   loading,
   showSearch,
@@ -255,13 +295,13 @@ const {
   queryParams,
   generateForm,
   generateRules,
-  getList,
+  getList: pageGetList,
   handleRowClick,
-  handleQuery,
+  handleQuery: pageHandleQuery,
   resetQuery: pageResetQuery,
-  handleExport,
+  handleExport: pageHandleExport,
   openGenerateDialog,
-  submitGenerate,
+  submitGenerate: pageSubmitGenerate,
   openDetail,
   syncCurrentReport
 } = useStatReportPage({
@@ -274,6 +314,83 @@ const {
   },
   immediate: false
 })
+
+function firstAuthorizedReportCode(action) {
+  const options = action === 'generate'
+    ? authorizedGenerateReportTypeOptions.value
+    : authorizedQueryReportTypeOptions.value
+  return options[0]?.value || ''
+}
+
+function resolveAuthorizedReportCode(action, reportCode = queryParams.value.reportCode) {
+  if (reportCode && hasStatReportPermission(reportCode, action)) {
+    return reportCode
+  }
+  return firstAuthorizedReportCode(action)
+}
+
+function ensureAuthorizedQueryReportCode() {
+  const nextReportCode = resolveAuthorizedReportCode('query')
+  if (!nextReportCode) {
+    proxy?.$modal?.msgWarning?.('当前账号没有统计报表查询权限')
+    reportList.value = []
+    total.value = 0
+    currentReport.value = undefined
+    return false
+  }
+  if (queryParams.value.reportCode !== nextReportCode) {
+    queryParams.value.reportCode = nextReportCode
+  }
+  return true
+}
+
+function guardedGetList() {
+  if (!ensureAuthorizedQueryReportCode()) {
+    return Promise.resolve()
+  }
+  return pageGetList()
+}
+
+function handleQuery() {
+  if (!ensureAuthorizedQueryReportCode()) {
+    return
+  }
+  pageHandleQuery()
+}
+
+function canGenerateReport(reportCode) {
+  return !isReadOnlyRole.value && hasStatReportPermission(reportCode, 'generate')
+}
+
+function guardedOpenGenerateDialog(payload) {
+  const nextReportCode = payload?.reportCode
+    ? payload.reportCode
+    : resolveAuthorizedReportCode('generate', queryParams.value.reportCode)
+  if (!nextReportCode || !canGenerateReport(nextReportCode)) {
+    proxy?.$modal?.msgWarning?.('当前账号没有该报表类型的生成权限')
+    return
+  }
+  openGenerateDialog({
+    ...(payload || {}),
+    reportCode: nextReportCode
+  })
+}
+
+function guardedSubmitGenerate() {
+  if (!canGenerateReport(generateForm.value.reportCode)) {
+    proxy?.$modal?.msgWarning?.('当前账号没有该报表类型的生成权限')
+    return
+  }
+  pageSubmitGenerate()
+}
+
+function handleExport() {
+  if (!hasStatReportPermission(queryParams.value.reportCode, 'export')) {
+    proxy?.$modal?.msgWarning?.('当前账号没有该报表类型的导出权限')
+    return
+  }
+  pageHandleExport()
+}
 
 const portalExplanations = computed(() => summaryData.value.azbExplanation || [])
 const portalExplanationItems = computed(() => decoratePortalExplanationItems(portalExplanations.value, {
@@ -508,7 +625,7 @@ const primaryReportAction = computed(() => {
   if (isReadOnlyRole.value) {
     return { label: '查看详情', action: 'detail' }
   }
-  if (String(currentReport.value.reportStatus || '') === '0') {
+  if (canGenerateReport(currentReport.value.reportCode) && String(currentReport.value.reportStatus || '') === '0') {
     return { label: '按当前报表重生成', action: 'generate' }
   }
   return { label: '查看详情', action: 'detail' }
@@ -640,7 +757,7 @@ function handlePrimaryReportAction() {
       proxy.$modal.msgWarning(`${readOnlyRoleLabel.value}仅保留报表查看、详情和导出，不能生成报表`)
       return
     }
-    openGenerateDialog(currentReport.value)
+    guardedOpenGenerateDialog(currentReport.value)
     return
   }
   openDetail(currentReport.value)
@@ -649,7 +766,8 @@ function handlePrimaryReportAction() {
 function resetQuery() {
   pageResetQuery()
   applyWorkbenchRouteQuery(route.query, queryParams.value, statReportWorkbenchFields)
-  getList()
+  guardedGetList()
+}
 
 watchEffect(() => {
   setPageGuide({
@@ -663,8 +781,6 @@ watchEffect(() => {
   })
 })
 
-}
-
 function clearWorkbenchContext() {
   Object.assign(queryParams.value, {
     pageNum: 1,
@@ -674,11 +790,11 @@ function clearWorkbenchContext() {
     path: route.path,
     query: stripWorkbenchRouteQuery(route.query, statReportWorkbenchFields)
   })
-  getList()
+  guardedGetList()
 }
 
 applyWorkbenchRouteQuery(route.query, queryParams.value, statReportWorkbenchFields)
-getList()
+guardedGetList()
 </script>
 
 <style scoped lang="scss">

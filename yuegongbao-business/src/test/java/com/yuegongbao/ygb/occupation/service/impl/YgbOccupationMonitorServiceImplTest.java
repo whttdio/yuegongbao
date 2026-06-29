@@ -14,6 +14,7 @@ import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
 import com.yuegongbao.ygb.integration.OccupationClient;
 import com.yuegongbao.ygb.occupation.domain.YgbOccupationMonitor;
 import com.yuegongbao.ygb.occupation.mapper.YgbOccupationMonitorMapper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
@@ -32,6 +33,9 @@ class YgbOccupationMonitorServiceImplTest
     @Mock
     private IYgbWarningService warningService;
 
+    @Mock
+    private YgbRegionScopeHelper regionScopeHelper;
+
     @InjectMocks
     private YgbOccupationMonitorServiceImpl service;
 
@@ -45,7 +49,9 @@ class YgbOccupationMonitorServiceImplTest
         int rows = service.syncOccupationMonitor("2026-06", "tester");
 
         assertEquals(2, rows);
-        verify(occupationMonitorMapper).deleteByScope("2026-06", null);
+        ArgumentCaptor<YgbOccupationMonitor> deleteScopeCaptor = ArgumentCaptor.forClass(YgbOccupationMonitor.class);
+        verify(occupationMonitorMapper).deleteByScope(deleteScopeCaptor.capture());
+        assertEquals("2026-06", deleteScopeCaptor.getValue().getStatMonth());
 
         ArgumentCaptor<YgbOccupationMonitor> captor = ArgumentCaptor.forClass(YgbOccupationMonitor.class);
         verify(occupationMonitorMapper, org.mockito.Mockito.times(2)).insertOccupationMonitor(captor.capture());

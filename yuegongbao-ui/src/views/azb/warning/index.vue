@@ -158,6 +158,7 @@
               link
               type="primary"
               icon="Operation"
+              :disabled="!canHandleWarningRow(scope.row)"
               @click.stop="openHandleDialog(scope.row)"
               v-hasPermi="['ygb:warning:handle']"
             >
@@ -223,7 +224,7 @@
       <el-form ref="handleRef" :model="handleForm" :rules="handleRules" label-width="100px">
         <el-form-item label="处置动作" prop="action">
           <el-select v-model="handleForm.action" placeholder="请选择处置动作">
-            <el-option v-for="item in actionOptions" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in handleActionOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="处置意见" prop="opinion">
@@ -251,7 +252,6 @@ import { decoratePortalExplanationItems, openPortalExplanationAction } from '@/u
 import { useRoleViewMode } from '@/utils/roleView'
 import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQuery } from '@/utils/workbenchLink'
 import {
-  actionOptions,
   focusQueue,
   formatRegionName,
   matchWarningFocus,
@@ -288,6 +288,8 @@ const {
   handleForm,
   handleRules,
   regionOptions,
+  getWarningActionOptions: resolveWarningActionOptions,
+  canHandleWarning: resolveCanHandleWarning,
   loadAll,
   loadEnterpriseOptions,
   handleQuery,
@@ -451,7 +453,7 @@ const primaryWarningAction = computed(() => {
   if (isReadOnlyRole.value) {
     return { label: '查看详情', action: 'detail' }
   }
-  if (['0', '1'].includes(String(currentWarning.value.warnStatus || ''))) {
+  if (resolveCanHandleWarning(currentWarning.value)) {
     return { label: '处置工单', action: 'handle' }
   }
   return { label: '查看详情', action: 'detail' }
@@ -483,6 +485,11 @@ const currentWarningActionSummary = computed(() => {
 
 const currentWarningActionTags = computed(() => buildWarningHintTags(currentWarning.value || undefined, roleView.value, activeFocus.value))
 const detailHintTags = computed(() => buildWarningHintTags(warningDetail.value || currentWarning.value, roleView.value, activeFocus.value))
+const handleActionOptions = computed(() => resolveWarningActionOptions(currentWarning.value))
+
+function canHandleWarningRow(row) {
+  return resolveCanHandleWarning(row)
+}
 
 const workflowSteps = computed(() => {
   if (roleView.value === 'bank') {

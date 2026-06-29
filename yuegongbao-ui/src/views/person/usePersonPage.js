@@ -9,7 +9,14 @@ import {
 } from '@/api/ygb/person'
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
 import useUserStore from '@/store/modules/user'
+import {
+  applyLockedEnterpriseQuery,
+  filterAuthorizedEnterpriseOptions,
+  isEnterpriseFilterLocked,
+  lockedEnterpriseId
+} from '@/utils/enterpriseScope'
 import { filterAuthorizedRegionOptions } from '@/utils/regionScope'
+import { formatRegionName, gdRegionNameMap, gdRegionOptions, normalizeRegionCode } from '@/utils/regionName'
 
 export const workerTypeOptions = [
   { label: '派遣工', value: '1' },
@@ -33,28 +40,13 @@ export const insuranceStatusOptions = [
 
 export const employmentStatusOptions = [
   { label: '在岗', value: '0' },
-  { label: '离岗', value: '1' }
+  { label: '离岗', value: '1' },
+  { label: '离岗', value: '2' }
 ]
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440100': '广州市',
-  '440106': '广州市天河区',
-  '440300': '深圳市',
-  '440305': '深圳市南山区',
-  '440600': '佛山市',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
-export const baseRegionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市', value: '440100' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市', value: '440300' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市', value: '440600' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const baseRegionOptions = gdRegionOptions
 
 function createDefaultQueryParams() {
   return {
@@ -100,16 +92,15 @@ function createRules() {
 }
 
 export function optionLabel(options, value, fallback = '-') {
-  const matched = Array.isArray(options) ? options.find(item => item.value === value) : undefined
+  if (value === null || value === undefined || value === '') {
+    return fallback
+  }
+  const normalized = String(value)
+  const matched = Array.isArray(options) ? options.find(item => String(item.value) === normalized) : undefined
   return matched ? matched.label : fallback
 }
 
-export function formatRegionName(code, fallback = '全部区域') {
-  if (!code) {
-    return fallback
-  }
-  return regionNameMap[code] || code
-}
+export { formatRegionName }
 
 export function maskIdCard(idCard) {
   if (!idCard || idCard.length < 8) {
@@ -147,30 +138,34 @@ export function usePersonPage(options = {}) {
 
   const data = reactive({
     form: createDefaultForm(),
-    queryParams: {
+    queryParams: applyLockedEnterpriseQuery({
       ...createDefaultQueryParams(),
       ...(initialQueryParams || {})
-    },
+    }),
     rules: createRules()
   })
 
   const { queryParams, form, rules } = toRefs(data)
 
+  const enterpriseFilterLocked = computed(() => isEnterpriseFilterLocked())
+
   const regionOptions = computed(() => {
     const optionMap = new Map(baseRegionOptions.map(item => [item.value, item]))
     enterpriseOptions.value.forEach(item => {
-      if (item.regionCode && !optionMap.has(item.regionCode)) {
-        optionMap.set(item.regionCode, {
-          value: item.regionCode,
-          label: formatRegionName(item.regionCode, item.regionCode)
+      const regionCode = normalizeRegionCode(item.regionCode)
+      if (regionCode && !optionMap.has(regionCode)) {
+        optionMap.set(regionCode, {
+          value: regionCode,
+          label: formatRegionName(regionCode, regionCode)
         })
       }
     })
     personList.value.forEach(item => {
-      if (item.regionCode && !optionMap.has(item.regionCode)) {
-        optionMap.set(item.regionCode, {
-          value: item.regionCode,
-          label: formatRegionName(item.regionCode, item.regionCode)
+      const regionCode = normalizeRegionCode(item.regionCode)
+      if (regionCode && !optionMap.has(regionCode)) {
+        optionMap.set(regionCode, {
+          value: regionCode,
+          label: formatRegionName(regionCode, regionCode)
         })
       }
     })
@@ -187,16 +182,31 @@ export function usePersonPage(options = {}) {
     return false
   }
 
+  function scopedQueryParams() {
+    return applyLockedEnterpriseQuery(queryParams.value)
+  }
+
   function buildSummaryQuery() {
+    const scoped = scopedQueryParams()
     return {
-      regionCode: queryParams.value.regionCode,
-      enterpriseId: queryParams.value.enterpriseId,
-      personName: queryParams.value.personName,
-      idCard: queryParams.value.idCard,
-      workerType: queryParams.value.workerType,
-      certStatus: queryParams.value.certStatus,
-      insuranceStatus: queryParams.value.insuranceStatus,
-      employmentStatus: queryParams.value.employmentStatus
+      regionCode: scoped.regionCode,
+      enterpriseId: scoped.enterpriseId,
+      personName: scoped.personName,
+      idCard: scoped.idCard,
+      workerType: scoped.workerType,
+      certStatus: scoped.certStatus,
+      insuranceStatus: scoped.insuranceStatus,
+      employmentStatus: scoped.employmentStatus
+    }
+  }
+
+  function applyEnterpriseScopeToForm(formData) {
+    const enterpriseId = lockedEnterpriseId() ?? formData.enterpriseId
+    const current = enterpriseOptions.value.find(item => Number(item.enterpriseId) === Number(enterpriseId))
+    return {
+      ...formData,
+      enterpriseId,
+      regionCode: formData.regionCode || current?.regionCode
     }
   }
 
@@ -213,8 +223,9 @@ export function usePersonPage(options = {}) {
 
   function getList() {
     loading.value = true
+    const scopedParams = scopedQueryParams()
     Promise.all([
-      listPerson(queryParams.value),
+      listPerson(scopedParams),
       getPersonSummary(buildSummaryQuery())
     ]).then(([listResponse, summaryResponse]) => {
       personList.value = listResponse.rows || []
@@ -227,13 +238,17 @@ export function usePersonPage(options = {}) {
   }
 
   function loadEnterpriseOptions() {
-    optionselectEnterprise().then(response => {
-      enterpriseOptions.value = response.data || []
+    return optionselectEnterprise().then(response => {
+      enterpriseOptions.value = filterAuthorizedEnterpriseOptions(response.data || [])
+      const enterpriseId = lockedEnterpriseId()
+      if (enterpriseId != null) {
+        queryParams.value.enterpriseId = enterpriseId
+      }
     })
   }
 
   function reset() {
-    form.value = createDefaultForm()
+    form.value = applyEnterpriseScopeToForm(createDefaultForm())
     proxy.resetForm('personRef')
   }
 
@@ -249,7 +264,7 @@ export function usePersonPage(options = {}) {
 
   function resetQuery() {
     proxy.resetForm('queryRef')
-    queryParams.value = createDefaultQueryParams()
+    queryParams.value = applyLockedEnterpriseQuery(createDefaultQueryParams())
     getList()
   }
 
@@ -320,7 +335,7 @@ export function usePersonPage(options = {}) {
       if (!valid) {
         return
       }
-      const payload = { ...form.value }
+      const payload = applyEnterpriseScopeToForm({ ...form.value })
       const request = payload.personId ? updatePerson(payload) : addPerson(payload)
       request.then(() => {
         proxy.$modal.msgSuccess(payload.personId ? '修改成功' : '新增成功')
@@ -348,7 +363,7 @@ export function usePersonPage(options = {}) {
   }
 
   function handleExport() {
-    proxy.download('ygb/person/export', { ...queryParams.value }, `${exportFilePrefix}_${Date.now()}.xlsx`)
+    proxy.download('ygb/person/export', { ...scopedQueryParams() }, `${exportFilePrefix}_${Date.now()}.xlsx`)
   }
 
   function handleEnterpriseChange(value) {
@@ -356,8 +371,9 @@ export function usePersonPage(options = {}) {
     form.value.regionCode = current?.regionCode || undefined
   }
 
-  loadEnterpriseOptions()
-  getList()
+  loadEnterpriseOptions().finally(() => {
+    getList()
+  })
 
   return {
     showSearch,
@@ -368,6 +384,7 @@ export function usePersonPage(options = {}) {
     title,
     personList,
     enterpriseOptions,
+    enterpriseFilterLocked,
     currentPerson,
     detailPerson,
     summaryData,
@@ -378,6 +395,7 @@ export function usePersonPage(options = {}) {
     form,
     rules,
     regionOptions,
+    scopedQueryParams,
     getList,
     cancel,
     handleQuery,

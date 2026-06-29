@@ -58,7 +58,7 @@ public class YgbModuleCatalogServiceImpl implements IYgbModuleCatalogService
                 "com.yuegongbao.ygb.newform", "ygb-newform-service", "large"),
             module("occupationMonitor", "职业病监测", "卫健职业病发病人数按行业和区域同步监测。", 1, "occupation", "职业病监管", 4020L,
                 "com.yuegongbao.ygb.occupation", "ygb-occupation-service", "large"),
-            module("heightWorkReport", "高处作业申报报备", "PC 端报备、证书 Stub 核验、电子凭证和第三方导入占位接口。", 1, "techdefense", "技术防范", 4040L,
+            module("heightWorkReport", "高处作业申报报备", "PC 端报备、证书核验、电子凭证和第三方导入接口。", 1, "techdefense", "技术防范", 4040L,
                 "com.yuegongbao.ygb.techdefense", "ygb-techdefense-service", "medium"),
             module("aiReport", "AI监测报告", "自动评分、风险分级、区域排名和整改建议。", 1, "aireport", "AI监测报告", 3940L,
                 "com.yuegongbao.ygb.aireport", "ygb-aireport-service", "large"),

@@ -14,7 +14,10 @@ import com.yuegongbao.ygb.credit.domain.YgbCreditScoreGenerateRequest;
 import com.yuegongbao.ygb.credit.domain.YgbCreditScoreSummary;
 import com.yuegongbao.ygb.credit.mapper.YgbCreditScoreMapper;
 import com.yuegongbao.ygb.foundation.domain.YgbEnterprise;
-import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
+import com.yuegongbao.ygb.foundation.service.IYgbEnterpriseService;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,10 +36,19 @@ class YgbCreditScoreServiceImplTest
     private YgbCreditScoreMapper creditScoreMapper;
 
     @Mock
-    private YgbEnterpriseMapper enterpriseMapper;
+    private IYgbEnterpriseService enterpriseService;
 
     @Mock
     private IYgbWarningService warningService;
+
+    @Mock
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Mock
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
+    @Mock
+    private YgbDataScopeGuard dataScopeGuard;
 
     @InjectMocks
     private YgbCreditScoreServiceImpl service;
@@ -49,7 +61,8 @@ class YgbCreditScoreServiceImplTest
         enterprise.setEnterpriseName("佛山顺德智造服务有限公司");
         enterprise.setEnterpriseType("3");
         enterprise.setRegionCode("440606");
-        when(enterpriseMapper.selectEnterpriseOptions()).thenReturn(List.of(enterprise));
+        when(regionScopeHelper.resolveAuthorizedRegionCode(any())).thenReturn("440000");
+        when(enterpriseService.selectEnterpriseOptions()).thenReturn(List.of(enterprise));
 
         when(creditScoreMapper.countContractTotal(eq(1003L), any(), any())).thenReturn(4);
         when(creditScoreMapper.countContractFiled(eq(1003L), any(), any())).thenReturn(2);

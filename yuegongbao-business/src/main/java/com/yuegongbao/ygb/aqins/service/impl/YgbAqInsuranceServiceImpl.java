@@ -27,6 +27,9 @@ import com.yuegongbao.ygb.aqins.service.IYgbAqInsuranceService;
 import com.yuegongbao.ygb.domain.vo.YgbAqInsuranceStubItem;
 import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
 import com.yuegongbao.ygb.integration.AqInsuranceClient;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
 @Service
@@ -46,6 +49,15 @@ public class YgbAqInsuranceServiceImpl implements IYgbAqInsuranceService
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbAqInsurance> selectAqInsuranceList(YgbAqInsurance aqInsurance)
@@ -113,7 +125,12 @@ public class YgbAqInsuranceServiceImpl implements IYgbAqInsuranceService
     @Override
     public YgbAqInsurance selectAqInsuranceById(Long policyId)
     {
-        return aqInsuranceMapper.selectAqInsuranceById(policyId);
+        YgbAqInsurance aqInsurance = aqInsuranceMapper.selectAqInsuranceById(policyId);
+        if (aqInsurance != null)
+        {
+            dataScopeGuard.assertEntityAllowed(aqInsurance);
+        }
+        return aqInsurance;
     }
 
     @Override
@@ -121,19 +138,24 @@ public class YgbAqInsuranceServiceImpl implements IYgbAqInsuranceService
     public int syncAqInsurance(String statMonth, Long enterpriseId, String operator)
     {
         validateMonth(statMonth);
+        if (enterpriseId != null)
+        {
+            enterpriseScopeHelper.assertEnterpriseAuthorized(enterpriseId);
+        }
         List<YgbAqInsuranceStubItem> items = aqInsuranceClient.pullMonthlyPolicies(statMonth);
         int rows = 0;
         for (YgbAqInsuranceStubItem item : items)
         {
-            if (enterpriseId != null && !enterpriseId.equals(item.getEnterpriseId()))
+            if (!isItemInScope(item, enterpriseId))
             {
                 continue;
             }
+            BigDecimal preventionFundAmount = defaultAmount(item.getPreventionFundAmount());
             YgbAqInsurance existed = aqInsuranceMapper.selectAqInsuranceByScope(statMonth, item.getEnterpriseId());
             BigDecimal usedAmount = existed == null || existed.getUsedFundAmount() == null
                 ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
                 : existed.getUsedFundAmount();
-            BigDecimal remainingAmount = item.getPreventionFundAmount().subtract(usedAmount).max(BigDecimal.ZERO)
+            BigDecimal remainingAmount = preventionFundAmount.subtract(usedAmount).max(BigDecimal.ZERO)
                 .setScale(2, RoundingMode.HALF_UP);
 
             YgbAqInsurance record = existed == null ? new YgbAqInsurance() : existed;
@@ -149,7 +171,7 @@ public class YgbAqInsuranceServiceImpl implements IYgbAqInsuranceService
             record.setPolicyStatus(resolvePolicyStatus(item.getPolicyStatus(), item.getStartDate(), item.getEndDate()));
             record.setInsuredPersonCount(item.getInsuredPersonCount());
             record.setPreventionFundRatio(item.getPreventionFundRatio());
-            record.setPreventionFundAmount(item.getPreventionFundAmount());
+            record.setPreventionFundAmount(preventionFundAmount);
             record.setUsedFundAmount(usedAmount);
             record.setRemainingFundAmount(remainingAmount);
             record.setExpireInDays(resolveExpireInDays(item.getEndDate()));
@@ -175,6 +197,28 @@ public class YgbAqInsuranceServiceImpl implements IYgbAqInsuranceService
             rows++;
         }
         return rows;
+    }
+
+    private boolean isItemInScope(YgbAqInsuranceStubItem item, Long requestedEnterpriseId)
+    {
+        if (item == null)
+        {
+            return false;
+        }
+        if (requestedEnterpriseId != null && !requestedEnterpriseId.equals(item.getEnterpriseId()))
+        {
+            return false;
+        }
+        try
+        {
+            regionScopeHelper.assertRegionAuthorized(item.getRegionCode());
+            enterpriseScopeHelper.assertEnterpriseAuthorized(item.getEnterpriseId());
+            return true;
+        }
+        catch (ServiceException e)
+        {
+            return false;
+        }
     }
 
     private void upsertPreventionFund(YgbAqInsurance record, String operator)

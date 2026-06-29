@@ -1,8 +1,28 @@
 <template>
   <view class="worker-page">
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">投递记录</view>
+      <view class="worker-subtitle">查看岗位投递进度和企业反馈状态</view>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ rows.length }}</view>
+          <view class="hero-stat__label">投递总数</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ pendingCount }}</view>
+          <view class="hero-stat__label">待反馈</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ repliedCount }}</view>
+          <view class="hero-stat__label">有反馈</view>
+        </view>
+      </view>
+    </view>
+
     <view class="worker-card">
-      <view class="worker-title">投递记录</view>
-      <view class="worker-subtitle">查看岗位投递进度和企业反馈状态。</view>
+      <view class="section-head">
+        <view class="worker-title">投递列表</view>
+      </view>
       <view v-if="rows.length">
         <view v-for="item in rows" :key="item.applyId" class="list-row" @click="openDetail(item)">
           <view>
@@ -33,6 +53,8 @@ import { onShow } from '@dcloudio/uni-app'
 import { getJobApplyList, getResumeDetail } from '../../api/worker'
 
 const rows = ref([])
+const pendingCount = computed(() => rows.value.filter((item) => !item.statusText || item.statusText === '已投递').length)
+const repliedCount = computed(() => Math.max(rows.value.length - pendingCount.value, 0))
 const applyLastLoadedAt = ref('')
 const applyLastMessage = ref('')
 const resumeExpectedJob = ref('')
@@ -169,123 +191,7 @@ onShow(() => {
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.worker-empty--panel {
-  padding: 24rpx 0;
-}
-
-.worker-empty__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.worker-empty__desc {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #7890aa;
-}
-
-.worker-empty__actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 22rpx;
-}
-
 .worker-empty__actions button {
   flex: 1;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
 }
 </style>

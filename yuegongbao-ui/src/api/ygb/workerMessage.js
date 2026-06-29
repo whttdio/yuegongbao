@@ -61,6 +61,14 @@ export function getWorkerFeedback(feedbackId) {
   })
 }
 
+export function updateWorkerFeedbackStatus(feedbackId, data) {
+  return request({
+    url: `/ygb/worker/profile/manage/feedback/status/${feedbackId}`,
+    method: 'post',
+    data
+  })
+}
+
 export function listWorkerUploadRecord(query) {
   return request({
     url: '/ygb/worker/profile/manage/upload-record/list',

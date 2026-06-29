@@ -1,36 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  addNewformTraining,
-  delNewformTraining,
-  getNewformTraining,
-  getNewformTrainingSummary,
-  listNewformTraining,
-  updateNewformTraining
-} from '@/api/ygb/newformWorker'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const config = {
-  title: '培训管理',
-  description: '复用扩展台账对象维护新业态培训计划、课程安排、学时留痕和闭环状态。',
-  permPrefix: 'ygb:newformTraining',
-  filePrefix: 'newform_training',
-  defaultCategoryCode: 'training',
-  defaultWorkflowStatus: 'pending',
-  defaultSourceLabel: '新业态监管',
-  recordNameLabel: '培训主题',
-  recordNamePlaceholder: '请输入培训主题',
-  filters: ['statMonth', 'regionCode', 'enterpriseId', 'platformName', 'recordName', 'workflowStatus', 'status'],
-  routeQueryFields: ['statMonth', 'regionCode', 'enterpriseId', 'platformName'],
-  listApi: query => listNewformTraining(query),
-  summaryApi: query => getNewformTrainingSummary(query),
-  detailApi: id => getNewformTraining(id),
-  addApi: data => addNewformTraining(data),
-  updateApi: data => updateNewformTraining(data),
-  deleteApi: ids => delNewformTraining(ids),
-  exportUrl: 'ygb/newform/training/export'
-}
+const config = createBusinessRecordPageConfig({
+  module: 'newformTraining',
+  title: '新业态培训管理',
+  description: '围绕新业态专项安全培训、学时和考试结果管理开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '培训事项',
+  businessNamePlaceholder: '请输入培训事项',
+  defaultSourceLabel: '新业态培训管理',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

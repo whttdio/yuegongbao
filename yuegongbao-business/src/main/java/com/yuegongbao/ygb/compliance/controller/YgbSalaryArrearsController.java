@@ -36,6 +36,13 @@ public class YgbSalaryArrearsController extends BaseController
         return getDataTable(list);
     }
 
+    @PreAuthorize("@ss.hasPermi('ygb:salaryBatchArrears:list')")
+    @GetMapping("/summary")
+    public AjaxResult summary(YgbSalaryArrears arrears)
+    {
+        return success(salaryArrearsService.selectSalaryArrearsSummary(arrears));
+    }
+
     @PreAuthorize("@ss.hasPermi('ygb:salaryBatchArrears:query')")
     @GetMapping("/{batchId}")
     public AjaxResult getInfo(@PathVariable Long batchId)

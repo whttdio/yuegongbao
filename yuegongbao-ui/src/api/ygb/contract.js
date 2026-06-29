@@ -59,3 +59,51 @@ export function delContract(contractId) {
     method: 'delete'
   })
 }
+
+export function listContractExpiry(query) {
+  return request({
+    url: '/ygb/contract/expiry/list',
+    method: 'get',
+    params: query
+  })
+}
+
+export function getContractExpirySummary(query) {
+  return request({
+    url: '/ygb/contract/expiry/summary',
+    method: 'get',
+    params: query
+  })
+}
+
+export function remindContractExpiry(data) {
+  return request({
+    url: '/ygb/contract/expiry/remind',
+    method: 'post',
+    data
+  })
+}
+
+export function listContractUnfiled(query) {
+  return request({
+    url: '/ygb/contract/unfiled/list',
+    method: 'get',
+    params: query
+  })
+}
+
+export function getContractUnfiledSummary(query) {
+  return request({
+    url: '/ygb/contract/unfiled/summary',
+    method: 'get',
+    params: query
+  })
+}
+
+export function warnContractUnfiled(data) {
+  return request({
+    url: '/ygb/contract/unfiled/warn',
+    method: 'post',
+    data
+  })
+}

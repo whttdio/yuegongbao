@@ -169,8 +169,7 @@
           <el-col :span="12">
             <el-form-item label="来源模式" prop="sourceMode">
               <el-select v-model="form.sourceMode" style="width: 100%">
-                <el-option label="manual" value="manual" />
-                <el-option label="stub" value="stub" />
+                <el-option v-for="item in sourceModeOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -213,6 +212,7 @@
         <el-descriptions-item label="默认焦点">{{ detail.defaultFocusKey || '-' }}</el-descriptions-item>
         <el-descriptions-item label="轮播/刷新">{{ detail.rotateSeconds || 0 }}s / {{ detail.refreshSeconds || 0 }}s</el-descriptions-item>
         <el-descriptions-item label="地图中心">{{ mapCenterText(detail) }}</el-descriptions-item>
+        <el-descriptions-item label="来源模式">{{ sourceModeLabel(detail.sourceMode) }}</el-descriptions-item>
         <el-descriptions-item label="卡片显隐/排序" :span="2">{{ detail.summaryCardConfig || '-' }}</el-descriptions-item>
         <el-descriptions-item label="焦点队列配置" :span="2">{{ detail.focusQueueConfig || '-' }}</el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{ detail.remark || '-' }}</el-descriptions-item>
@@ -222,7 +222,7 @@
 </template>
 
 <script setup name="YgbCockpitConfig">
-import { getCurrentInstance, reactive, ref, toRefs } from 'vue'
+import { getCurrentInstance, reactive, ref, toRefs, unref } from 'vue'
 import {
   addCockpitConfig,
   delCockpitConfig,
@@ -231,6 +231,8 @@ import {
   listCockpitConfig,
   updateCockpitConfig
 } from '@/api/ygb/cockpitConfig'
+import { useAuthorizedRegionOptions } from '@/utils/regionScope'
+import { gdRegionOptions } from '@/utils/regionName'
 
 const { proxy } = getCurrentInstance()
 const loading = ref(false)
@@ -243,12 +245,7 @@ const detailOpen = ref(false)
 const title = ref('')
 const detail = ref(null)
 
-const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+const regionOptions = useAuthorizedRegionOptions(gdRegionOptions)
 
 const statusOptions = [
   { label: '停用', value: '0' },
@@ -263,6 +260,11 @@ const focusKeyOptions = [
   { label: '设备', value: 'device' },
   { label: '工伤', value: 'injury' },
   { label: '联动月报', value: 'socialTax' }
+]
+
+const sourceModeOptions = [
+  { label: '人工维护', value: 'manual' },
+  { label: '系统同步', value: 'SYSTEM' }
 ]
 
 const data = reactive({
@@ -286,7 +288,7 @@ const data = reactive({
 const { queryParams, form, rules } = toRefs(data)
 
 function regionLabel(value) {
-  return regionOptions.find(item => item.value === value)?.label || value || '-'
+  return unref(regionOptions).find(item => item.value === value)?.label || value || '-'
 }
 
 function mapCenterText(row = {}) {
@@ -294,6 +296,10 @@ function mapCenterText(row = {}) {
     return '-'
   }
   return `${row.mapCenterLng}, ${row.mapCenterLat} / Z${row.mapZoom || '-'}`
+}
+
+function sourceModeLabel(value) {
+  return sourceModeOptions.find(item => item.value === value)?.label || value || '-'
 }
 
 function reset() {

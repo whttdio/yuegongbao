@@ -1,7 +1,7 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">实名认证</view>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">实名认证</view>
       <view class="worker-subtitle">{{ detail.statusHint || '请补充实名资料并上传身份证件照片。' }}</view>
       <view class="status-panel">
         <view class="status-panel__title">{{ detail.applyStatusText || detail.realNameStatusText || '未提交申请' }}</view>
@@ -25,56 +25,75 @@
 
     <view class="worker-card">
       <view class="worker-title">实名资料</view>
-      <input
-        v-model="form.personName"
-        class="form-input"
-        placeholder="姓名"
-        :disabled="!canEditForm"
-        maxlength="20"
-      />
-      <input
-        v-model="form.mobile"
-        class="form-input"
-        placeholder="手机号"
-        :disabled="!canEditForm"
-        maxlength="11"
-        type="number"
-      />
-      <input
-        v-model="form.idCard"
-        class="form-input"
-        placeholder="身份证号"
-        :disabled="!canEditForm"
-        maxlength="18"
-      />
+      <view class="form-stack">
+        <view class="form-field">
+          <view class="form-field__label">姓名</view>
+          <input
+            v-model="form.personName"
+            class="form-input"
+            placeholder="姓名"
+            :disabled="!canEditForm"
+            maxlength="20"
+          />
+        </view>
+        <view class="form-field">
+          <view class="form-field__label">手机号</view>
+          <input
+            v-model="form.mobile"
+            class="form-input"
+            placeholder="手机号"
+            :disabled="!canEditForm"
+            maxlength="11"
+            type="number"
+          />
+        </view>
+        <view class="form-field">
+          <view class="form-field__label">身份证号</view>
+          <input
+            v-model="form.idCard"
+            class="form-input"
+            placeholder="身份证号"
+            :disabled="!canEditForm"
+            maxlength="18"
+          />
+        </view>
+      </view>
 
       <view v-if="validationMessage" class="validation-panel">
         {{ validationMessage }}
       </view>
 
-      <view class="upload-block">
-        <view class="upload-block__title">身份证人像面</view>
-        <button class="worker-button worker-button--secondary" :disabled="uploadingFront || !canEditForm" @click="chooseImage('front')">
-          {{ uploadingFront ? '上传中...' : '上传人像面' }}
-        </button>
-        <image v-if="form.idCardFrontUrl" :src="form.idCardFrontUrl" class="upload-preview" mode="aspectFill" />
-      </view>
+      <view class="form-section">
+        <view class="form-field">
+          <view class="form-field__label">身份证人像面</view>
+          <view class="upload-zone" @click="chooseImage('front')">
+            <view class="upload-zone__icon">{{ uploadingFront ? '…' : '+' }}</view>
+            <view class="upload-zone__title">{{ uploadingFront ? '上传中...' : '上传人像面' }}</view>
+            <view class="upload-zone__desc">拍摄或选择身份证正面照片</view>
+          </view>
+          <image v-if="form.idCardFrontUrl" :src="form.idCardFrontUrl" class="face-block__preview" mode="aspectFill" />
+        </view>
 
-      <view class="upload-block">
-        <view class="upload-block__title">身份证国徽面</view>
-        <button class="worker-button worker-button--secondary" :disabled="uploadingBack || !canEditForm" @click="chooseImage('back')">
-          {{ uploadingBack ? '上传中...' : '上传国徽面' }}
-        </button>
-        <image v-if="form.idCardBackUrl" :src="form.idCardBackUrl" class="upload-preview" mode="aspectFill" />
-      </view>
+        <view class="form-field">
+          <view class="form-field__label">身份证国徽面</view>
+          <view class="upload-zone" @click="chooseImage('back')">
+            <view class="upload-zone__icon">{{ uploadingBack ? '…' : '+' }}</view>
+            <view class="upload-zone__title">{{ uploadingBack ? '上传中...' : '上传国徽面' }}</view>
+            <view class="upload-zone__desc">拍摄或选择身份证反面照片</view>
+          </view>
+          <image v-if="form.idCardBackUrl" :src="form.idCardBackUrl" class="face-block__preview" mode="aspectFill" />
+        </view>
 
-      <view class="upload-block">
-        <view class="upload-block__title">本人免冠照片</view>
-        <view class="worker-subtitle">本人照需现场拍摄，避免直接从相册选择旧图。</view>
-        <button class="worker-button worker-button--secondary" :disabled="uploadingSelfie || !canEditForm" @click="chooseImage('selfie')">
-          {{ uploadingSelfie ? '上传中...' : '拍摄并上传本人照' }}
-        </button>
-        <image v-if="form.selfieUrl" :src="form.selfieUrl" class="upload-preview" mode="aspectFill" />
+        <view class="form-field">
+          <view class="form-field__label">本人免冠照片</view>
+          <view class="form-field__hint">本人照需现场拍摄，避免直接从相册选择旧图。</view>
+          <view class="upload-zone" @click="chooseImage('selfie')">
+            <view class="upload-zone__icon">{{ uploadingSelfie ? '…' : '+' }}</view>
+            <view class="upload-zone__title">{{ uploadingSelfie ? '上传中...' : '拍摄并上传本人照' }}</view>
+            <view class="upload-zone__desc">请现场拍摄本人免冠照片</view>
+          </view>
+          <image v-if="form.selfieUrl" :src="form.selfieUrl" class="face-block__preview" mode="aspectFill" />
+        </view>
       </view>
 
       <button class="worker-button" :disabled="submitting || !canSubmit" @click="submitApply">
@@ -341,74 +360,24 @@ onShow(loadDetail)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.worker-card + .worker-card {
-  margin-top: 24rpx;
-}
-
 .status-panel {
   margin-top: 18rpx;
   padding: 22rpx 24rpx;
   border-radius: 20rpx;
-  background: linear-gradient(135deg, #eef5ff 0%, #f8fbff 100%);
+  background: linear-gradient(135deg, #e6f2ef 0%, #f8fbff 100%);
 }
 
 .status-panel__title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #16324f;
+  color: #122d42;
 }
 
 .status-panel__desc {
   margin-top: 10rpx;
   font-size: 24rpx;
   line-height: 1.7;
-  color: #58738f;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.form-input {
-  width: 100%;
-  margin-top: 18rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
-  font-size: 28rpx;
-  color: #16324f;
+  color: #536b7d;
 }
 
 .validation-panel {
@@ -421,63 +390,10 @@ onShow(loadDetail)
   line-height: 1.6;
 }
 
-.upload-block {
-  margin-top: 22rpx;
-}
-
-.upload-block__title {
-  margin-bottom: 14rpx;
-  font-size: 26rpx;
-  color: #16324f;
-  font-weight: 600;
-}
-
-.upload-preview {
-  width: 100%;
-  height: 280rpx;
-  margin-top: 16rpx;
-  border-radius: 20rpx;
-  background: #eef3f8;
-}
-
 .tip-row {
   margin-top: 18rpx;
   font-size: 26rpx;
   line-height: 1.7;
-  color: #36506b;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
+  color: #183247;
 }
 </style>

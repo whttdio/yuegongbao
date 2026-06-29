@@ -15,6 +15,8 @@ public interface WorkerProfileMapper
 {
     WorkerResume selectWorkerResume(@Param("userId") Long userId);
 
+    WorkerResume selectWorkerResumeByPersonId(@Param("personId") Long personId);
+
     java.util.List<WorkerResume> selectAdminWorkerResumeList(WorkerResume query);
 
     WorkerResume selectWorkerResumeById(@Param("resumeId") Long resumeId);
@@ -22,6 +24,8 @@ public interface WorkerProfileMapper
     int insertWorkerResume(WorkerResume resume);
 
     int updateWorkerResume(WorkerResume resume);
+
+    int updateWorkerResumeRemark(WorkerResume resume);
 
     int insertWorkerFeedback(WorkerFeedback feedback);
 
@@ -32,6 +36,8 @@ public interface WorkerProfileMapper
     java.util.List<WorkerFeedback> selectWorkerFeedbackManageList(WorkerFeedback query);
 
     WorkerFeedback selectWorkerFeedbackById(@Param("feedbackId") Long feedbackId);
+
+    int updateWorkerFeedbackHandle(WorkerFeedback feedback);
 
     WorkerSetting selectWorkerSetting(@Param("userId") Long userId);
 

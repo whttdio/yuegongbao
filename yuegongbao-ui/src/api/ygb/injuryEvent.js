@@ -40,6 +40,14 @@ export function listRecognitionAssist(query) {
   })
 }
 
+export function getRecognitionAssistSummary(query) {
+  return request({
+    url: '/ygb/injury/event/summary',
+    method: 'get',
+    params: query
+  })
+}
+
 export function getRecognitionAssist(eventId) {
   return request({
     url: '/ygb/injury/event/recognitionAssist/' + eventId,

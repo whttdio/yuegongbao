@@ -12,7 +12,7 @@
       <div class="ygb-page__tip">
         <div class="ygb-page__tip-item">当前视角：{{ roleBadge }}</div>
         <div class="ygb-page__tip-item">{{ roleTip }}</div>
-        <div class="ygb-page__tip-item">生成名单前需先完成社保缴费同步和个税比对，当前仍复用统一漏保清单接口。</div>
+        <div class="ygb-page__tip-item">生成名单前需先完成社保缴费同步和个税比对，确保催缴对象来源清晰、可追溯。</div>
       </div>
     </section>
 
@@ -110,7 +110,7 @@
           <template #default="scope">
             <el-button link type="info" icon="View" @click.stop="openDetail(scope.row)">详情</el-button>
             <el-button
-              v-if="!isReadOnlyRole"
+              v-if="!isReadOnlyRole && isUninsuredHandleAllowed(scope.row)"
               link
               type="primary"
               icon="Edit"
@@ -129,7 +129,7 @@
       <el-form ref="handleRef" :model="handleForm" :rules="handleRules" label-width="100px">
         <el-form-item label="处置状态" prop="disposalStatus">
           <el-select v-model="handleForm.disposalStatus" placeholder="请选择处置状态">
-            <el-option v-for="item in disposalStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in availableDisposalStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="处置说明" prop="remark">
@@ -183,6 +183,7 @@ import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQue
 import {
   disposalStatusOptions,
   warningStatusOptions,
+  isUninsuredHandleAllowed,
   useUninsuredListPage,
   optionLabel,
   formatMoney,
@@ -256,6 +257,7 @@ const {
   currentRow,
   detailRow,
   summaryData,
+  availableDisposalStatusOptions,
   queryParams,
   handleForm,
   handleRules,
@@ -440,7 +442,7 @@ const roleTip = computed(() => {
   if (roleView.value === 'admin') {
     return '优先统筹待核查、高工资和未预警对象，再决定是催缴补缴还是进入监管联动。'
   }
-  return '页面继续复用统一漏保清单接口，不引入第二套扩面业务表。'
+  return '页面围绕漏保识别、核查催缴、预警联动和月度归档推进扩面减损闭环。'
 })
 
 const summaryCards = computed(() => {
@@ -580,15 +582,15 @@ const primaryAction = computed(() => {
 
 const secondaryAction = computed(() => {
   if (activeFocus.value?.key === 'highSalary') {
-    return { label: '查看社保基数比对', path: '/ygb/socialBaseCompare' }
+    return { label: '查看社保基数比对', path: '/social-insurance/baseCompare' }
   }
   if (activeFocus.value?.key === 'unwarned' || activeFocus.value?.key === 'enforced') {
-    return { label: '查看预警中心', path: '/ygb/warning' }
+    return { label: '查看预警中心', path: '/warning-center/workOrder' }
   }
   if (activeFocus.value?.key === 'completed') {
-    return { label: '查看社保税务联动月报', path: '/ygb-report/statReport/socialTax' }
+    return { label: '查看社保税务联动月报', path: '/statistical-report/social' }
   }
-  return { label: '查看社保缴费监控', path: '/ygb/socialPayment' }
+  return { label: '查看社保缴费监控', path: '/social-insurance/payment' }
 })
 
 const currentActionSummary = computed(() => {
@@ -844,20 +846,19 @@ function resetQuery() {
   pageResetQuery()
   applyWorkbenchRouteQuery(route.query, queryParams.value, uninsuredWorkbenchFields)
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: roleTitle.value || '????????',
-    description: roleDescription.value || '?????????????????????????????????',
+    title: roleTitle.value || '数据碰撞与漏保清单',
+    description: roleDescription.value || '通过税务、工资和社保数据碰撞生成漏保清单，跟踪催缴、补缴和误报处置。',
     portalExplanation: portalExplanationItems.value,
     focus: resolvedFocusQueues.value,
-    selection: [...selectedOverview.value, { label: '??????', value: currentActionSummary.value }],
+    selection: [...selectedOverview.value, { label: '当前处置建议', value: currentActionSummary.value }],
     workflow: resolvedWorkflowSteps.value,
     hints: [...currentActionTags.value].slice(0, 6)
   })
 })
-
-}
 
 function clearWorkbenchContext() {
   Object.assign(queryParams.value, {

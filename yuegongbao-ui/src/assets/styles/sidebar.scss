@@ -46,7 +46,7 @@
 
     &.has-logo {
       .el-scrollbar {
-        height: calc(100% - 60px);
+        height: calc(100% - var(--layout-sidebar-logo-height, 60px));
       }
     }
 
@@ -170,6 +170,21 @@
         justify-content: center;
         padding: 0 !important;
         border-radius: 8px;
+      }
+
+      .menu-title {
+        display: none !important;
+      }
+
+      .el-menu-item .menu-title,
+      .el-sub-menu__title .menu-title,
+      .el-menu-item > span:not(.svg-icon),
+      .el-sub-menu__title > span:not(.svg-icon) {
+        display: none !important;
+      }
+
+      .svg-icon {
+        margin-right: 0 !important;
       }
 
       .nest-menu .el-sub-menu > .el-sub-menu__title,

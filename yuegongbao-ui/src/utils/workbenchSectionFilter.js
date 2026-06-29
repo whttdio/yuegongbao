@@ -3,6 +3,7 @@ const CARD_SELECTOR = [
   '.azb-focus-card',
   '.ygb-device-panel',
   '.azb-device-panel',
+  '.cockpit-screen .screen-panel',
   '.ygb-cockpit .panel',
   '.azb-cockpit .card',
   '.portal-explanation-card'
@@ -13,6 +14,7 @@ const GRID_SELECTOR = [
   '.azb-focus-grid',
   '.ygb-device-page__grid',
   '.azb-device-page__grid',
+  '.cockpit-screen .metric-grid',
   '.ygb-cockpit .command-grid',
   '.ygb-cockpit .ops-grid',
   '.ygb-cockpit .module-grid',

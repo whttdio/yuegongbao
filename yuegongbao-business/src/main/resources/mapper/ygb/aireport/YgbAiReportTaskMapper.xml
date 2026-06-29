@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -52,11 +52,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and region_code like concat(#{regionCode}, '%')
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
             <if test="riskLevel != null and riskLevel != ''">
                 and risk_level = #{riskLevel}
             </if>
-            <if test="handleStatus != null and handleStatus != ''">
+            <if test="handleStatus != null and handleStatus != '' and handleStatus != 'overdue'">
                 and handle_status = #{handleStatus}
+            </if>
+            <if test="handleStatus != null and handleStatus == 'overdue'">
+                and due_date is not null
+                and due_date &lt; now()
+                and handle_status != 'closed'
             </if>
         </where>
         order by case when due_date is null then 1 else 0 end, due_date asc, task_id desc

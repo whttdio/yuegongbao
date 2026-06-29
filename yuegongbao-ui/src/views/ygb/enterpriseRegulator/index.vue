@@ -7,7 +7,7 @@ import EnterpriseSubledgerPage from '@/views/ygb/shared/EnterpriseSubledgerPage.
 
 const config = {
   title: '监管单位',
-  description: '复用企业主表统一维护监管单位台账，支撑区域筛查、同步校验和主链办理入口。',
+  description: '统一维护监管单位台账，支撑区域筛查、同步校验和主链办理入口。',
   fixedEnterpriseType: '4',
   filePrefix: 'enterprise_regulator'
 }

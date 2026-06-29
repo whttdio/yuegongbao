@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-container ygb-page ygb-device-page">
     <section class="gov-page-header ygb-page__header">
       <div>
@@ -10,7 +10,7 @@
         </p>
       </div>
       <div class="ygb-device-page__tip">
-        设备授权继续联动 `EmergencyCertClient + SocialClient` Stub 口径，锁机、解锁、心跳和 AI 事件当前只回写日志，不接真实 MQTT。
+        设备授权联动证书与社保核验，锁机、解锁、心跳和 AI 事件统一回写日志，形成可追溯的设备办理记录。
       </div>
     </section>
 
@@ -171,17 +171,24 @@
         <el-table-column label="安装位置" prop="installLocation" min-width="180" show-overflow-tooltip />
         <el-table-column class-name="table-fill-column" min-width="1" />
 
-        <el-table-column label="操作" fixed="right" align="center" :width="isReadOnlyRole ? 100 : 360" class-name="small-padding fixed-width">
+                <el-table-column label="操作" fixed="right" align="center" :width="isReadOnlyRole ? 100 : 220" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-button v-if="isReadOnlyRole" link type="info" icon="View" @click.stop="handleRowClick(scope.row)">详情</el-button>
-            <template v-else>
+            <div v-else class="device-row-actions">
               <el-button link type="primary" icon="Edit" @click.stop="handleUpdate(scope.row)" v-hasPermi="['ygb:device:edit']">修改</el-button>
-              <el-button link type="primary" icon="Lock" @click.stop="handleLock(scope.row)" v-hasPermi="['ygb:device:lock']">锁机</el-button>
-              <el-button link type="primary" icon="Unlock" @click.stop="handleUnlock(scope.row)" v-hasPermi="['ygb:device:unlock']">解锁</el-button>
-              <el-button link type="primary" icon="Checked" @click.stop="openAuthorizeDialog(scope.row)" v-hasPermi="['ygb:device:authorize']">授权</el-button>
-              <el-button link type="primary" icon="Connection" @click.stop="openHeartbeatDialog(scope.row)" v-hasPermi="['ygb:device:heartbeat']">心跳</el-button>
-              <el-button link type="primary" icon="VideoCamera" @click.stop="openAiDialog(scope.row)" v-hasPermi="['ygb:device:aiEvent']">AI事件</el-button>
-            </template>
+              <el-dropdown trigger="click">
+                <el-button link type="primary">更多</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item :disabled="!canLockDevice(scope.row)" v-hasPermi="['ygb:device:lock']" @click.stop="handleLock(scope.row)">锁机</el-dropdown-item>
+                    <el-dropdown-item :disabled="!canUnlockDevice(scope.row)" v-hasPermi="['ygb:device:unlock']" @click.stop="handleUnlock(scope.row)">解锁</el-dropdown-item>
+                    <el-dropdown-item :disabled="!canOperateDevice(scope.row)" v-hasPermi="['ygb:device:authorize']" @click.stop="openAuthorizeDialog(scope.row)">授权</el-dropdown-item>
+                    <el-dropdown-item v-hasPermi="['ygb:device:heartbeat']" @click.stop="openHeartbeatDialog(scope.row)">心跳</el-dropdown-item>
+                    <el-dropdown-item :disabled="!canOperateDevice(scope.row)" v-hasPermi="['ygb:device:aiEvent']" @click.stop="openAiDialog(scope.row)">AI事件</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -197,7 +204,7 @@
               {{ currentDevice ? `${currentDevice.deviceCode} / ${currentDevice.enterpriseName || '-'} / ${formatRegionName(currentDevice.regionCode, '-')}` : '点击设备行后，联动查看当前设备的指令日志和设备事件。' }}
             </div>
           </div>
-          <div v-if="currentDevice" class="ygb-device-panel__extra">当前日志范围：最近 5 条 Stub 回写记录</div>
+          <div v-if="currentDevice" class="ygb-device-panel__extra">当前日志范围：最近 5 条回写记录</div>
         </div>
       </template>
 
@@ -317,7 +324,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="证书编号" prop="certNo">
-          <el-input v-model="authorizeForm.certNo" placeholder="可选，留空则走 Stub 默认判定" />
+          <el-input v-model="authorizeForm.certNo" placeholder="可选，留空则按系统规则判定" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -328,7 +335,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog title="模拟心跳" v-model="heartbeatOpen" width="520px" append-to-body>
+    <el-dialog title="设备心跳回写" v-model="heartbeatOpen" width="520px" append-to-body>
       <el-form ref="heartbeatRef" :model="heartbeatForm" label-width="100px">
         <el-form-item label="设备">
           <el-input :model-value="traceDeviceName" disabled />
@@ -347,7 +354,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog title="模拟 AI 事件" v-model="aiOpen" width="620px" append-to-body>
+    <el-dialog title="AI 事件回写" v-model="aiOpen" width="620px" append-to-body>
       <el-form ref="aiRef" :model="aiForm" label-width="100px">
         <el-form-item label="设备">
           <el-input :model-value="traceDeviceName" disabled />
@@ -407,7 +414,7 @@ function blockReadOnlyAction(actionLabel) {
 const workflowSteps = [
   { label: '建档接入', desc: '先完成设备编码、所属企业、安装位置和设备类型建档，形成设备接入底账。' },
   { label: '人员授权', desc: '按企业和人员关系发起设备授权，保留证书核验和授权结果回写。' },
-  { label: '在线回写', desc: '通过模拟心跳和事件回写确认设备在线、事件上报和状态同步能力。' },
+  { label: '在线回写', desc: '通过心跳和事件回写确认设备在线、事件上报和状态同步能力。' },
   { label: '异常留痕', desc: '对授权拒绝、离线故障和 AI 异常留痕归档，形成可追溯的设备办理记录。' }
 ]
 
@@ -447,6 +454,9 @@ const {
   regionOptions,
   authorizeDeviceName,
   traceDeviceName,
+  canLockDevice,
+  canOperateDevice,
+  canUnlockDevice,
   cancel,
   getList,
   handleAdd,
@@ -719,7 +729,7 @@ const submoduleEntriesLegacy = computed(() => ([
     title: '考勤设备',
     desc: '按考勤设备视角查看在线、授权和接入台账。',
     actionText: '进入考勤设备',
-    path: '/ygb-safety/deviceAttendance',
+    path: '/attendance/deviceOnline',
     query: buildDeviceSubmoduleQuery()
   },
   {
@@ -727,7 +737,7 @@ const submoduleEntriesLegacy = computed(() => ([
     title: '芯片设备',
     desc: '聚焦芯片设备、物联卡和授权状态。',
     actionText: '进入芯片设备',
-    path: '/ygb-safety/deviceChip',
+    path: '/device-management/chip',
     query: buildDeviceSubmoduleQuery()
   },
   {
@@ -735,7 +745,7 @@ const submoduleEntriesLegacy = computed(() => ([
     title: 'AI 设备',
     desc: '查看 AI 设备在线、授权和异常留痕基础台账。',
     actionText: '进入 AI 设备',
-    path: '/ygb-safety/deviceAi',
+    path: '/device-management/ai',
     query: buildDeviceSubmoduleQuery()
   },
   {
@@ -743,7 +753,7 @@ const submoduleEntriesLegacy = computed(() => ([
     title: '物联卡',
     desc: '查看设备物联卡号、归属企业和在线状态。',
     actionText: '进入物联卡台账',
-    path: '/ygb-safety/deviceIotCard',
+    path: '/device-management/iotCard',
     query: buildDeviceSubmoduleQuery()
   },
   {
@@ -751,7 +761,7 @@ const submoduleEntriesLegacy = computed(() => ([
     title: '芯片库存',
     desc: '查看芯片编号、库存归属和授权状态。',
     actionText: '进入芯片库存',
-    path: '/ygb-safety/deviceChipInventory',
+    path: '/device-management/chipInventory',
     query: buildDeviceSubmoduleQuery()
   },
   {
@@ -759,7 +769,7 @@ const submoduleEntriesLegacy = computed(() => ([
     title: '电子围栏',
     desc: '维护围栏名称、区域和关联企业范围。',
     actionText: '进入电子围栏',
-    path: '/ygb-safety/deviceGeofence',
+    path: '/device-management/geofence',
     query: buildDeviceSubmoduleQuery()
   },
   {
@@ -767,7 +777,7 @@ const submoduleEntriesLegacy = computed(() => ([
     title: '拆卸报警',
     desc: '集中查看拆卸、拆改和围栏破坏相关报警。',
     actionText: '进入拆卸报警',
-    path: '/ygb-safety/deviceUninstallAlert',
+    path: '/device-management/uninstallAlert',
     query: buildDeviceSubmoduleQuery()
   }
 ]))
@@ -857,6 +867,20 @@ init()
 </script>
 
 <style scoped lang="scss">
+.ygb-device-page :deep(.el-table__body .fixed-width .cell) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 0;
+  white-space: normal;
+}
+
+.ygb-device-page :deep(.el-table__body .fixed-width .cell .el-button) {
+  margin-left: 0;
+  padding: 4px 8px;
+}
+
 .ygb-workbench-alert {
   margin-bottom: 16px;
 }
@@ -917,6 +941,18 @@ init()
   padding: 14px 16px;
   color: #5f6f80;
   line-height: 1.8;
+}
+
+.device-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.device-row-actions :deep(.el-button) {
+  margin-left: 0;
+  padding: 4px 8px;
 }
 
 .ygb-device-card,
@@ -1139,3 +1175,4 @@ init()
   }
 }
 </style>
+

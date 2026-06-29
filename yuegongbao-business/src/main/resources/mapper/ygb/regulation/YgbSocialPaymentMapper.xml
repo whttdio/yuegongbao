@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -55,6 +55,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and region_code like concat(#{regionCode}, '%')
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
         </where>
         order by stat_month desc, enterprise_id asc, person_id asc, payment_id desc
     </select>
@@ -76,12 +77,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         )
     </insert>
 
-    <delete id="deleteByScope">
+    <delete id="deleteByScope" parameterType="YgbSocialPayment">
         delete from t_social_payment
         where stat_month = #{statMonth}
         <if test="enterpriseId != null">
             and enterprise_id = #{enterpriseId}
         </if>
+        ${params.regionDataScope}
+        ${params.enterpriseDataScope}
     </delete>
 
     <select id="selectWorkerSocialPaymentList" resultMap="YgbSocialPaymentResult">

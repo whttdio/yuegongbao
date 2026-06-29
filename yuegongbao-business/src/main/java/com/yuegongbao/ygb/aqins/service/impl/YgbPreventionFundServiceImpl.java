@@ -19,6 +19,7 @@ import com.yuegongbao.ygb.aqins.mapper.YgbAqInsuranceMapper;
 import com.yuegongbao.ygb.aqins.mapper.YgbPreventionFundMapper;
 import com.yuegongbao.ygb.aqins.service.IYgbPreventionFundService;
 import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
 @Service
@@ -32,6 +33,9 @@ public class YgbPreventionFundServiceImpl implements IYgbPreventionFundService
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbPreventionFund> selectPreventionFundList(YgbPreventionFund preventionFund)
@@ -86,7 +90,12 @@ public class YgbPreventionFundServiceImpl implements IYgbPreventionFundService
     @Override
     public YgbPreventionFund selectPreventionFundById(Long fundId)
     {
-        return preventionFundMapper.selectPreventionFundById(fundId);
+        YgbPreventionFund preventionFund = preventionFundMapper.selectPreventionFundById(fundId);
+        if (preventionFund != null)
+        {
+            dataScopeGuard.assertEntityAllowed(preventionFund);
+        }
+        return preventionFund;
     }
 
     @Override
@@ -98,14 +107,17 @@ public class YgbPreventionFundServiceImpl implements IYgbPreventionFundService
         {
             throw new ServiceException("预防资金池记录不存在。");
         }
+        dataScopeGuard.assertEntityAllowed(current);
         YgbAqInsurance policy = aqInsuranceMapper.selectAqInsuranceById(current.getPolicyId());
         if (policy == null)
         {
             throw new ServiceException("关联安责险保单不存在。");
         }
 
+        dataScopeGuard.assertEntityAllowed(policy);
         BigDecimal accruedAmount = current.getAccruedAmount() == null ? BigDecimal.ZERO : current.getAccruedAmount();
         BigDecimal usedAmount = preventionFund.getUsedAmount() == null ? BigDecimal.ZERO : preventionFund.getUsedAmount();
+        validateFundUsage(usedAmount, preventionFund);
         if (usedAmount.compareTo(accruedAmount) > 0)
         {
             throw new ServiceException("已使用金额不能大于计提金额。");
@@ -160,8 +172,8 @@ public class YgbPreventionFundServiceImpl implements IYgbPreventionFundService
         list.add(explanationItem("missingEvidence", "缺少凭证记录", summary.getMissingEvidenceCount(), 0,
             "缺凭证会直接削弱资金使用可追溯性，应优先补齐证据链。", "preventionFund", "preventionFund",
             "530.1 预防费办理解释", baseQuery));
-        list.add(explanationItem("nonStub", "非 Stub 来源记录", summary.getNonStubCount(), 0,
-            "非 Stub 来源记录适合作为办理链回写复核入口，确保数据来源与资金状态一致。", "preventionFund",
+        list.add(explanationItem("nonStub", "协同来源记录", summary.getNonStubCount(), 0,
+            "协同来源记录适合作为办理链回写复核入口，确保数据来源与资金状态一致。", "preventionFund",
             "preventionFund", "530.1 预防费办理解释", baseQuery));
         return list;
     }
@@ -249,5 +261,25 @@ public class YgbPreventionFundServiceImpl implements IYgbPreventionFundService
             return false;
         }
         return remaining.divide(accrued, 4, RoundingMode.HALF_UP).compareTo(new BigDecimal("0.10")) <= 0;
+    }
+
+    private void validateFundUsage(BigDecimal usedAmount, YgbPreventionFund preventionFund)
+    {
+        if (usedAmount.compareTo(BigDecimal.ZERO) < 0)
+        {
+            throw new ServiceException("used amount cannot be negative.");
+        }
+        if (usedAmount.compareTo(BigDecimal.ZERO) <= 0)
+        {
+            return;
+        }
+        if (StringUtils.isEmpty(preventionFund.getUsagePurpose()))
+        {
+            throw new ServiceException("usage purpose is required when fund is used.");
+        }
+        if (StringUtils.isEmpty(preventionFund.getEvidenceUrl()))
+        {
+            throw new ServiceException("evidence url is required when fund is used.");
+        }
     }
 }

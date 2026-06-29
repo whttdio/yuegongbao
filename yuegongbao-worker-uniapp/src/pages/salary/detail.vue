@@ -1,8 +1,17 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">{{ detail.salaryMonth || '-' }} 工资详情</view>
+    <view class="worker-card worker-hero">
+      <view class="section-head">
+        <view class="worker-title">{{ detail.salaryMonth || '-' }} 工资详情</view>
+        <view class="worker-tag">{{ detail.payStatusText || '-' }}</view>
+      </view>
       <view class="worker-subtitle">{{ detail.enterpriseName || '-' }}</view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">金额明细</view>
+      </view>
       <view class="detail-grid">
         <view class="detail-item">
           <view class="detail-item__label">应发工资</view>
@@ -29,11 +38,12 @@
           <view class="detail-item__value detail-item__value--small">{{ detail.contractNo || '-' }}</view>
         </view>
       </view>
-      <view class="worker-subtitle">状态：{{ detail.payStatusText || '-' }}</view>
     </view>
 
     <view class="worker-card">
-      <view class="worker-title">发放信息</view>
+      <view class="section-head">
+        <view class="worker-title">发放信息</view>
+      </view>
       <view class="detail-row">
         <view class="detail-row__label">工资批次</view>
         <view class="detail-row__value">{{ detail.batchNo || '-' }}</view>
@@ -74,7 +84,9 @@
     </view>
 
     <view class="worker-card">
-      <view class="worker-title">备注说明</view>
+      <view class="section-head">
+        <view class="worker-title">备注说明</view>
+      </view>
       <view class="detail-block">
         {{ detail.failReason || detail.remark || '本月暂无额外备注。' }}
       </view>
@@ -142,135 +154,3 @@ onLoad((options) => {
   loadData(options?.month)
 })
 </script>
-
-<style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-  margin: 24rpx 0;
-}
-
-.detail-item {
-  padding: 20rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.detail-item__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.detail-item__value {
-  margin-top: 10rpx;
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.detail-item__value--small {
-  font-size: 22rpx;
-  line-height: 1.6;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.deduction-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.deduction-row:last-child {
-  border-bottom: none;
-}
-
-.deduction-row__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.deduction-row__desc {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: #7890aa;
-}
-
-.detail-block {
-  margin-top: 20rpx;
-  padding: 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  font-size: 28rpx;
-  color: #16324f;
-  line-height: 1.7;
-}
-
-.result-block {
-  margin-top: 20rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 24rpx;
-  color: #5f7893;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.8;
-  color: #36506b;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-</style>

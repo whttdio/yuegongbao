@@ -6,7 +6,7 @@
         <h1 class="ygb-page__title">高处作业申报报备台账</h1>
         <p class="ygb-page__desc">
           当前仅提供 PC 办理入口，严格按“只报备、不审批”落地。
-          App 与小程序入口预留，证书核验、导入和电子凭证均按 Stub 联调。
+          App 与小程序入口共用同一报备链路，证书核验、导入和电子凭证均按统一接口联调。
         </p>
       </div>
       <div class="ygb-page__tip">
@@ -707,8 +707,8 @@ function resetQuery() {
 
 watchEffect(() => {
   setPageGuide({
-    title: '????????' || '????????',
-    description: '????????????????????????????' || '????????????????????????????',
+    title: '高处作业上报',
+    description: '跟踪高处作业申请、审批、现场记录和风险预警，支撑高危作业闭环监管。',
     portalExplanation: portalExplanationItems.value,
     focus: focusQueues.value,
     selection: selectedReportOverview.value,

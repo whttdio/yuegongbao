@@ -69,8 +69,8 @@
           <el-date-picker v-model="queryParams.statMonth" type="month" value-format="YYYY-MM" format="YYYY-MM" style="width: 180px" />
         </el-form-item>
         <el-form-item label="报表类型">
-          <el-select v-model="queryParams.reportCode" clearable style="width: 220px">
-            <el-option v-for="item in reportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+          <el-select v-model="queryParams.reportCode" style="width: 220px">
+            <el-option v-for="item in authorizedQueryReportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -88,12 +88,12 @@
     <el-card class="toolbar-card ygb-toolbar-card" shadow="never">
       <el-row :gutter="10">
         <el-col v-if="canGenerate" :span="1.5">
-          <el-button type="primary" plain icon="DocumentAdd" @click="guardedOpenGenerateDialog()" v-hasPermi="['ygb:statReport:generate']">生成报表</el-button>
+          <el-button type="primary" plain icon="DocumentAdd" @click="guardedOpenGenerateDialog()">生成报表</el-button>
         </el-col>
-        <el-col :span="1.5">
-          <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:statReport:export']">导出</el-button>
+        <el-col v-if="canExportCurrentReport" :span="1.5">
+          <el-button type="warning" plain icon="Download" @click="handleExport">导出</el-button>
         </el-col>
-        <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
+        <right-toolbar v-model:showSearch="showSearch" @queryTable="guardedGetList" />
       </el-row>
     </el-card>
 
@@ -140,19 +140,18 @@
           <template #default="scope">
             <el-button link type="info" icon="View" @click.stop="openDetail(scope.row)">详情</el-button>
             <el-button
-              v-if="canGenerate"
+              v-if="canGenerateReport(scope.row.reportCode)"
               link
               type="primary"
               icon="RefreshRight"
               @click.stop="guardedOpenGenerateDialog(scope.row)"
-              v-hasPermi="['ygb:statReport:generate']"
             >
               重生成
             </el-button>
           </template>
         </el-table-column>
       </el-table>
-      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="guardedGetList" />
     </el-card>
 
     <el-dialog v-if="!isReadOnlyRole" title="生成统计报表" v-model="generateOpen" width="520px" append-to-body>
@@ -167,7 +166,7 @@
         </el-form-item>
         <el-form-item label="报表类型" prop="reportCode">
           <el-select v-model="generateForm.reportCode" style="width: 100%">
-            <el-option v-for="item in reportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in authorizedGenerateReportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -193,7 +192,7 @@
           <el-descriptions-item label="核心比率">{{ formatMetricRate(reportDetail.metricRate, reportDetail.reportCode) }}</el-descriptions-item>
           <el-descriptions-item label="生成时间">{{ parseTime(reportDetail.generatedTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</el-descriptions-item>
           <el-descriptions-item label="当前视角重点" :span="2">{{ detailFocusText }}</el-descriptions-item>
-          <el-descriptions-item label="报表附件" :span="2">{{ reportDetail.attachmentUrl || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="报表下载地址" :span="2">{{ reportDetail.attachmentUrl || '-' }}</el-descriptions-item>
           <el-descriptions-item label="摘要" :span="2">{{ reportDetail.reportSummary }}</el-descriptions-item>
         </el-descriptions>
 
@@ -207,12 +206,24 @@
         <div class="ygb-report-items">
           <h3>明细项</h3>
           <el-table :data="reportItems" size="small">
-            <el-table-column label="分类" prop="itemCategory" width="150" />
+            <el-table-column label="分类" width="150">
+              <template #default="scope">
+                {{ formatStatReportItemCategory(scope.row.itemCategory) }}
+              </template>
+            </el-table-column>
             <el-table-column label="名称" prop="itemName" min-width="160" />
-            <el-table-column label="维度编码" prop="itemDimension" width="160" />
+            <el-table-column label="维度" width="160">
+              <template #default="scope">
+                {{ formatStatReportItemDimension(scope.row.itemDimension, scope.row) }}
+              </template>
+            </el-table-column>
             <el-table-column label="数量" prop="metricCount" width="90" />
             <el-table-column label="数值" prop="metricValue" width="120" />
-            <el-table-column label="比率" prop="metricRate" width="100" />
+            <el-table-column label="比率" width="100">
+              <template #default="scope">
+                {{ formatMetricRate(scope.row.metricRate, reportDetail.reportCode) }}
+              </template>
+            </el-table-column>
           </el-table>
         </div>
       </template>
@@ -235,6 +246,8 @@ import { useRoleViewMode } from '@/utils/roleView'
 import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQuery } from '@/utils/workbenchLink'
 import {
   formatMetricRate,
+  formatStatReportItemCategory,
+  formatStatReportItemDimension,
   statReportRegionNameMap as regionNameMap,
   statReportRegionOptions as allRegionOptions,
   statReportStatusOptions as statusOptions,
@@ -243,6 +256,7 @@ import {
   useStatReportPage,
   valueOrDefault
 } from '@/views/statReport/useStatReportPage'
+import { resolveStatReportTypeKeyByReportCode } from '@/views/statReport/reportConfigs'
 
 const { proxy } = getCurrentInstance()
 const { setPageGuide } = useWorkbenchAssist()
@@ -255,7 +269,11 @@ const activeFocusKey = ref('')
 const statReportWorkbenchFields = ['regionCode']
 
 function hasPermissionPrefix(permissions, prefixes) {
-  return Array.isArray(permissions) && permissions.some(permission => prefixes.some(prefix => permission.startsWith(prefix)))
+  return Array.isArray(permissions) && permissions.some(permission => permission === '*:*:*' || prefixes.some(prefix => permission.startsWith(prefix)))
+}
+
+function hasExactPermission(permissions, permission) {
+  return Array.isArray(permissions) && permissions.some(item => item === '*:*:*' || item === permission)
 }
 
 function isFinanceView(roles, permissions) {
@@ -284,6 +302,21 @@ function countRows(predicate) {
 
 function reportTypeLabel(reportCode) {
   return reportTypeOptions.find(item => item.value === reportCode)?.label || reportCode || '-'
+}
+
+function resolveKnownStatReportTypeKey(reportCode) {
+  if (!reportTypeOptions.some(item => item.value === reportCode)) {
+    return ''
+  }
+  return resolveStatReportTypeKeyByReportCode(reportCode)
+}
+
+function hasStatReportPermission(reportCode, action) {
+  const typeKey = resolveKnownStatReportTypeKey(reportCode)
+  if (!typeKey) {
+    return false
+  }
+  return hasExactPermission(userStore.permissions || [], `ygb:statReport:${typeKey}:${action}`)
 }
 
 function matchReportFocus(row, focusKey) {
@@ -330,7 +363,11 @@ const roleView = computed(() => {
   return 'default'
 })
 
-const canGenerate = computed(() => !isReadOnlyRole.value && hasPermissionPrefix(userStore.permissions || [], ['ygb:statReport:generate']))
+const authorizedQueryReportTypeOptions = computed(() => reportTypeOptions.filter(item => hasStatReportPermission(item.value, 'query')))
+const authorizedGenerateReportTypeOptions = computed(() => reportTypeOptions.filter(item => hasStatReportPermission(item.value, 'generate')))
+const authorizedExportReportTypeOptions = computed(() => reportTypeOptions.filter(item => hasStatReportPermission(item.value, 'export')))
+const canGenerate = computed(() => !isReadOnlyRole.value && authorizedGenerateReportTypeOptions.value.length > 0)
+const canExportCurrentReport = computed(() => hasStatReportPermission(queryParams.value.reportCode, 'export'))
 
 const {
   loading,
@@ -346,10 +383,10 @@ const {
   queryParams,
   generateForm,
   generateRules,
-  getList,
+  getList: pageGetList,
   handleRowClick,
-  handleQuery,
-  handleExport,
+  handleQuery: pageHandleQuery,
+  handleExport: pageHandleExport,
   openGenerateDialog,
   submitGenerate,
   openDetail,
@@ -368,12 +405,87 @@ const {
   immediate: false
 })
 
+function firstAuthorizedReportCode(action) {
+  const options = action === 'generate'
+    ? authorizedGenerateReportTypeOptions.value
+    : action === 'export'
+      ? authorizedExportReportTypeOptions.value
+      : authorizedQueryReportTypeOptions.value
+  return options[0]?.value || ''
+}
+
+function resolveAuthorizedReportCode(action, reportCode = queryParams.value.reportCode) {
+  if (reportCode && hasStatReportPermission(reportCode, action)) {
+    return reportCode
+  }
+  return firstAuthorizedReportCode(action)
+}
+
+function ensureAuthorizedQueryReportCode() {
+  const nextReportCode = resolveAuthorizedReportCode('query')
+  if (!nextReportCode) {
+    proxy?.$modal?.msgWarning?.('当前账号没有统计报表查询权限')
+    reportList.value = []
+    total.value = 0
+    currentReport.value = undefined
+    return false
+  }
+  if (queryParams.value.reportCode !== nextReportCode) {
+    queryParams.value.reportCode = nextReportCode
+  }
+  return true
+}
+
+function guardedGetList() {
+  if (!ensureAuthorizedQueryReportCode()) {
+    return Promise.resolve()
+  }
+  return pageGetList()
+}
+
+function handleQuery() {
+  if (!ensureAuthorizedQueryReportCode()) {
+    return
+  }
+  pageHandleQuery()
+}
+
+function reportActionLabel(reportCode, action) {
+  return `${reportTypeLabel(reportCode)}${action === 'generate' ? '生成' : action === 'export' ? '导出' : '查询'}`
+}
+
+function canGenerateReport(reportCode) {
+  return !isReadOnlyRole.value && hasStatReportPermission(reportCode, 'generate')
+}
+
 function guardedOpenGenerateDialog(payload) {
-  openGenerateDialog(payload)
+  const nextReportCode = payload?.reportCode
+    ? payload.reportCode
+    : resolveAuthorizedReportCode('generate', queryParams.value.reportCode)
+  if (!nextReportCode || !canGenerateReport(nextReportCode)) {
+    proxy?.$modal?.msgWarning?.(`当前账号没有${reportActionLabel(nextReportCode, 'generate')}权限`)
+    return
+  }
+  openGenerateDialog({
+    ...(payload || {}),
+    reportCode: nextReportCode
+  })
 }
 
 function guardedSubmitGenerate() {
+  if (!canGenerateReport(generateForm.value.reportCode)) {
+    proxy?.$modal?.msgWarning?.(`当前账号没有${reportActionLabel(generateForm.value.reportCode, 'generate')}权限`)
+    return
+  }
   submitGenerate()
+}
+
+function handleExport() {
+  if (!hasStatReportPermission(queryParams.value.reportCode, 'export')) {
+    proxy?.$modal?.msgWarning?.(`当前账号没有${reportActionLabel(queryParams.value.reportCode, 'export')}权限`)
+    return
+  }
+  pageHandleExport()
 }
 
 const portalExplanations = computed(() => summaryData.value.ygbExplanation || [])
@@ -528,7 +640,7 @@ const roleTip = computed(() => {
   if (roleView.value === 'admin') {
     return '优先统筹会阻断企业归档闭环的关键月报对象，再决定是否重生成和归档。'
   }
-  return '生成结果当前继续返回 Stub 附件和结构化明细，后续可直接衔接 PDF、OSS 和归档链路。'
+  return '生成结果会返回报表附件和结构化明细，可直接衔接 PDF、OSS 和归档链路。'
 })
 
 const summaryCards = computed(() => {
@@ -643,7 +755,7 @@ const primaryReportAction = computed(() => {
   if (!currentReport.value) {
     return { label: activeFocus.value?.actionText || '查看详情', action: 'detail' }
   }
-  if (canGenerate.value && String(currentReport.value.reportStatus || '') === '0') {
+  if (canGenerateReport(currentReport.value.reportCode) && String(currentReport.value.reportStatus || '') === '0') {
     return { label: '按当前报表重生成', action: 'generate' }
   }
   return { label: '查看详情', action: 'detail' }
@@ -795,7 +907,7 @@ function resetQuery() {
     reportStatus: undefined
   })
   applyWorkbenchRouteQuery(route.query, queryParams.value, statReportWorkbenchFields)
-  getList()
+  guardedGetList()
 }
 
 function clearWorkbenchContext() {
@@ -807,11 +919,11 @@ function clearWorkbenchContext() {
     path: route.path,
     query: stripWorkbenchRouteQuery(route.query, statReportWorkbenchFields)
   })
-  getList()
+  guardedGetList()
 }
 
 applyWorkbenchRouteQuery(route.query, queryParams.value, statReportWorkbenchFields)
-getList()
+guardedGetList()
 </script>
 
 <style scoped lang="scss">

@@ -1,34 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  addPlatformModule,
-  delPlatformModule,
-  getPlatformModule,
-  getPlatformModuleSummary,
-  listPlatformModule,
-  updatePlatformModule
-} from '@/api/ygb/platform'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const submodule = 'exchange'
-const config = {
-  title: '接口与数据交换监控',
-  description: '记录交换任务、异常回写和人工跟踪结果，形成业务治理台账。',
-  permPrefix: 'ygb:platformExchange',
-  filePrefix: 'platform_exchange',
-  defaultCategoryCode: 'exchange',
-  defaultSourceLabel: '数据交换监控',
-  recordNameLabel: '交换任务',
-  recordNamePlaceholder: '请输入交换任务名称',
-  listApi: query => listPlatformModule(submodule, query),
-  summaryApi: query => getPlatformModuleSummary(submodule, query),
-  detailApi: id => getPlatformModule(submodule, id),
-  addApi: data => addPlatformModule(submodule, data),
-  updateApi: data => updatePlatformModule(submodule, data),
-  deleteApi: ids => delPlatformModule(submodule, ids),
-  exportUrl: `ygb/platform/${submodule}/export`
-}
+const config = createBusinessRecordPageConfig({
+  module: 'platformExchange',
+  title: '接口与数据交换监管',
+  description: '围绕接口调用、数据交换状态和异常记录监控开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '接口事项',
+  businessNamePlaceholder: '请输入接口事项',
+  defaultSourceLabel: '接口与数据交换监管',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

@@ -16,17 +16,26 @@ import com.yuegongbao.ygb.aireport.mapper.YgbAiReportMapper;
 import com.yuegongbao.ygb.aireport.mapper.YgbAiReportTaskMapper;
 import com.yuegongbao.ygb.aireport.service.IYgbAiReportTaskService;
 import com.yuegongbao.ygb.util.YgbRegionHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 
 @Service
 public class YgbAiReportTaskServiceImpl implements IYgbAiReportTaskService
 {
     private static final DateTimeFormatter PERIOD_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final String STATUS_DRAFT = "draft";
+    private static final String STATUS_PENDING = "pending";
+    private static final String STATUS_PROCESSING = "processing";
+    private static final String STATUS_CLOSED = "closed";
+    private static final String STATUS_REJECTED = "rejected";
 
     @Autowired
     private YgbAiReportTaskMapper aiReportTaskMapper;
 
     @Autowired
     private YgbAiReportMapper aiReportMapper;
+
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
 
     @Override
     public List<YgbAiReportTask> selectAiReportTaskList(YgbAiReportTask task)
@@ -82,6 +91,7 @@ public class YgbAiReportTaskServiceImpl implements IYgbAiReportTaskService
         YgbAiReportTask task = aiReportTaskMapper.selectAiReportTaskById(taskId);
         if (task != null)
         {
+            regionScopeHelper.assertEntityRegionAllowed(task);
             hydrateRegionName(task);
         }
         return task;
@@ -91,6 +101,8 @@ public class YgbAiReportTaskServiceImpl implements IYgbAiReportTaskService
     public int insertAiReportTask(YgbAiReportTask task, String operator)
     {
         fillTaskDefaults(task);
+        validateInitialStatus(task.getHandleStatus());
+        regionScopeHelper.assertEntityRegionAllowed(task);
         task.setCreateBy(operator);
         task.setCreateTime(new Date());
         task.setUpdateBy(operator);
@@ -105,7 +117,10 @@ public class YgbAiReportTaskServiceImpl implements IYgbAiReportTaskService
         {
             throw new ServiceException("Task ID cannot be empty");
         }
+        YgbAiReportTask current = requireAiReportTaskAllowed(task.getTaskId());
         fillTaskDefaults(task);
+        regionScopeHelper.assertEntityRegionAllowed(task);
+        task.setHandleStatus(current.getHandleStatus());
         task.setUpdateBy(operator);
         task.setUpdateTime(new Date());
         return aiReportTaskMapper.updateAiReportTask(task);
@@ -114,12 +129,14 @@ public class YgbAiReportTaskServiceImpl implements IYgbAiReportTaskService
     @Override
     public int updateAiReportTaskStatus(Long taskId, YgbAiReportTask task, String operator)
     {
-        YgbAiReportTask current = aiReportTaskMapper.selectAiReportTaskById(taskId);
-        if (current == null)
+        YgbAiReportTask current = requireAiReportTaskAllowed(taskId);
+        String nextStatus = transitStatus(current.getHandleStatus(), task.getHandleStatus());
+        if ((STATUS_CLOSED.equals(nextStatus) || STATUS_REJECTED.equals(nextStatus))
+            && StringUtils.isEmpty(task.getFeedbackText()))
         {
-            throw new ServiceException("AI report task does not exist");
+            throw new ServiceException("Task feedback cannot be empty when closing or rejecting");
         }
-        current.setHandleStatus(StringUtils.defaultIfEmpty(task.getHandleStatus(), current.getHandleStatus()));
+        current.setHandleStatus(nextStatus);
         current.setFeedbackText(task.getFeedbackText());
         current.setRemark(task.getRemark());
         current.setUpdateBy(operator);
@@ -130,7 +147,26 @@ public class YgbAiReportTaskServiceImpl implements IYgbAiReportTaskService
     @Override
     public int deleteAiReportTaskByIds(Long[] taskIds, String operator)
     {
+        for (Long taskId : taskIds)
+        {
+            requireAiReportTaskAllowed(taskId);
+        }
         return aiReportTaskMapper.deleteAiReportTaskByIds(taskIds, operator);
+    }
+
+    private YgbAiReportTask requireAiReportTaskAllowed(Long taskId)
+    {
+        if (taskId == null)
+        {
+            throw new ServiceException("Task ID cannot be empty");
+        }
+        YgbAiReportTask task = aiReportTaskMapper.selectAiReportTaskById(taskId);
+        if (task == null)
+        {
+            throw new ServiceException("AI report task does not exist");
+        }
+        regionScopeHelper.assertEntityRegionAllowed(task);
+        return task;
     }
 
     private void fillTaskDefaults(YgbAiReportTask task)
@@ -154,7 +190,7 @@ public class YgbAiReportTaskServiceImpl implements IYgbAiReportTaskService
         }
         if (StringUtils.isEmpty(task.getHandleStatus()))
         {
-            task.setHandleStatus("pending");
+            task.setHandleStatus(STATUS_PENDING);
         }
         if (task.getDueDate() == null)
         {
@@ -212,5 +248,51 @@ public class YgbAiReportTaskServiceImpl implements IYgbAiReportTaskService
     private void hydrateRegionName(YgbAiReportTask task)
     {
         task.setRegionName(YgbRegionHelper.resolveRegionName(task.getRegionCode()));
+    }
+
+    private void validateInitialStatus(String status)
+    {
+        if (!STATUS_DRAFT.equals(status) && !STATUS_PENDING.equals(status))
+        {
+            throw new ServiceException("New AI report task must be draft or pending");
+        }
+    }
+
+    private String transitStatus(String currentStatus, String requestedStatus)
+    {
+        String current = StringUtils.defaultIfEmpty(currentStatus, STATUS_PENDING);
+        String next = StringUtils.defaultIfEmpty(requestedStatus, current);
+        if (next.equals(current))
+        {
+            return next;
+        }
+        if (STATUS_PROCESSING.equals(next))
+        {
+            requireCurrent(current, STATUS_DRAFT, STATUS_PENDING);
+            return next;
+        }
+        if (STATUS_CLOSED.equals(next) || STATUS_REJECTED.equals(next))
+        {
+            requireCurrent(current, STATUS_PROCESSING);
+            return next;
+        }
+        if (STATUS_PENDING.equals(next))
+        {
+            requireCurrent(current, STATUS_DRAFT);
+            return next;
+        }
+        throw new ServiceException("Unsupported AI report task status");
+    }
+
+    private void requireCurrent(String current, String... allowedStatuses)
+    {
+        for (String allowedStatus : allowedStatuses)
+        {
+            if (allowedStatus.equals(current))
+            {
+                return;
+            }
+        }
+        throw new ServiceException("Current AI report task status does not allow this operation");
     }
 }

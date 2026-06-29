@@ -1,34 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  addAqInsuranceClaim,
-  delAqInsuranceClaim,
-  getAqInsuranceClaim,
-  getAqInsuranceClaimSummary,
-  listAqInsuranceClaim,
-  updateAqInsuranceClaim
-} from '@/api/ygb/aqInsurance'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const config = {
+const config = createBusinessRecordPageConfig({
+  module: 'aqInsuranceClaim',
   title: '赔付率监控',
-  description: '在安责险主链下补齐赔付率监控对象、状态流转和导出能力。',
-  permPrefix: 'ygb:aqInsuranceClaim',
-  filePrefix: 'aq_insurance_claim',
-  defaultCategoryCode: 'claim_rate',
-  defaultWorkflowStatus: 'pending',
-  defaultSourceLabel: '安责险监管',
-  recordNameLabel: '监控标题',
-  recordNamePlaceholder: '请输入监控标题',
-  listApi: query => listAqInsuranceClaim(query),
-  summaryApi: query => getAqInsuranceClaimSummary(query),
-  detailApi: id => getAqInsuranceClaim(id),
-  addApi: data => addAqInsuranceClaim(data),
-  updateApi: data => updateAqInsuranceClaim(data),
-  deleteApi: ids => delAqInsuranceClaim(ids),
-  exportUrl: 'ygb/aqInsurance/claim/export'
-}
+  description: '围绕行业企业赔付率统计和异常赔付风险开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '赔付监控事项',
+  businessNamePlaceholder: '请输入赔付监控事项',
+  defaultSourceLabel: '赔付率监控',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

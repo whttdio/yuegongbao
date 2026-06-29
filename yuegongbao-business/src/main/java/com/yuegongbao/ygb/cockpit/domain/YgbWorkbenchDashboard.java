@@ -20,6 +20,8 @@ import com.yuegongbao.ygb.regulation.domain.YgbUninsuredListSummary;
 import com.yuegongbao.ygb.report.domain.YgbStatReportSummary;
 import com.yuegongbao.ygb.techdefense.domain.YgbHeightWorkReportSummary;
 import com.yuegongbao.ygb.warning.domain.YgbWarningSummary;
+import com.yuegongbao.ygb.credit.domain.YgbCreditScore;
+import com.yuegongbao.ygb.credit.domain.YgbCreditScoreSummary;
 
 public class YgbWorkbenchDashboard
 {
@@ -94,6 +96,10 @@ public class YgbWorkbenchDashboard
     private String sourceDescription;
 
     private String homeSummary;
+
+    private YgbCreditScoreSummary creditScoreSummary;
+
+    private List<YgbCreditScore> creditRanking;
 
     public YgbCockpitIndicator getIndicators()
     {
@@ -453,5 +459,25 @@ public class YgbWorkbenchDashboard
     public void setHomeSummary(String homeSummary)
     {
         this.homeSummary = homeSummary;
+    }
+
+    public YgbCreditScoreSummary getCreditScoreSummary()
+    {
+        return creditScoreSummary;
+    }
+
+    public void setCreditScoreSummary(YgbCreditScoreSummary creditScoreSummary)
+    {
+        this.creditScoreSummary = creditScoreSummary;
+    }
+
+    public List<YgbCreditScore> getCreditRanking()
+    {
+        return creditRanking;
+    }
+
+    public void setCreditRanking(List<YgbCreditScore> creditRanking)
+    {
+        this.creditRanking = creditRanking;
     }
 }

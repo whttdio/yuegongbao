@@ -1,13 +1,22 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">拍照上传</view>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">拍照上传</view>
       <view class="worker-subtitle">
         用于现场留痕、隐患上报和工伤证据采集。上传成功后可直接带入投诉举报。
       </view>
-      <picker class="form-picker" :range="categoryOptions" range-key="label" @change="handleCategoryChange">
-        <view class="form-picker__text">上传分类：{{ selectedCategory.label }}</view>
-      </picker>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">发起上传</view>
+      </view>
+      <view class="form-field">
+        <view class="form-field__label">上传分类</view>
+        <picker class="form-picker" :range="categoryOptions" range-key="label" @change="handleCategoryChange">
+          <view class="form-picker__text">{{ selectedCategory.label }}</view>
+        </picker>
+      </view>
       <view class="camera-actions">
         <button class="worker-button worker-button--secondary" @click="chooseImage('camera')">拍照取证</button>
         <button class="worker-button worker-button--secondary" @click="chooseImage('album')">相册选择</button>
@@ -586,32 +595,6 @@ onShow(loadRecords)
 </script>
 
 <style lang="scss">
-.form-picker {
-  width: 100%;
-  margin-top: 18rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
-}
-
-.form-picker__text {
-  font-size: 28rpx;
-  color: #16324f;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 16rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
 .camera-actions {
   display: flex;
   gap: 20rpx;
@@ -631,80 +614,7 @@ onShow(loadRecords)
   height: 360rpx;
   margin-top: 20rpx;
   border-radius: 24rpx;
-  background: #eef3f8;
+  background: #f4f8fa;
 }
 
-.record-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.record-row:last-child {
-  border-bottom: none;
-}
-
-.record-row__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.record-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.record-row__link {
-  font-size: 24rpx;
-  color: #1f6fd6;
-  white-space: nowrap;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 24rpx;
-  padding: 14rpx 0;
-  font-size: 24rpx;
-  color: #57748f;
-}
-
-.detail-row__label {
-  flex-shrink: 0;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  color: #16324f;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 18rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
 </style>

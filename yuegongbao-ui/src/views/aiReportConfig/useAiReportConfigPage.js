@@ -8,20 +8,11 @@ import {
   updateAiReportConfig
 } from '@/api/ygb/aiReportConfig'
 import { authorizedDefaultRegionCode, useAuthorizedRegionOptions } from '@/utils/regionScope'
+import { gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
-export const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const regionOptions = gdRegionOptions
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440106': '广州市天河区',
-  '440305': '深圳市南山区',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
 export const statusOptions = [
   { label: '停用', value: '0' },
@@ -42,7 +33,7 @@ function createDefaultForm(defaultRegionCode = '440000') {
     configId: undefined,
     regionCode: defaultRegionCode,
     version: '',
-    configStatus: '1',
+    configStatus: '0',
     effectiveDate: currentDate(),
     weightA: 25,
     weightB: 20,

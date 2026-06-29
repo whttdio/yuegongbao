@@ -77,7 +77,7 @@
     >
       <el-table-column prop="menuName" label="菜单名称" min-width="220" :show-overflow-tooltip="true">
         <template #default="{ row }">
-          <svg-icon :icon-class="row.icon || 'tree'" />
+          <svg-icon :icon-class="resolveRowIcon(row)" />
           <span class="ml5">{{ row.menuName }}</span>
         </template>
       </el-table-column>
@@ -255,6 +255,7 @@
 import { getCurrentInstance, nextTick, reactive, ref, toRefs } from 'vue'
 import { addMenu, delMenu, getMenu, listMenu, updateMenu, updateMenuSort } from '@/api/system/menu'
 import IconSelect from '@/components/IconSelect'
+import { resolveMenuIcon } from '@/utils/menuIcon'
 
 const { proxy } = getCurrentInstance()
 const { sys_show_hide, sys_normal_disable } = useDict('sys_show_hide', 'sys_normal_disable')
@@ -318,6 +319,21 @@ function normalizePortalScope(scope) {
   return scope || 'both'
 }
 
+function resolveRowIcon(row) {
+  return resolveMenuIcon(
+    {
+      title: row?.menuName,
+      icon: row?.icon,
+      path: row?.path,
+      meta: {
+        title: row?.menuName,
+        icon: row?.icon
+      }
+    },
+    {}
+  )
+}
+
 function getList() {
   loading.value = true
   listMenu(queryParams.value).then(response => {
@@ -341,7 +357,7 @@ function reset() {
     menuId: undefined,
     parentId: 0,
     menuName: undefined,
-    icon: undefined,
+    icon: 'people',
     menuType: 'M',
     orderNum: 0,
     isFrame: '1',
@@ -368,7 +384,7 @@ function showSelectIcon() {
 }
 
 function selected(name) {
-  form.value.icon = name
+  form.value.icon = name && name !== '#' ? name : 'people'
 }
 
 function handleQuery() {
@@ -403,6 +419,7 @@ function handleUpdate(row) {
     getMenu(row.menuId).then(response => {
       form.value = {
         ...response.data,
+        icon: response.data.icon && response.data.icon !== '#' ? response.data.icon : 'people',
         portalScope: normalizePortalScope(response.data.portalScope)
       }
       open.value = true

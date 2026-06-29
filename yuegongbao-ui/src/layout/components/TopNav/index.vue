@@ -7,9 +7,7 @@
   >
     <template v-for="(item, index) in topMenus">
       <el-menu-item :style="{'--theme': theme}" :index="item.path" :key="index" v-if="index < visibleNumber">
-        <svg-icon
-        v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
-        :icon-class="item.meta.icon"/>
+        <svg-icon :icon-class="resolveMenuIcon(item)" />
         {{ item.meta.title }}
       </el-menu-item>
     </template>
@@ -22,10 +20,8 @@
           :index="item.path"
           :key="index"
           v-if="index >= visibleNumber">
-        <svg-icon
-          v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
-          :icon-class="item.meta.icon"/>
-        {{ item.meta.title }}
+          <svg-icon :icon-class="resolveMenuIcon(item)" />
+          {{ item.meta.title }}
         </el-menu-item>
       </template>
     </el-sub-menu>
@@ -35,7 +31,9 @@
 <script setup>
 import { constantRoutes } from "@/router"
 import { isHttp } from '@/utils/validate'
+import { parseMenuQuery } from '@/utils/yuegongbao'
 import { isOfficialPortalPath, openOfficialPortal } from '@/utils/portal'
+import { resolveMenuIcon } from '@/utils/menuIcon'
 import useAppStore from '@/store/modules/app'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
@@ -130,8 +128,7 @@ function handleSelect(key, keyPath) {
     // 没有子路由路径内部打开
     const routeMenu = childrenMenus.value.find(item => item.path === key)
     if (routeMenu && routeMenu.query) {
-      let query = JSON.parse(routeMenu.query)
-      router.push({ path: key, query: query })
+      router.push({ path: key, query: parseMenuQuery(routeMenu.query) })
     } else {
       router.push({ path: key })
     }
@@ -175,7 +172,7 @@ onMounted(() => {
 
 <style lang="scss">
 .topmenu-container.el-menu--horizontal {
-  height: 68px !important;
+  height: var(--layout-header-height, 60px) !important;
   padding-left: 8px;
   border-bottom: none;
   background: transparent;
@@ -183,8 +180,8 @@ onMounted(() => {
 
 .topmenu-container.el-menu--horizontal > .el-menu-item {
   float: left;
-  height: 68px !important;
-  line-height: 68px !important;
+  height: var(--layout-header-height, 60px) !important;
+  line-height: var(--layout-header-height, 60px) !important;
   color: rgba(255, 255, 255, 0.86) !important;
   padding: 0 10px !important;
   margin: 0 8px !important;
@@ -199,8 +196,8 @@ onMounted(() => {
 
 .topmenu-container.el-menu--horizontal > .el-sub-menu .el-sub-menu__title {
   float: left;
-  height: 68px !important;
-  line-height: 68px !important;
+  height: var(--layout-header-height, 60px) !important;
+  line-height: var(--layout-header-height, 60px) !important;
   color: rgba(255, 255, 255, 0.86) !important;
   padding: 0 10px !important;
   margin: 0 8px !important;

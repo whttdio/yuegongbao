@@ -1,20 +1,11 @@
 import { getCurrentInstance, reactive, ref, toRefs } from 'vue'
 import { generateStatReport, getStatReport, getStatReportSummary, listStatReport } from '@/api/ygb/statReport'
 import { authorizedDefaultRegionCode } from '@/utils/regionScope'
+import { gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
-export const statReportRegionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const statReportRegionOptions = gdRegionOptions
 
-export const statReportRegionNameMap = {
-  440000: '广东省',
-  440106: '广州市天河区',
-  440305: '深圳市南山区',
-  440606: '佛山市顺德区'
-}
+export const statReportRegionNameMap = gdRegionNameMap
 
 export const statReportTypeOptions = [
   { label: '工伤发生率月报', value: 'INJURY_RATE' },
@@ -29,7 +20,38 @@ export const statReportTypeOptions = [
   { label: '新业态月报', value: 'NEWFORM' },
   { label: '职业病月报', value: 'OCCUPATION' },
   { label: '工会监督月报', value: 'UNION_SUPERVISION' },
+  { label: '专项整治月报', value: 'SPECIAL_RECTIFICATION' },
   { label: '自定义月报', value: 'CUSTOM' }
+]
+
+export const statReportItemCategoryOptions = [
+  ...statReportTypeOptions,
+  { label: '设备月报', value: 'DEVICE_STATS' },
+  { label: '扩面减损月报', value: 'EXPANSION_REDUCTION' },
+  { label: '工资发放月报', value: 'SALARY' }
+]
+
+export const statReportItemDimensionOptions = [
+  { label: '社保基数异常', value: 'SOCIAL_ABNORMAL' },
+  { label: '个税比对异常', value: 'TAX_ABNORMAL' },
+  { label: '漏保清单', value: 'UNINSURED' },
+  { label: '用工比例黄警', value: 'EMPLOYMENT_YELLOW' },
+  { label: '用工比例红警', value: 'EMPLOYMENT_RED' },
+  { label: '假外包疑似', value: 'FAKE_OUTSOURCING' },
+  { label: '安责险理赔监控', value: 'AQ_CLAIM' },
+  { label: '新业态职业伤害', value: 'NEWFORM_INJURY' },
+  { label: '职业病预警', value: 'OCCUPATION_WARNING' },
+  { label: '工会投诉协同', value: 'UNION_CASE' },
+  { label: '社保监管', value: 'SOCIAL' },
+  { label: '税务监管', value: 'TAX' },
+  { label: '扩面减损', value: 'EXPANSION' },
+  { label: '专项治理', value: 'SPECIAL' },
+  { label: '设备预警', value: 'DEVICE' },
+  { label: '工伤监管', value: 'INJURY' },
+  { label: '安责险', value: 'AQINS' },
+  { label: '新业态', value: 'NEWFORM' },
+  { label: '职业病', value: 'OCCUPATION' },
+  { label: '工会监督', value: 'UNION' }
 ]
 
 export const statReportStatusOptions = [
@@ -52,9 +74,40 @@ export function statusLabel(value, options = statReportStatusOptions) {
   return matched ? matched.label : '-'
 }
 
+function optionLabel(value, options) {
+  const matched = options.find(item => String(item.value) === String(value))
+  return matched ? matched.label : ''
+}
+
+export function formatStatReportItemCategory(value) {
+  return optionLabel(value, statReportItemCategoryOptions) || value || '-'
+}
+
+export function formatStatReportItemDimension(value, row = {}) {
+  if (statReportRegionNameMap[value]) {
+    return statReportRegionNameMap[value]
+  }
+  const label = optionLabel(value, statReportItemDimensionOptions)
+  if (label) {
+    return label
+  }
+  if (/^\d+$/.test(String(value || '')) && row.itemName) {
+    return row.itemName
+  }
+  return value || row.itemName || '-'
+}
+
+function normalizeMetricRate(value, reportCode) {
+  const safeValue = Number(value ?? 0)
+  if (reportCode === 'INJURY_RATE' && safeValue > 100) {
+    return Number((safeValue / 10).toFixed(2))
+  }
+  return value ?? 0
+}
+
 export function formatMetricRate(value, reportCode) {
-  const safeValue = value ?? 0
-  const suffix = reportCode === 'INJURY_RATE' ? '‰' : '%'
+  const safeValue = normalizeMetricRate(value, reportCode)
+  const suffix = '%'
   return `${safeValue}${suffix}`
 }
 
@@ -192,23 +245,27 @@ export function useStatReportPage(options = {}) {
 
   function getList() {
     loading.value = true
-    return Promise.all([
-      listStatReport(buildRequestQuery()),
-      getStatReportSummary(buildSummaryQuery())
-    ]).then(([listResponse, summaryResponse]) => {
-      reportList.value = listResponse.rows || []
-      total.value = listResponse.total || 0
-      summaryData.value = summaryResponse.data || {}
-      if (typeof afterList === 'function') {
-        afterList({
-          reportList: reportList.value,
-          summaryData: summaryData.value
-        })
-      }
-      syncCurrentReport()
-    }).finally(() => {
-      loading.value = false
-    })
+    const listQuery = buildRequestQuery()
+    const summaryQuery = buildSummaryQuery()
+    return listStatReport(listQuery)
+      .then(listResponse => {
+        reportList.value = listResponse.rows || []
+        total.value = listResponse.total || 0
+        return getStatReportSummary(summaryQuery).catch(() => ({ data: {} }))
+      })
+      .then(summaryResponse => {
+        summaryData.value = summaryResponse?.data || {}
+        if (typeof afterList === 'function') {
+          afterList({
+            reportList: reportList.value,
+            summaryData: summaryData.value
+          })
+        }
+        syncCurrentReport()
+      })
+      .finally(() => {
+        loading.value = false
+      })
   }
 
   function handleRowClick(row) {

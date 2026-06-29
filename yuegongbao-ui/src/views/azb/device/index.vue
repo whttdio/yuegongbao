@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-container azb-page azb-device-page">
     <section class="gov-page-header azb-page__header">
       <div>
@@ -182,17 +182,24 @@
         <el-table-column label="安装位置" prop="installLocation" min-width="180" show-overflow-tooltip />
         <el-table-column class-name="table-fill-column" min-width="1" />
 
-        <el-table-column label="操作" fixed="right" align="center" :width="isReadOnlyRole ? 100 : 360" class-name="small-padding fixed-width">
+                <el-table-column label="操作" fixed="right" align="center" :width="isReadOnlyRole ? 100 : 220" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-button v-if="isReadOnlyRole" link type="info" icon="View" @click.stop="handleRowClick(scope.row)">详情</el-button>
-            <template v-else>
+            <div v-else class="device-row-actions">
               <el-button link type="primary" icon="Edit" @click.stop="handleUpdate(scope.row)" v-hasPermi="['ygb:device:edit']">修改</el-button>
-              <el-button link type="primary" icon="Lock" @click.stop="handleLock(scope.row)" v-hasPermi="['ygb:device:lock']">锁机</el-button>
-              <el-button link type="primary" icon="Unlock" @click.stop="handleUnlock(scope.row)" v-hasPermi="['ygb:device:unlock']">解锁</el-button>
-              <el-button link type="primary" icon="Checked" @click.stop="openAuthorizeDialog(scope.row)" v-hasPermi="['ygb:device:authorize']">授权</el-button>
-              <el-button link type="primary" icon="Connection" @click.stop="openHeartbeatDialog(scope.row)" v-hasPermi="['ygb:device:heartbeat']">心跳</el-button>
-              <el-button link type="primary" icon="VideoCamera" @click.stop="openAiDialog(scope.row)" v-hasPermi="['ygb:device:aiEvent']">AI事件</el-button>
-            </template>
+              <el-dropdown trigger="click">
+                <el-button link type="primary">更多</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-hasPermi="['ygb:device:lock']" @click.stop="handleLock(scope.row)">锁机</el-dropdown-item>
+                    <el-dropdown-item v-hasPermi="['ygb:device:unlock']" @click.stop="handleUnlock(scope.row)">解锁</el-dropdown-item>
+                    <el-dropdown-item v-hasPermi="['ygb:device:authorize']" @click.stop="openAuthorizeDialog(scope.row)">授权</el-dropdown-item>
+                    <el-dropdown-item v-hasPermi="['ygb:device:heartbeat']" @click.stop="openHeartbeatDialog(scope.row)">心跳</el-dropdown-item>
+                    <el-dropdown-item v-hasPermi="['ygb:device:aiEvent']" @click.stop="openAiDialog(scope.row)">AI事件</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -1011,6 +1018,20 @@ init()
 </script>
 
 <style scoped lang="scss">
+.azb-device-page :deep(.el-table__body .fixed-width .cell) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 0;
+  white-space: normal;
+}
+
+.azb-device-page :deep(.el-table__body .fixed-width .cell .el-button) {
+  margin-left: 0;
+  padding: 4px 8px;
+}
+
 .azb-workbench-alert {
   margin-bottom: 16px;
 }
@@ -1082,6 +1103,18 @@ init()
   padding: 12px 14px;
   color: #476a72;
   line-height: 1.7;
+}
+
+.device-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.device-row-actions :deep(.el-button) {
+  margin-left: 0;
+  padding: 4px 8px;
 }
 
 .azb-device-card,
@@ -1388,3 +1421,4 @@ init()
   }
 }
 </style>
+

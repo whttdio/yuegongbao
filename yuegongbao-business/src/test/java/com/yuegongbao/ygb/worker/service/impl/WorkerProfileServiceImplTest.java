@@ -27,10 +27,12 @@ import com.yuegongbao.system.service.ISysConfigService;
 import com.yuegongbao.ygb.aqins.mapper.YgbAqInsuranceMapper;
 import com.yuegongbao.ygb.compliance.mapper.YgbContractMapper;
 import com.yuegongbao.ygb.foundation.domain.YgbPerson;
+import com.yuegongbao.ygb.worker.domain.WorkerFeedback;
 import com.yuegongbao.ygb.worker.domain.WorkerPushTestRecord;
 import com.yuegongbao.ygb.worker.domain.WorkerRealnameApply;
 import com.yuegongbao.ygb.worker.domain.WorkerResume;
 import com.yuegongbao.ygb.worker.domain.WorkerSetting;
+import com.yuegongbao.ygb.worker.domain.vo.WorkerMessageHandleRequest;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerPushTestRequest;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerRealnameSubmitRequest;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerResumeSaveRequest;
@@ -177,6 +179,46 @@ class WorkerProfileServiceImplTest
         assertEquals("FAIL", historyList.get(0).get("testStatus"));
         assertEquals("trace-002", historyList.get(1).get("traceId"));
         assertEquals("SUCCESS", historyList.get(1).get("testStatus"));
+    }
+
+    @Test
+    void updateFeedbackHandleRequiresOpinionWhenClosing()
+    {
+        WorkerMessageHandleRequest request = new WorkerMessageHandleRequest();
+        request.setStatus("1");
+
+        ServiceException ex = assertThrows(ServiceException.class,
+            () -> service.updateFeedbackHandle(10L, request, "operator"));
+
+        assertEquals("标记已处理时必须填写处理意见。", ex.getMessage());
+    }
+
+    @Test
+    void updateFeedbackHandleCanReopenFeedback()
+    {
+        WorkerFeedback feedback = new WorkerFeedback();
+        feedback.setFeedbackId(10L);
+        feedback.setStatus("1");
+        when(workerProfileMapper.selectWorkerFeedbackById(eq(10L))).thenReturn(feedback);
+        when(workerProfileMapper.updateWorkerFeedbackHandle(any(WorkerFeedback.class))).thenReturn(1);
+
+        WorkerMessageHandleRequest request = new WorkerMessageHandleRequest();
+        request.setStatus("0");
+        request.setReplyContent("需要继续跟进");
+
+        Map<String, Object> result = service.updateFeedbackHandle(10L, request, "operator");
+
+        assertEquals("0", result.get("status"));
+        assertEquals("待处理", result.get("statusText"));
+        assertEquals(Boolean.TRUE, result.get("updated"));
+
+        ArgumentCaptor<WorkerFeedback> feedbackCaptor = ArgumentCaptor.forClass(WorkerFeedback.class);
+        verify(workerProfileMapper).updateWorkerFeedbackHandle(feedbackCaptor.capture());
+        WorkerFeedback updated = feedbackCaptor.getValue();
+        assertEquals(10L, updated.getFeedbackId());
+        assertEquals("0", updated.getStatus());
+        assertEquals("operator", updated.getUpdateBy());
+        assertEquals("反馈处理：重新打开；需要继续跟进", updated.getRemark());
     }
 
     @Test

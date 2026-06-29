@@ -22,13 +22,21 @@ import com.yuegongbao.ygb.newform.domain.YgbNewformWorker;
 import com.yuegongbao.ygb.newform.domain.YgbNewformWorkerSummary;
 import com.yuegongbao.ygb.newform.mapper.YgbNewformWorkerMapper;
 import com.yuegongbao.ygb.newform.service.IYgbNewformWorkerService;
+import com.yuegongbao.ygb.util.EnterpriseScopeMode;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
 import com.yuegongbao.ygb.util.YgbRegionHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
 @Service
 public class YgbNewformWorkerServiceImpl implements IYgbNewformWorkerService
 {
     private static final Pattern MONTH_PATTERN = Pattern.compile("^\\d{4}-\\d{2}$");
+    private static final String STATUS_UNINSURED = "0";
+    private static final String STATUS_INSURED = "1";
+    private static final String STATUS_STOPPED = "2";
+    private static final String WARNING_NONE = "0";
+    private static final String WARNING_EXISTS = "1";
 
     @Autowired
     private YgbNewformWorkerMapper newformWorkerMapper;
@@ -39,10 +47,17 @@ public class YgbNewformWorkerServiceImpl implements IYgbNewformWorkerService
     @Autowired
     private IYgbWarningService warningService;
 
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
     @Override
     public List<YgbNewformWorker> selectNewformWorkerList(YgbNewformWorker query)
     {
-        List<YgbNewformWorker> list = newformWorkerMapper.selectNewformWorkerList(query);
+        YgbNewformWorker scopedQuery = prepareQuery(query);
+        List<YgbNewformWorker> list = newformWorkerMapper.selectNewformWorkerList(scopedQuery);
         list.forEach(item -> item.setRegionName(YgbRegionHelper.resolveRegionName(item.getRegionCode())));
         return list;
     }
@@ -106,7 +121,8 @@ public class YgbNewformWorkerServiceImpl implements IYgbNewformWorkerService
     @Override
     public List<YgbNewformPlatformStat> selectNewformPlatformList(YgbNewformWorker query)
     {
-        List<YgbNewformPlatformStat> list = newformWorkerMapper.selectNewformPlatformList(query);
+        YgbNewformWorker scopedQuery = prepareQuery(query);
+        List<YgbNewformPlatformStat> list = newformWorkerMapper.selectNewformPlatformList(scopedQuery);
         list.forEach(item -> item.setRegionName(YgbRegionHelper.resolveRegionName(item.getRegionCode())));
         return list;
     }
@@ -120,7 +136,8 @@ public class YgbNewformWorkerServiceImpl implements IYgbNewformWorkerService
     @Override
     public List<YgbNewformPlatformStat> selectNewformInjuryMonitorList(YgbNewformWorker query)
     {
-        List<YgbNewformPlatformStat> list = newformWorkerMapper.selectNewformInjuryMonitorList(query);
+        YgbNewformWorker scopedQuery = prepareQuery(query);
+        List<YgbNewformPlatformStat> list = newformWorkerMapper.selectNewformInjuryMonitorList(scopedQuery);
         list.forEach(item -> item.setRegionName(YgbRegionHelper.resolveRegionName(item.getRegionCode())));
         return list;
     }
@@ -136,13 +153,18 @@ public class YgbNewformWorkerServiceImpl implements IYgbNewformWorkerService
     public int syncNewformWorker(String statMonth, Long enterpriseId, String operator)
     {
         validateMonth(statMonth);
-        newformWorkerMapper.deleteByScope(statMonth, enterpriseId);
+        if (enterpriseId != null)
+        {
+            enterpriseScopeHelper.assertEnterpriseAuthorized(enterpriseId);
+        }
+        YgbNewformWorker deleteScope = buildScopedWorkerQuery(statMonth, enterpriseId);
+        newformWorkerMapper.deleteByScope(deleteScope);
         List<YgbNewformWorkerStubItem> records = newformClient.pullWorkerRecords(statMonth);
 
         int rows = 0;
         for (YgbNewformWorkerStubItem item : records)
         {
-            if (enterpriseId != null && !enterpriseId.equals(item.getEnterpriseId()))
+            if (!isItemInScope(item, enterpriseId))
             {
                 continue;
             }
@@ -189,12 +211,93 @@ public class YgbNewformWorkerServiceImpl implements IYgbNewformWorkerService
         return rows;
     }
 
+    private YgbNewformWorker buildScopedWorkerQuery(String statMonth, Long enterpriseId)
+    {
+        YgbNewformWorker query = new YgbNewformWorker();
+        query.setStatMonth(statMonth);
+        query.setEnterpriseId(enterpriseId);
+        applyDataScope(query);
+        return query;
+    }
+
+    private YgbNewformWorker prepareQuery(YgbNewformWorker query)
+    {
+        YgbNewformWorker scopedQuery = query == null ? new YgbNewformWorker() : query;
+        validateQuery(scopedQuery);
+        applyDataScope(scopedQuery);
+        return scopedQuery;
+    }
+
+    private void applyDataScope(YgbNewformWorker query)
+    {
+        if (enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            enterpriseScopeHelper.applyEnterpriseDataScope(query, EnterpriseScopeMode.SINGLE, "enterprise_id");
+            return;
+        }
+        regionScopeHelper.applyRegionDataScope(query, "region_code");
+    }
+
+    private void validateQuery(YgbNewformWorker query)
+    {
+        if (query == null)
+        {
+            return;
+        }
+        if (StringUtils.isNotEmpty(query.getStatMonth()))
+        {
+            validateMonth(query.getStatMonth());
+        }
+        validateStatus(query.getInsuranceStatus(), "参保状态", STATUS_UNINSURED, STATUS_INSURED, STATUS_STOPPED);
+        validateStatus(query.getInjuryInsuranceStatus(), "职业伤害参保状态", STATUS_UNINSURED, STATUS_INSURED,
+            STATUS_STOPPED);
+        validateStatus(query.getWarningStatus(), "预警状态", WARNING_NONE, WARNING_EXISTS);
+    }
+
+    private boolean isItemInScope(YgbNewformWorkerStubItem item, Long requestedEnterpriseId)
+    {
+        if (item == null)
+        {
+            return false;
+        }
+        if (requestedEnterpriseId != null && !requestedEnterpriseId.equals(item.getEnterpriseId()))
+        {
+            return false;
+        }
+        try
+        {
+            regionScopeHelper.assertRegionAuthorized(item.getRegionCode());
+            enterpriseScopeHelper.assertEnterpriseAuthorized(item.getEnterpriseId());
+            return true;
+        }
+        catch (ServiceException e)
+        {
+            return false;
+        }
+    }
+
     private void validateMonth(String statMonth)
     {
         if (StringUtils.isEmpty(statMonth) || !MONTH_PATTERN.matcher(statMonth).matches())
         {
             throw new ServiceException("统计月份格式错误，应为 yyyy-MM。");
         }
+    }
+
+    private void validateStatus(String value, String label, String... allowedValues)
+    {
+        if (StringUtils.isEmpty(value))
+        {
+            return;
+        }
+        for (String allowedValue : allowedValues)
+        {
+            if (allowedValue.equals(value))
+            {
+                return;
+            }
+        }
+        throw new ServiceException(label + "不合法。");
     }
 
     private YgbNewformPlatformSummary buildPlatformSummary(List<YgbNewformPlatformStat> list, boolean includeAverageIncome)

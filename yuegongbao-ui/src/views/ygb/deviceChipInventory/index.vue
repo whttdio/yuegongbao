@@ -9,7 +9,7 @@ import { getDeviceChipInventory, getDeviceChipInventorySummary, listDeviceChipIn
 const config = {
   title: '芯片库存',
   eyebrow: '设备子台账',
-  description: '复用统一设备底表查看芯片编号、授权状态和库存归属。',
+  description: '查看芯片编号、授权状态、库存归属和出入库办理情况。',
   permPrefix: 'ygb:device',
   filePrefix: 'device_chip_inventory',
   routeQueryFields: ['regionCode', 'enterpriseId', 'deviceCode', 'deviceName', 'deviceStatus', 'authStatus'],

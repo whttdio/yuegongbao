@@ -1,11 +1,34 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">上传归档</view>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">上传归档</view>
       <view class="worker-subtitle">集中查看本人上传归档记录，可按分类筛选并继续发起拍照上传。</view>
-      <picker class="form-picker" :range="categoryOptions" range-key="label" @change="handleCategoryChange">
-        <view class="form-picker__text">归档分类：{{ selectedCategory.label }}</view>
-      </picker>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ records.length }}</view>
+          <view class="hero-stat__label">归档条数</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ selectedCategory.label }}</view>
+          <view class="hero-stat__label">当前分类</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ categoryOptions.length }}</view>
+          <view class="hero-stat__label">可选分类</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">筛选与操作</view>
+      </view>
+      <view class="form-field">
+        <view class="form-field__label">归档分类</view>
+        <picker class="form-picker" :range="categoryOptions" range-key="label" @change="handleCategoryChange">
+          <view class="form-picker__text">{{ selectedCategory.label }}</view>
+        </picker>
+      </view>
       <view class="action-row">
         <button class="worker-button" @click="goCamera">去拍照上传</button>
         <button class="worker-button worker-button--secondary" @click="loadRecords">刷新记录</button>
@@ -19,15 +42,15 @@
       </view>
       <view v-if="records.length">
         <view v-for="item in records" :key="item.uploadId" class="record-row">
-          <view class="record-main">
+          <view>
             <view class="record-row__title">{{ item.categoryName || selectedCategory.label }}</view>
             <view class="record-row__subtitle">{{ item.originalFilename || item.fileName || '-' }}</view>
             <view class="record-row__subtitle">{{ item.createTime || '-' }}</view>
             <view class="record-row__subtitle">{{ item.fileUrl || '-' }}</view>
           </view>
-          <view class="record-actions">
-            <view class="record-action" @click="copyRecord(item)">复制地址</view>
-            <view class="record-action" @click="openComplaint(item)">带入投诉</view>
+          <view class="record-row__actions">
+            <view class="record-row__link" @click="copyRecord(item)">复制地址</view>
+            <view class="record-row__link" @click="openComplaint(item)">带入投诉</view>
           </view>
         </view>
       </view>
@@ -170,20 +193,6 @@ onShow(loadRecords)
   margin-top: 24rpx;
 }
 
-.form-picker {
-  width: 100%;
-  margin-top: 18rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
-}
-
-.form-picker__text {
-  font-size: 28rpx;
-  color: #16324f;
-}
-
 .action-row {
   display: flex;
   gap: 20rpx;
@@ -194,144 +203,15 @@ onShow(loadRecords)
   flex: 1;
 }
 
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 16rpx;
-}
-
-.record-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.record-row:last-child {
-  border-bottom: none;
-}
-
-.record-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.record-row__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.record-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.record-actions {
+.record-row__actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 12rpx;
-}
-
-.record-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-  white-space: nowrap;
-}
-
-.worker-empty--panel {
-  padding: 24rpx 0;
-}
-
-.worker-empty__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.worker-empty__desc {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #7890aa;
-}
-
-.worker-empty__actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 22rpx;
+  flex-shrink: 0;
 }
 
 .worker-empty__actions button {
   flex: 1;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 </style>

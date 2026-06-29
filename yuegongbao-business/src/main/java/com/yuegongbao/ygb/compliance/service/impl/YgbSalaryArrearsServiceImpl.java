@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.yuegongbao.common.exception.ServiceException;
 import com.yuegongbao.common.utils.StringUtils;
 import com.yuegongbao.ygb.compliance.domain.YgbSalaryArrears;
+import com.yuegongbao.ygb.compliance.domain.YgbSalaryArrearsSummary;
 import com.yuegongbao.ygb.compliance.mapper.YgbSalaryArrearsMapper;
 import com.yuegongbao.ygb.compliance.service.IYgbSalaryArrearsService;
 import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
@@ -27,6 +28,46 @@ public class YgbSalaryArrearsServiceImpl implements IYgbSalaryArrearsService
     public List<YgbSalaryArrears> selectSalaryArrearsList(YgbSalaryArrears arrears)
     {
         return salaryArrearsMapper.selectSalaryArrearsList(arrears);
+    }
+
+    @Override
+    public YgbSalaryArrearsSummary selectSalaryArrearsSummary(YgbSalaryArrears arrears)
+    {
+        List<YgbSalaryArrears> list = selectSalaryArrearsList(arrears);
+        YgbSalaryArrearsSummary summary = new YgbSalaryArrearsSummary();
+        BigDecimal totalArrearsAmount = BigDecimal.ZERO;
+        int unhandledCount = 0;
+        int processingCount = 0;
+        int handledCount = 0;
+        int overdueCount = 0;
+        for (YgbSalaryArrears item : list)
+        {
+            totalArrearsAmount = totalArrearsAmount.add(item.getArrearsAmount() == null ? BigDecimal.ZERO : item.getArrearsAmount());
+            String handleStatus = item.getHandleStatus();
+            if ("pending".equals(handleStatus) || "0".equals(handleStatus))
+            {
+                unhandledCount++;
+            }
+            else if ("processing".equals(handleStatus) || "1".equals(handleStatus))
+            {
+                processingCount++;
+            }
+            else if ("closed".equals(handleStatus) || "handled".equals(handleStatus) || "2".equals(handleStatus))
+            {
+                handledCount++;
+            }
+            if (item.getOverdueDays() != null && item.getOverdueDays() > 0)
+            {
+                overdueCount++;
+            }
+        }
+        summary.setTotalArrears(list.size());
+        summary.setTotalArrearsAmount(totalArrearsAmount);
+        summary.setUnhandledCount(unhandledCount);
+        summary.setProcessingCount(processingCount);
+        summary.setHandledCount(handledCount);
+        summary.setOverdueCount(overdueCount);
+        return summary;
     }
 
     @Override

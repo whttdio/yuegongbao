@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -49,6 +49,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and region_code like concat(#{regionCode}, '%')
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
         </where>
         order by stat_month desc, ratio_value desc, record_id desc
     </select>
@@ -64,12 +65,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         )
     </insert>
 
-    <delete id="deleteByScope">
+    <delete id="deleteByScope" parameterType="YgbEmploymentRatio">
         delete from t_employment_proportion
         where stat_month = #{statMonth}
         <if test="employerEnterpriseId != null">
             and employer_enterprise_id = #{employerEnterpriseId}
         </if>
+        ${params.regionDataScope}
+        ${params.enterpriseDataScope}
     </delete>
 
 </mapper>

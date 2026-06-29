@@ -65,7 +65,7 @@ public class YgbPerson extends BaseEntity
     private String insuranceStatus;
 
     /** 在岗状态 */
-    @Excel(name = "在岗状态", readConverterExp = "0=在岗,1=离岗")
+    @Excel(name = "在岗状态", readConverterExp = "0=在岗,1=离岗,2=离岗")
     private String employmentStatus;
 
     /** 入场日期 */

@@ -10,8 +10,8 @@ const viewCode = 'ATTENDANCE'
 const config = {
   title: '考勤设备',
   eyebrow: '设备子视图',
-  description: '复用统一设备底表按考勤设备视角查看接入、在线、授权和基础台账。',
-  tip: '不拆设备主表，直接通过 viewCode=ATTENDANCE 过滤设备类型。',
+  description: '按考勤设备视角查看接入、在线、授权和基础台账。',
+  tip: '聚焦考勤设备的在线率、授权状态和月度考勤归集支撑情况。',
   permPrefix: 'ygb:device',
   filePrefix: 'device_attendance',
   defaultQueryParams: { deviceType: '1' },

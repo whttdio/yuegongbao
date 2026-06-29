@@ -25,6 +25,22 @@ public class WorkerCurrentUserServiceImpl implements WorkerCurrentUserService
     @Override
     public YgbPerson getCurrentWorker()
     {
+        YgbPerson worker = resolveCurrentWorker();
+        if (worker == null)
+        {
+            throw new ServiceException("当前账号未绑定劳动者档案，请联系管理员。");
+        }
+        return worker;
+    }
+
+    @Override
+    public YgbPerson getCurrentWorkerIfPresent()
+    {
+        return resolveCurrentWorker();
+    }
+
+    private YgbPerson resolveCurrentWorker()
+    {
         SysUser user = getCurrentSysUser();
         YgbPerson worker = null;
         if (StringUtils.isNotEmpty(user.getPhonenumber()))
@@ -38,10 +54,6 @@ public class WorkerCurrentUserServiceImpl implements WorkerCurrentUserService
         if (worker == null && StringUtils.isNotEmpty(user.getNickName()))
         {
             worker = personMapper.selectPersonByName(user.getNickName());
-        }
-        if (worker == null)
-        {
-            throw new ServiceException("当前账号未绑定劳动者档案，请联系管理员。");
         }
         return worker;
     }

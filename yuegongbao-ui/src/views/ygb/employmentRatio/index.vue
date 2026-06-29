@@ -567,11 +567,11 @@ watch(focusQueues, queues => {
 
 watchEffect(() => {
   setPageGuide({
-    title: '??????????',
-    description: '?????????????????????????????????',
+    title: '用工比例监控',
+    description: '监控劳务派遣用工比例、超限风险和整改进度，支撑专项治理闭环。',
     portalExplanation: portalExplanationItems.value,
     focus: focusQueues.value,
-    selection: [...selectedRatioOverview.value, { label: '??????', value: currentRatioActionSummary.value }],
+    selection: [...selectedRatioOverview.value, { label: '当前处置建议', value: currentRatioActionSummary.value }],
     workflow: workflowSteps.value,
     hints: [...currentRatioActionTags.value, ...ratioHintTags.value].slice(0, 6)
   })

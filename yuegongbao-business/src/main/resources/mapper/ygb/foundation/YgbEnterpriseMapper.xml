@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -48,6 +48,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and region_code like concat(#{regionCode}, '%')
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
             <if test="status != null and status != ''">
                 and status = #{status}
             </if>
@@ -58,9 +59,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by create_time desc, enterprise_id desc
     </select>
 
-    <select id="selectEnterpriseOptions" resultMap="YgbEnterpriseResult">
+    <select id="selectEnterpriseOptions" parameterType="YgbEnterprise" resultMap="YgbEnterpriseResult">
         <include refid="selectEnterpriseVo" />
         where del_flag = '0' and status = '0'
+            ${params.regionDataScope}
+            ${params.enterpriseDataScope}
         order by enterprise_name asc
     </select>
 

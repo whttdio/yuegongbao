@@ -45,6 +45,8 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     public static final String PORTAL_SCOPE_BOTH = "both";
 
+    public static final String DOC_MENU_ROUTE_PREFIX = "YgbDoc";
+
     @Autowired
     private SysMenuMapper menuMapper;
 
@@ -258,13 +260,33 @@ public class SysMenuServiceImpl implements ISysMenuService
         {
             List<SysMenu> scopedChildren = filterMenuTreeByPortalScope(menu.getChildren(), normalizedPortalCode);
             boolean matchesCurrentPortal = matchesPortalScope(menu.getPortalScope(), normalizedPortalCode);
-            if (matchesCurrentPortal || !scopedChildren.isEmpty())
+            if (isDocumentPortalMenu(menu, normalizedPortalCode)
+                    && (matchesCurrentPortal || !scopedChildren.isEmpty()))
             {
                 menu.setChildren(scopedChildren);
                 scopedMenus.add(menu);
             }
         }
         return scopedMenus;
+    }
+
+    private boolean isDocumentPortalMenu(SysMenu menu, String portalCode)
+    {
+        if (!StringUtils.equalsIgnoreCase(portalCode, "ygb"))
+        {
+            return true;
+        }
+        if (menu == null)
+        {
+            return false;
+        }
+        String routeName = StringUtils.defaultString(menu.getRouteName());
+        if (StringUtils.startsWith(routeName, DOC_MENU_ROUTE_PREFIX))
+        {
+            return true;
+        }
+        String menuName = StringUtils.defaultString(menu.getMenuName());
+        return StringUtils.startsWith(menuName, DOC_MENU_ROUTE_PREFIX);
     }
 
     /**

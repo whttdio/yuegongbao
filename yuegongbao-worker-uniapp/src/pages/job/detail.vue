@@ -1,8 +1,19 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">{{ detail.title || '-' }}</view>
+    <view class="worker-card worker-hero">
+      <view class="section-head">
+        <view class="worker-title">{{ detail.title || '-' }}</view>
+        <view class="worker-tag" :class="detail.applied ? 'worker-tag--success' : 'worker-tag--info'">
+          {{ detail.applied ? '已投递' : '待投递' }}
+        </view>
+      </view>
       <view class="worker-subtitle">{{ detail.enterpriseName || '-' }}</view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">基本信息</view>
+      </view>
       <view class="detail-grid">
         <view class="detail-item">
           <view class="detail-item__label">工种</view>
@@ -21,18 +32,41 @@
           <view class="detail-item__value">{{ detail.recruitCount || 0 }}</view>
         </view>
       </view>
-      <view class="detail-block">
-        <view class="detail-block__title">岗位说明</view>
-        <view class="worker-subtitle">{{ detail.description || '-' }}</view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">岗位说明</view>
       </view>
       <view class="detail-block">
-        <view class="detail-block__title">任职要求</view>
-        <view class="worker-subtitle">{{ detail.requirementText || '-' }}</view>
+        <view class="detail-block__content">{{ detail.description || '-' }}</view>
+      </view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">任职要求</view>
       </view>
       <view class="detail-block">
-        <view class="detail-block__title">联系方式</view>
-        <view class="worker-subtitle">{{ detail.contactName || '-' }} {{ detail.contactMobile || '' }}</view>
+        <view class="detail-block__content">{{ detail.requirementText || '-' }}</view>
       </view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">联系方式</view>
+      </view>
+      <view class="detail-row">
+        <view class="detail-row__label">联系人</view>
+        <view class="detail-row__value">{{ detail.contactName || '-' }}</view>
+      </view>
+      <view class="detail-row">
+        <view class="detail-row__label">联系电话</view>
+        <view class="detail-row__value">{{ detail.contactMobile || '-' }}</view>
+      </view>
+    </view>
+
+    <view class="worker-card">
       <button class="worker-button" :disabled="detail.applied" @click="submitApply">
         {{ detail.applied ? '已投递' : '立即投递' }}
       </button>
@@ -200,106 +234,3 @@ onLoad((options) => {
   loadData()
 })
 </script>
-
-<style lang="scss">
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-  margin: 24rpx 0;
-}
-
-.detail-item {
-  padding: 20rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.detail-item__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.detail-item__value {
-  margin-top: 10rpx;
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.detail-block {
-  margin-bottom: 22rpx;
-}
-
-.detail-block__title {
-  margin-bottom: 10rpx;
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-</style>

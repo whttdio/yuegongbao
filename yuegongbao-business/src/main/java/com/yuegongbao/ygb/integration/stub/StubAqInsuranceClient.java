@@ -14,8 +14,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import com.yuegongbao.ygb.foundation.domain.YgbEnterprise;
 import com.yuegongbao.ygb.foundation.domain.YgbPerson;
+import com.yuegongbao.ygb.foundation.service.IYgbEnterpriseService;
 import com.yuegongbao.ygb.domain.vo.YgbAqInsuranceStubItem;
-import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
 import com.yuegongbao.ygb.foundation.mapper.YgbPersonMapper;
 import com.yuegongbao.ygb.integration.AqInsuranceClient;
 
@@ -31,7 +31,7 @@ public class StubAqInsuranceClient extends AbstractYgbStubClient implements AqIn
     private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
 
     @Autowired
-    private YgbEnterpriseMapper enterpriseMapper;
+    private IYgbEnterpriseService enterpriseService;
 
     @Autowired
     private YgbPersonMapper personMapper;
@@ -40,7 +40,7 @@ public class StubAqInsuranceClient extends AbstractYgbStubClient implements AqIn
     public List<YgbAqInsuranceStubItem> pullMonthlyPolicies(String statMonth)
     {
         YearMonth month = YearMonth.parse(statMonth, MONTH_FORMATTER);
-        return enterpriseMapper.selectEnterpriseOptions().stream()
+        return enterpriseService.selectEnterpriseOptions().stream()
             .filter(enterprise -> !"4".equals(enterprise.getEnterpriseType()))
             .map(enterprise -> buildPolicy(month, enterprise))
             .collect(Collectors.toList());

@@ -22,6 +22,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="description" column="description" />
         <result property="requirementText" column="requirement_text" />
         <result property="status" column="status" />
+        <result property="remark" column="remark" />
         <result property="publishTime" column="publish_time" />
     </resultMap>
 
@@ -40,7 +41,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="WorkerJobPostColumns">
         job_id, enterprise_id, enterprise_name, title, job_type, work_address, longitude, latitude, salary_min, salary_max, salary_text,
-        recruit_count, contact_name, contact_mobile, description, requirement_text, status, publish_time
+        recruit_count, contact_name, contact_mobile, description, requirement_text, status, remark, publish_time
     </sql>
 
     <select id="selectJobList" resultMap="WorkerJobPostResult">
@@ -115,6 +116,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select <include refid="WorkerJobPostColumns" />
         from ygb_worker_job_post
         where del_flag = '0'
+        <if test="enterpriseId != null">
+          and enterprise_id = #{enterpriseId}
+        </if>
         <if test="title != null and title != ''">
           and title like concat('%', #{title}, '%')
         </if>
@@ -168,10 +172,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             description = #{description},
             requirement_text = #{requirementText},
             status = #{status},
+            remark = #{remark},
             publish_time = #{publishTime},
             update_by = #{updateBy},
             update_time = sysdate()
         where job_id = #{jobId}
+    </update>
+
+    <update id="updateJobReview" parameterType="com.yuegongbao.ygb.worker.domain.WorkerJobPost">
+        update ygb_worker_job_post
+        set status = #{status},
+            publish_time = #{publishTime},
+            remark = #{remark},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where job_id = #{jobId}
+          and del_flag = '0'
     </update>
 
     <update id="deleteJobPostByIds">

@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>{{ config.title }}</span>
-          <span class="card-header__tip">{{ config.description || '统一复用扩展台账对象，交付列表、汇总、详情、导出和权限动作。' }}</span>
+          <span class="card-header__tip">{{ config.description || '围绕当前业务台账提供列表、汇总、详情、导出和权限动作。' }}</span>
         </div>
       </template>
 
@@ -25,7 +25,13 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="showFilter('enterpriseId')" label="企业">
-          <el-select v-model="queryParams.enterpriseId" clearable filterable style="width: 220px">
+          <el-select
+            v-model="queryParams.enterpriseId"
+            :clearable="!enterpriseFilterLocked"
+            :disabled="enterpriseFilterLocked"
+            filterable
+            style="width: 220px"
+          >
             <el-option v-for="item in enterpriseOptions" :key="item.enterpriseId" :label="item.enterpriseName" :value="item.enterpriseId" />
           </el-select>
         </el-form-item>
@@ -87,7 +93,11 @@
         <el-table-column :label="config.recordNameLabel || '记录名称'" prop="recordName" min-width="180" show-overflow-tooltip />
         <el-table-column label="分类编码" prop="categoryCode" width="140" />
         <el-table-column label="统计月份" prop="statMonth" width="110" />
-        <el-table-column label="区域" prop="regionCode" width="120" />
+        <el-table-column label="区域" width="120">
+          <template #default="scope">
+            <span>{{ formatRegionName(scope.row.regionCode, scope.row.regionCode || '-') }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="企业名称" prop="enterpriseName" min-width="180" show-overflow-tooltip />
         <el-table-column label="流程状态" width="120">
           <template #default="scope">
@@ -162,23 +172,52 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="企业ID" prop="enterpriseId">
-              <el-input-number v-model="form.enterpriseId" :min="0" style="width: 100%" controls-position="right" />
+            <el-form-item label="企业" prop="enterpriseId">
+              <el-select
+                v-model="form.enterpriseId"
+                :clearable="!enterpriseFilterLocked"
+                :disabled="enterpriseFilterLocked"
+                filterable
+                style="width: 100%"
+                @change="handleFormEnterpriseChange"
+              >
+                <el-option
+                  v-for="item in enterpriseOptions"
+                  :key="item.enterpriseId"
+                  :label="item.enterpriseName"
+                  :value="item.enterpriseId"
+                />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="企业名称" prop="enterpriseName">
-              <el-input v-model="form.enterpriseName" />
+              <el-input v-model="form.enterpriseName" :disabled="enterpriseFilterLocked" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="人员ID" prop="personId">
-              <el-input-number v-model="form.personId" :min="0" style="width: 100%" controls-position="right" />
+            <el-form-item label="人员" prop="personId">
+              <el-select
+                v-model="form.personId"
+                clearable
+                filterable
+                placeholder="请选择人员"
+                style="width: 100%"
+                @change="handleFormPersonChange"
+                @clear="handleFormPersonClear"
+              >
+                <el-option
+                  v-for="item in personOptions"
+                  :key="item.personId"
+                  :label="formatPersonOptionLabel(item)"
+                  :value="item.personId"
+                />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="人员姓名" prop="personName">
-              <el-input v-model="form.personName" />
+              <el-input v-model="form.personName" disabled placeholder="选择人员后自动回填" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -234,7 +273,7 @@
         <el-descriptions-item :label="config.recordNameLabel || '记录名称'">{{ detail.recordName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="分类编码">{{ detail.categoryCode || '-' }}</el-descriptions-item>
         <el-descriptions-item label="统计月份">{{ detail.statMonth || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="区域编码">{{ detail.regionCode || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="区域">{{ formatRegionName(detail.regionCode, detail.regionCode || '-') }}</el-descriptions-item>
         <el-descriptions-item label="企业名称">{{ detail.enterpriseName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="人员姓名">{{ detail.personName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="来源标签">{{ detail.sourceLabel || '-' }}</el-descriptions-item>
@@ -258,7 +297,15 @@
 import { computed, getCurrentInstance, reactive, ref, toRefs } from 'vue'
 import { useRoute } from 'vue-router'
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
+import { optionselectPerson } from '@/api/ygb/person'
+import {
+  applyLockedEnterpriseQuery,
+  filterAuthorizedEnterpriseOptions,
+  isEnterpriseFilterLocked,
+  lockedEnterpriseId
+} from '@/utils/enterpriseScope'
 import { authorizedDefaultRegionCode, useAuthorizedRegionOptions } from '@/utils/regionScope'
+import { formatRegionName } from '@/utils/regionName'
 import { statReportRegionOptions } from '@/views/statReport/useStatReportPage'
 
 const props = defineProps({
@@ -272,6 +319,7 @@ const route = useRoute()
 const { proxy } = getCurrentInstance()
 const regionOptions = useAuthorizedRegionOptions(statReportRegionOptions)
 const enterpriseOptions = ref([])
+const personOptions = ref([])
 const loading = ref(false)
 const showSearch = ref(true)
 const recordList = ref([])
@@ -307,8 +355,18 @@ const warningLevelOptions = [
 
 const defaultVisibleFilters = ['statMonth', 'regionCode', 'recordName', 'enterpriseName', 'workflowStatus', 'status']
 
+const enterpriseFilterLocked = computed(() => isEnterpriseFilterLocked())
+
+const formRules = computed(() => ({
+  recordName: [{
+    required: true,
+    message: `${props.config.recordNameLabel || '记录名称'}不能为空`,
+    trigger: 'blur'
+  }]
+}))
+
 const data = reactive({
-  queryParams: {
+  queryParams: applyLockedEnterpriseQuery({
     pageNum: 1,
     pageSize: 10,
     portalCode: props.config.portalCode || 'ygb',
@@ -323,14 +381,12 @@ const data = reactive({
     personName: undefined,
     workflowStatus: undefined,
     status: undefined
-  },
-  form: {},
-  rules: {
-    recordName: [{ required: true, message: '记录名称不能为空', trigger: 'blur' }]
-  }
+  }),
+  form: {}
 })
 
-const { queryParams, form, rules } = toRefs(data)
+const { queryParams, form } = toRefs(data)
+const rules = formRules
 
 const summaryCards = computed(() => ([
   { key: 'total', label: '总量', value: summaryData.value.totalCount ?? 0 },
@@ -374,8 +430,64 @@ function applyRouteQuery() {
   })
 }
 
+function resolveEnterpriseName(enterpriseId) {
+  if (enterpriseId == null) {
+    return ''
+  }
+  const matched = enterpriseOptions.value.find(item => Number(item.enterpriseId) === Number(enterpriseId))
+  return matched?.enterpriseName || ''
+}
+
+function normalizeId(value) {
+  return value === undefined || value === null || value === '' ? '' : String(value)
+}
+
+function formatPersonOptionLabel(item) {
+  if (!item) {
+    return ''
+  }
+  const name = item.personName || `ID:${item.personId}`
+  const suffix = item.enterpriseName || ''
+  return suffix ? `${name} / ${suffix}` : name
+}
+
+function findPersonOption(personId) {
+  const targetId = normalizeId(personId)
+  return personOptions.value.find(item => normalizeId(item.personId) === targetId)
+}
+
+function applyEnterpriseScopeToForm(formData) {
+  const enterpriseId = lockedEnterpriseId() ?? formData.enterpriseId
+  return {
+    ...formData,
+    enterpriseId,
+    enterpriseName: formData.enterpriseName || resolveEnterpriseName(enterpriseId)
+  }
+}
+
+function handleFormEnterpriseChange(enterpriseId) {
+  form.value.enterpriseName = resolveEnterpriseName(enterpriseId)
+  form.value.personId = undefined
+  form.value.personName = ''
+  loadPersonOptions({ enterpriseId })
+}
+
+function handleFormPersonClear() {
+  form.value.personId = undefined
+  form.value.personName = ''
+}
+
+function handleFormPersonChange(personId) {
+  if (!personId) {
+    handleFormPersonClear()
+    return
+  }
+  const selectedPerson = findPersonOption(personId)
+  applySelectedPersonToForm(selectedPerson)
+}
+
 function resetFormData() {
-  form.value = {
+  form.value = applyEnterpriseScopeToForm({
     recordId: undefined,
     portalCode: props.config.portalCode || 'ygb',
     recordName: '',
@@ -393,16 +505,21 @@ function resetFormData() {
     sourceLabel: props.config.defaultSourceLabel || '',
     payloadJson: '',
     remark: ''
-  }
+  })
   proxy.resetForm('formRef')
+}
+
+function scopedQueryParams() {
+  return applyLockedEnterpriseQuery(queryParams.value)
 }
 
 function getList() {
   loading.value = true
+  const scopedParams = scopedQueryParams()
   return Promise.all([
-    props.config.listApi(normalizedParams(queryParams.value)),
+    props.config.listApi(normalizedParams(scopedParams)),
     props.config.summaryApi(normalizedParams({
-      ...queryParams.value,
+      ...scopedParams,
       pageNum: undefined,
       pageSize: undefined
     }))
@@ -416,11 +533,32 @@ function getList() {
 }
 
 function loadEnterpriseOptions() {
-  if (!showFilter('enterpriseId')) {
-    return Promise.resolve()
-  }
   return optionselectEnterprise().then(response => {
-    enterpriseOptions.value = response.data || []
+    enterpriseOptions.value = filterAuthorizedEnterpriseOptions(response.data || [])
+    const enterpriseId = lockedEnterpriseId()
+    if (enterpriseId != null) {
+      queryParams.value.enterpriseId = enterpriseId
+    }
+  })
+}
+
+function loadPersonOptions(query = {}) {
+  const params = normalizedParams(query)
+  return optionselectPerson(params).then(response => {
+    personOptions.value = response.data || []
+  })
+}
+
+function loadFormPersonOptions() {
+  return loadPersonOptions({ enterpriseId: form.value.enterpriseId }).then(() => {
+    if (form.value.personId && !findPersonOption(form.value.personId)) {
+      return loadPersonOptions()
+    }
+  }).then(() => {
+    const selectedPerson = findPersonOption(form.value.personId)
+    if (selectedPerson) {
+      applySelectedPersonToForm(selectedPerson, { preserveEnterprise: true })
+    }
   })
 }
 
@@ -431,7 +569,7 @@ function handleQuery() {
 
 function resetQuery() {
   proxy.resetForm('queryRef')
-  queryParams.value = {
+  queryParams.value = applyLockedEnterpriseQuery({
     pageNum: 1,
     pageSize: 10,
     portalCode: props.config.portalCode || 'ygb',
@@ -446,7 +584,7 @@ function resetQuery() {
     personName: undefined,
     workflowStatus: undefined,
     status: undefined
-  }
+  })
   applyRouteQuery()
   getList()
 }
@@ -459,6 +597,7 @@ function handleSelectionChange(selection) {
 
 function handleAdd() {
   resetFormData()
+  loadFormPersonOptions()
   title.value = `新增${props.config.title}`
   open.value = true
 }
@@ -467,7 +606,8 @@ function handleUpdate(row) {
   resetFormData()
   const recordId = row?.recordId || ids.value[0]
   props.config.detailApi(recordId).then(response => {
-    form.value = response.data || {}
+    form.value = applyEnterpriseScopeToForm(response.data || {})
+    loadFormPersonOptions()
     open.value = true
     title.value = `修改${props.config.title}`
   })
@@ -483,13 +623,52 @@ function handleView(row) {
 function submitForm() {
   proxy.$refs.formRef.validate(valid => {
     if (!valid) return
-    const request = form.value.recordId ? props.config.updateApi(form.value) : props.config.addApi(form.value)
+    const payload = buildSubmitPayload()
+    if (!payload) return
+    const request = payload.recordId ? props.config.updateApi(payload) : props.config.addApi(payload)
     request.then(() => {
       proxy.$modal.msgSuccess(form.value.recordId ? '修改成功' : '新增成功')
       open.value = false
       getList()
     })
   })
+}
+
+function applySelectedPersonToForm(selectedPerson, options = {}) {
+  if (!selectedPerson) {
+    return
+  }
+  form.value.personId = selectedPerson.personId
+  form.value.personName = selectedPerson.personName || ''
+  if (!options.preserveEnterprise || !form.value.enterpriseId) {
+    form.value.enterpriseId = selectedPerson.enterpriseId ?? form.value.enterpriseId
+    form.value.enterpriseName = selectedPerson.enterpriseName || form.value.enterpriseName
+    form.value.regionCode = selectedPerson.regionCode || form.value.regionCode
+  }
+}
+
+function buildSubmitPayload() {
+  const selectedPerson = findPersonOption(form.value.personId)
+  if (form.value.personId && !selectedPerson) {
+    proxy.$modal.msgWarning('请选择有效人员')
+    return null
+  }
+  if (selectedPerson) {
+    const formEnterpriseId = normalizeId(form.value.enterpriseId)
+    const personEnterpriseId = normalizeId(selectedPerson.enterpriseId)
+    if (formEnterpriseId && personEnterpriseId && formEnterpriseId !== personEnterpriseId) {
+      proxy.$modal.msgWarning('所选人员与当前企业不一致，请重新选择人员')
+      return null
+    }
+  }
+  const payload = applyEnterpriseScopeToForm({ ...form.value })
+  if (selectedPerson) {
+    payload.personName = selectedPerson.personName || payload.personName
+    payload.enterpriseId = payload.enterpriseId ?? selectedPerson.enterpriseId
+    payload.enterpriseName = payload.enterpriseName || selectedPerson.enterpriseName
+    payload.regionCode = payload.regionCode || selectedPerson.regionCode
+  }
+  return payload
 }
 
 function handleDelete(row) {
@@ -504,7 +683,7 @@ function handleDelete(row) {
 
 function handleExport() {
   proxy.download(props.config.exportUrl, normalizedParams({
-    ...queryParams.value,
+    ...scopedQueryParams(),
     pageNum: undefined,
     pageSize: undefined
   }), `${props.config.filePrefix || 'module_record'}_${Date.now()}.xlsx`)

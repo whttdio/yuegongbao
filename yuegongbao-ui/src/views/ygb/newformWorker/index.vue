@@ -10,7 +10,7 @@
         </p>
       </div>
       <div class="ygb-table-tip">
-        当前同步固定走 Stub，后续可平滑切换平台正式接口；未参加职业伤害保障的人员会自动联动预警中心。
+        当前页面按月份同步平台从业人员与职业伤害参保数据；未参加职业伤害保障的人员会自动联动预警中心。
       </div>
     </section>
 
@@ -85,7 +85,7 @@
     <el-card class="toolbar-card ygb-toolbar-card" shadow="never">
       <el-row :gutter="10">
         <el-col v-if="!isReadOnlyRole" :span="1.5">
-          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:newformWorker:sync']">模拟同步</el-button>
+          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:newformWorker:sync']">同步平台人员</el-button>
         </el-col>
         <el-col :span="1.5">
           <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:newformWorker:export']">导出</el-button>
@@ -379,7 +379,7 @@ const activeFocus = computed(() => focusQueues.value.find(item => item.key === a
 const workbenchContext = computed(() => buildWorkbenchContext(route.query, {
   fields: newformWorkerWorkbenchFields,
   title: '当前新业态人员页沿用了上游来源条件。',
-  description: '当前页面复用了上游工作台筛选，可在同一门户语境下继续处理参保、预警和回写问题。',
+  description: '当前页面已带入工作台筛选条件，可继续处理参保、预警和回写问题。',
   fieldLabels: {
     statMonth: '统计月份',
     enterpriseId: '企业',
@@ -427,9 +427,9 @@ const submoduleEntries = computed(() => ([
   {
     key: 'platform',
     title: '平台企业聚合',
-    desc: '复用主表聚合平台维度的人员底数、参保状态、风险数量和平均收入。',
+    desc: '聚合平台维度的人员底数、参保状态、风险数量和平均收入。',
     actionText: '打开聚合页',
-    path: '/ygb-newform/newformPlatform',
+    path: '/newform-regulation/platform',
     query: buildNewformSubmoduleQuery()
   },
   {
@@ -437,7 +437,7 @@ const submoduleEntries = computed(() => ([
     title: '职业伤害监测',
     desc: '聚合职业伤害参保、未参保、停保和预警对象，直接承接风险核查。',
     actionText: '打开监测页',
-    path: '/ygb-newform/newformInjuryMonitor',
+    path: '/newform-regulation/injuryMonitor',
     query: buildNewformSubmoduleQuery({
       warningStatus: queryParams.value.warningStatus,
       injuryInsuranceStatus: queryParams.value.injuryInsuranceStatus
@@ -448,7 +448,7 @@ const submoduleEntries = computed(() => ([
     title: '培训管理',
     desc: '进入 typed-record 台账，延续当前月份、区域、企业和平台上下文。',
     actionText: '打开培训台账',
-    path: '/ygb-newform/newformTraining',
+    path: '/newform-regulation/training',
     query: buildNewformSubmoduleQuery()
   }
 ]))
@@ -585,20 +585,19 @@ function syncCurrentWorker() {
 function handleQuery() {
   queryParams.value.pageNum = 1
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '?????????' || '?????????',
-    description: '?????????????????????????????????' || '?????????????????????????????????',
+    title: '新业态人员库',
+    description: '维护新业态从业人员台账、参保状态和职业伤害风险，支撑平台用工监管。',
     portalExplanation: portalExplanationItems.value,
     focus: focusQueues.value,
-    selection: [...selectedWorkerOverview.value, { label: '??????', value: currentWorkerActionSummary.value }],
+    selection: [...selectedWorkerOverview.value, { label: '当前处置建议', value: currentWorkerActionSummary.value }],
     workflow: workflowSteps.value,
     hints: [...currentWorkerActionTags.value].slice(0, 6)
   })
 })
-
-}
 
 function resetQuery() {
   proxy.resetForm('queryRef')
@@ -687,7 +686,7 @@ function handleSync() {
     statMonth: queryParams.value.statMonth,
     enterpriseId: queryParams.value.enterpriseId
   }).then(response => {
-    proxy.$modal.msgSuccess(response.msg || '模拟同步完成')
+    proxy.$modal.msgSuccess(response.msg || '平台人员同步完成')
     getList()
   })
 }

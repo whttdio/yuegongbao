@@ -1,4 +1,10 @@
-import { formatMetricRate, statReportRegionNameMap, statusLabel } from '@/views/statReport/useStatReportPage'
+import {
+  formatMetricRate,
+  formatStatReportItemCategory,
+  formatStatReportItemDimension,
+  statReportRegionNameMap,
+  statusLabel
+} from '@/views/statReport/useStatReportPage'
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -149,9 +155,9 @@ export function printStatReportDetail({ config, report, items = [], printTime })
       <tbody>
         ${items.map(item => `
           <tr>
-            <td>${escapeHtml(item.itemCategory)}</td>
+            <td>${escapeHtml(formatStatReportItemCategory(item.itemCategory))}</td>
             <td>${escapeHtml(item.itemName)}</td>
-            <td>${escapeHtml(item.itemDimension)}</td>
+            <td>${escapeHtml(formatStatReportItemDimension(item.itemDimension, item))}</td>
             <td>${escapeHtml(item.metricCount)}</td>
             <td>${escapeHtml(item.metricValue)}</td>
             <td>${escapeHtml(formatMetricRate(item.metricRate, report.reportCode))}</td>

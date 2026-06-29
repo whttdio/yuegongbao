@@ -3,6 +3,8 @@
 -- 1. yuegongbao_20260417.sql
 -- 2. ygb_phase1_enterprise_person.sql
 -- 3. 本脚本
+set names utf8mb4;
+
 create table if not exists t_labor_contract (
   contract_id               bigint(20)      not null auto_increment,
   contract_no               varchar(64)     not null,

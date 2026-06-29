@@ -120,7 +120,7 @@
         <el-table-column label="操作" fixed="right" align="center" width="180" class-name="small-padding fixed-width">
           <template #default="scope">
             <el-button link type="info" icon="View" @click.stop="openDetail(scope.row)">详情</el-button>
-            <el-button v-if="!isReadOnlyRole" link type="primary" icon="Edit" @click.stop="openHandleDialog(scope.row)" v-hasPermi="['ygb:uninsuredList:handle']">处置</el-button>
+            <el-button v-if="!isReadOnlyRole && isUninsuredHandleAllowed(scope.row)" link type="primary" icon="Edit" @click.stop="openHandleDialog(scope.row)" v-hasPermi="['ygb:uninsuredList:handle']">处置</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -131,7 +131,7 @@
       <el-form ref="handleRef" :model="handleForm" :rules="handleRules" label-width="100px">
         <el-form-item label="处置状态" prop="disposalStatus">
           <el-select v-model="handleForm.disposalStatus" placeholder="请选择处置状态">
-            <el-option v-for="item in disposalStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in availableDisposalStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="处置说明" prop="remark">
@@ -183,6 +183,7 @@ import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQue
 import {
   disposalStatusOptions,
   warningStatusOptions,
+  isUninsuredHandleAllowed,
   useUninsuredListPage,
   formatRegionName,
   optionLabel,
@@ -234,6 +235,7 @@ const {
   currentRow,
   detailRow,
   summaryData,
+  availableDisposalStatusOptions,
   queryParams,
   handleForm,
   handleRules,

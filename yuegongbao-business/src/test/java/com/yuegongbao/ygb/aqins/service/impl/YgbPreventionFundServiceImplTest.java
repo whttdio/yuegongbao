@@ -11,6 +11,7 @@ import com.yuegongbao.ygb.aqins.domain.YgbAqInsurance;
 import com.yuegongbao.ygb.aqins.domain.YgbPreventionFund;
 import com.yuegongbao.ygb.aqins.mapper.YgbAqInsuranceMapper;
 import com.yuegongbao.ygb.aqins.mapper.YgbPreventionFundMapper;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,6 +30,9 @@ class YgbPreventionFundServiceImplTest
 
     @Mock
     private IYgbWarningService warningService;
+
+    @Mock
+    private YgbDataScopeGuard dataScopeGuard;
 
     @InjectMocks
     private YgbPreventionFundServiceImpl service;

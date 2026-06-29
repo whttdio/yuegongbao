@@ -3,20 +3,20 @@ import { isResolvedRouteAvailable } from '@/utils/portal'
 import { resolveDefaultStatReportRoute, resolveStatReportRoutePath } from '@/views/statReport/reportConfigs'
 
 const MODULE_PATHS = Object.freeze({
-  enterprise: '/ygb-foundation/enterprise',
-  person: '/ygb-foundation/person',
-  contract: '/ygb-compliance/contract',
-  salaryBatch: '/ygb-compliance/salaryBatch',
-  device: '/ygb-safety/device',
-  warning: '/ygb-warning/warning',
-  aqInsurance: '/ygb-aqins/aqInsurance',
-  creditScore: '/ygb-credit/creditScore',
+  enterprise: '/enterprise-management/employer',
+  person: '/personnel-management/person',
+  contract: '/contract-filing/contract',
+  salaryBatch: '/salary-supervision/payment',
+  device: '/device-management/detail',
+  warning: '/warning-center/workOrder',
+  aqInsurance: '/aq-insurance/insurance',
+  creditScore: '/credit-evaluation/overview',
   statReport: resolveDefaultStatReportRoute('ygb'),
   statReportInjury: resolveStatReportRoutePath('ygb', 'injury'),
   statReportWarning: resolveStatReportRoutePath('ygb', 'warning'),
   statReportSalary: resolveStatReportRoutePath('ygb', 'salary'),
   statReportSocialTax: resolveStatReportRoutePath('ygb', 'socialTax'),
-  heightWorkReport: '/ygb-techdefense/heightWorkReport'
+  heightWorkReport: '/enterprise-portal/work'
 })
 
 function sanitizeQuery(query = {}) {

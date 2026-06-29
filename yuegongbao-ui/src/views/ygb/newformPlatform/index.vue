@@ -11,7 +11,7 @@ const config = {
   eyebrow: '新业态子对象',
   description: '按月汇总新业态平台企业的覆盖、参保、职业伤害参保与预警情况，用同一口径服务监管核对、企业复盘和月度导出。',
   signalTitle: '平台维度总览',
-  tip: '直接复用 t_newform_worker 主台账，不额外建设第二套聚合表，仅做平台维度汇总、展示与导出。',
+  tip: '按平台维度汇总人员底数、参保状态、收入水平和风险变化，支撑新业态监管办理。',
   focusTitle: '重点看什么',
   focusDescription: '这个页面更适合先判断平台覆盖和参保密度，再决定是否下钻主台账核查具体对象。',
   focusBullets: [
@@ -39,6 +39,14 @@ const config = {
   listApi: query => listNewformPlatform(query),
   summaryApi: query => getNewformPlatformSummary(query),
   exportUrl: 'ygb/newform/platform/export',
+  drilldown: {
+    path: '/newform-regulation/worker',
+    query: row => ({
+      statMonth: row.statMonth,
+      regionCode: row.regionCode,
+      platformName: row.platformName
+    })
+  },
   columns: [
     { label: '统计月份', prop: 'statMonth', width: 110 },
     { label: '区域', prop: 'regionCode', minWidth: 140, type: 'region' },

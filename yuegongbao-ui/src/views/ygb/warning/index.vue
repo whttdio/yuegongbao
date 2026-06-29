@@ -67,30 +67,6 @@
       </div>
     </div>
 
-    <div class="ygb-analysis-grid">
-      <el-card v-for="section in analysisSections" :key="section.key" class="ygb-focus-card ygb-analysis-panel" shadow="never">
-        <template #header>
-          <div class="ygb-card-head">
-            <div class="ygb-card-head__title">{{ section.title }}</div>
-            <div class="ygb-card-head__desc">{{ section.desc }}</div>
-          </div>
-        </template>
-        <div v-if="section.items.length" class="ygb-analysis-list">
-          <button
-            v-for="item in section.items"
-            :key="`${section.key}-${item.dimensionKey}`"
-            type="button"
-            class="ygb-analysis-item"
-            @click="applyAnalysisFilter(section.filterField, item.dimensionKey)"
-          >
-            <span class="ygb-analysis-item__label">{{ item.dimensionLabel }}</span>
-            <span class="ygb-analysis-item__value">{{ item.dimensionCount }}</span>
-          </button>
-        </div>
-        <el-empty v-else description="暂无统计数据" :image-size="56" />
-      </el-card>
-    </div>
-
     <el-card class="search-card ygb-search-card" shadow="never">
       <el-form ref="queryRef" :model="queryParams" :inline="true" v-show="showSearch">
         <el-form-item label="区域">
@@ -148,7 +124,7 @@
         <el-table-column label="预警类型" prop="warnType" min-width="180" show-overflow-tooltip />
         <el-table-column label="来源模块" prop="sourceModule" width="120">
           <template #default="scope">
-            <dict-tag :options="sourceModuleOptions" :value="scope.row.sourceModule" />
+            <dict-tag :options="sourceModuleOptions" :value="normalizeSourceModule(scope.row.sourceModule)" />
           </template>
         </el-table-column>
         <el-table-column label="企业" prop="enterpriseName" min-width="200" show-overflow-tooltip />
@@ -182,6 +158,7 @@
               link
               type="primary"
               icon="Operation"
+              :disabled="!canHandleWarningRow(scope.row)"
               @click.stop="openHandleDialog(scope.row)"
               v-hasPermi="['ygb:warning:handle']"
             >
@@ -202,7 +179,7 @@
           </el-descriptions-item>
           <el-descriptions-item label="预警类型">{{ warningDetail.warnType || '-' }}</el-descriptions-item>
           <el-descriptions-item label="来源模块">
-            <dict-tag :options="sourceModuleOptions" :value="warningDetail.sourceModule" />
+            <dict-tag :options="sourceModuleOptions" :value="normalizeSourceModule(warningDetail.sourceModule)" />
           </el-descriptions-item>
           <el-descriptions-item label="企业">{{ warningDetail.enterpriseName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="区域">{{ formatRegionName(warningDetail.regionCode) }}</el-descriptions-item>
@@ -246,7 +223,7 @@
       <el-form ref="handleRef" :model="handleForm" :rules="handleRules" label-width="100px">
         <el-form-item label="处置动作" prop="action">
           <el-select v-model="handleForm.action" placeholder="请选择处置动作">
-            <el-option v-for="item in actionOptions" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in handleActionOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="处置意见" prop="opinion">
@@ -274,10 +251,10 @@ import { decoratePortalExplanationItems, openPortalExplanationAction } from '@/u
 import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQuery } from '@/utils/workbenchLink'
 import { useRoleViewMode } from '@/utils/roleView'
 import {
-  actionOptions,
   formatRegionName,
   optionLabel,
   sourceModuleOptions,
+  normalizeSourceModule,
   useWarningPage,
   warnLevelOptions,
   warnStatusOptions
@@ -306,6 +283,8 @@ const {
   handleForm,
   handleRules,
   regionOptions,
+  getWarningActionOptions: resolveWarningActionOptions,
+  canHandleWarning: resolveCanHandleWarning,
   loadAll,
   loadEnterpriseOptions,
   handleQuery,
@@ -353,7 +332,7 @@ const workbenchContext = computed(() => buildWorkbenchContext(route.query, {
     },
     regionCode: value => formatRegionName(value, value),
     warnLevel: value => optionLabel(warnLevelOptions, value),
-    sourceModule: value => optionLabel(sourceModuleOptions, value),
+    sourceModule: value => optionLabel(sourceModuleOptions, normalizeSourceModule(value)),
     warnStatus: value => optionLabel(warnStatusOptions, value),
     focusKey: value => warningFocusLabel(value)
   }
@@ -413,37 +392,6 @@ const analysisOverviewCards = computed(() => ([
   }
 ]))
 
-const analysisSections = computed(() => ([
-  {
-    key: 'level',
-    title: '按预警等级',
-    desc: '快速识别红警、黄警、提示类预警的结构分布。',
-    filterField: 'warnLevel',
-    items: normalizeAnalysisItems(warningAnalysis.value.levelStats, 'warnLevel')
-  },
-  {
-    key: 'source',
-    title: '按来源模块',
-    desc: '识别社保、个税、扩面、设备等预警来源的集中点。',
-    filterField: 'sourceModule',
-    items: normalizeAnalysisItems(warningAnalysis.value.sourceStats, 'sourceModule')
-  },
-  {
-    key: 'region',
-    title: '按区域分布',
-    desc: '查看当前筛选范围内预警最集中的区域。',
-    filterField: 'regionCode',
-    items: normalizeAnalysisItems(warningAnalysis.value.regionStats, 'regionCode')
-  },
-  {
-    key: 'status',
-    title: '按处理状态',
-    desc: '评估待处理、处理中、已办结和升级预警的结构。',
-    filterField: 'warnStatus',
-    items: normalizeAnalysisItems(warningAnalysis.value.statusStats, 'warnStatus')
-  }
-]))
-
 const selectedWarningOverview = computed(() => {
   if (!currentWarning.value) {
     return [
@@ -456,13 +404,14 @@ const selectedWarningOverview = computed(() => {
   return [
     { label: '所属企业', value: currentWarning.value.enterpriseName || '-' },
     { label: '预警级别', value: optionLabel(warnLevelOptions, currentWarning.value.warnLevel) },
-    { label: '来源模块', value: optionLabel(sourceModuleOptions, currentWarning.value.sourceModule) },
+    { label: '来源模块', value: optionLabel(sourceModuleOptions, normalizeSourceModule(currentWarning.value.sourceModule)) },
     { label: '工单状态', value: optionLabel(warnStatusOptions, currentWarning.value.warnStatus) }
   ]
 })
 
 const warningHintTags = computed(() => buildHintTags(currentWarning.value))
 const detailHintTags = computed(() => buildHintTags(warningDetail.value || currentWarning.value))
+const handleActionOptions = computed(() => resolveWarningActionOptions(currentWarning.value))
 watchEffect(() => {
   setPageGuide({
     title: '联动预警办理闭环',
@@ -475,6 +424,10 @@ watchEffect(() => {
 const readOnlyAlertTitle = computed(() => `${readOnlyRoleLabel.value}仅保留预警查看、详情和导出`)
 const readOnlyAlertDescription = computed(() => `${readOnlyRoleDescription.value || ''} 当前页面仍展示摘要、解释和来源条件，但不开放工单处置动作。`.trim())
 
+function canHandleWarningRow(row) {
+  return resolveCanHandleWarning(row)
+}
+
 function warningFocusLabel(value) {
   if (value === 'pending') return '待处理工单'
   if (value === 'processing') return '处理中工单'
@@ -482,36 +435,6 @@ function warningFocusLabel(value) {
   if (value === 'expansion') return '扩面减损联动'
   if (value === 'red') return '红警工单'
   return value || '-'
-}
-
-function normalizeAnalysisItems(items = [], field) {
-  return (Array.isArray(items) ? items : []).map(item => ({
-    ...item,
-    dimensionLabel: resolveAnalysisLabel(field, item.dimensionKey, item.dimensionLabel),
-    dimensionCount: Number(item.dimensionCount || 0)
-  }))
-}
-
-function resolveAnalysisLabel(field, value, fallback) {
-  if (field === 'warnLevel') {
-    return optionLabel(warnLevelOptions, value, fallback || value || '-')
-  }
-  if (field === 'sourceModule') {
-    return optionLabel(sourceModuleOptions, value, fallback || value || '-')
-  }
-  if (field === 'warnStatus') {
-    return optionLabel(warnStatusOptions, value, fallback || value || '-')
-  }
-  if (field === 'regionCode') {
-    return formatRegionName(value, fallback || value || '-')
-  }
-  return fallback || value || '-'
-}
-
-function applyAnalysisFilter(field, value) {
-  queryParams.value.pageNum = 1
-  queryParams.value[field] = value || undefined
-  loadAll()
 }
 
 function buildHintTags(warning) {
@@ -531,19 +454,20 @@ function buildHintTags(warning) {
   if (warning.warnStatus === '4') {
     tags.push({ label: '当前已升级，需要继续跟踪上级处置结果。', type: 'danger' })
   }
-  if (warning.sourceModule === 'SOCIAL') {
+  const sourceModule = normalizeSourceModule(warning.sourceModule)
+  if (sourceModule === 'SOCIAL') {
     tags.push({ label: '社保联动来源，适合财务和人社监管优先核查。', type: 'success' })
   }
-  if (warning.sourceModule === 'TAX') {
+  if (sourceModule === 'TAX') {
     tags.push({ label: '个税联动来源，建议联动工资和税务比对结果复核。', type: 'success' })
   }
-  if (warning.sourceModule === 'EXPANSION') {
+  if (sourceModule === 'EXPANSION') {
     tags.push({ label: '扩面减损来源，建议核对漏保对象和整改责任。', type: 'warning' })
   }
-  if (warning.sourceModule === 'DEVICE') {
+  if (sourceModule === 'DEVICE') {
     tags.push({ label: '设备联动来源，必要时同步查看设备状态和处置留痕。', type: 'info' })
   }
-  if (warning.sourceModule === 'INJURY') {
+  if (sourceModule === 'INJURY') {
     tags.push({ label: '工伤事件来源，建议关注办结时限和证据材料。', type: 'warning' })
   }
   if (!tags.length) {
@@ -618,6 +542,7 @@ function handlePortalExplanationAction(action) {
 }
 
 applyWorkbenchRouteQuery(route.query, queryParams.value, warningWorkbenchFields)
+queryParams.value.sourceModule = normalizeSourceModule(queryParams.value.sourceModule)
 loadEnterpriseOptions()
 loadAll()
 </script>

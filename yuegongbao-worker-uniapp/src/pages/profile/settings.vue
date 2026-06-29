@@ -8,6 +8,44 @@
     </view>
 
     <view class="worker-card">
+      <view class="settings-list">
+        <view class="settings-row" @click="goAccountSecurity">账号安全</view>
+        <view class="settings-row settings-row--switch">
+          <view class="settings-row__main">
+            <view class="settings-row__title">业务通知偏好</view>
+            <view class="settings-row__desc">控制平台业务提醒是否继续发送到当前账号。</view>
+          </view>
+          <switch :checked="notifyEnabled" color="#0f766e" @change="toggleNotify" />
+        </view>
+        <view class="settings-row" @click="openSystemNotificationSetting">
+          <view class="settings-row__main">
+            <view class="settings-row__title">系统通知权限</view>
+            <view class="settings-row__desc">{{ permissionHint }}</view>
+          </view>
+          <view class="worker-tag">{{ permissionLabel }}</view>
+        </view>
+        <view class="settings-row settings-row--switch">
+          <view class="settings-row__main">
+            <view class="settings-row__title">联调验收工具</view>
+            <view class="settings-row__desc">展开推送联调、接口环境切换和验收留痕面板。</view>
+          </view>
+          <switch :checked="showDevTools" color="#0f766e" @change="toggleShowDevTools" />
+        </view>
+        <view class="settings-row" @click="triggerPushTest">
+          <view class="settings-row__main">
+            <view class="settings-row__title">发送测试推送</view>
+            <view class="settings-row__desc">调用服务端推送网关，验证送达和点击跳转链路。</view>
+          </view>
+          <view class="worker-tag">{{ pushTesting ? '发送中' : '测试' }}</view>
+        </view>
+        <view class="settings-row" @click="clearCache">清理缓存</view>
+        <view class="settings-row" @click="goPrivacy">隐私协议</view>
+        <view class="settings-row settings-row--danger" @click="logout">退出登录</view>
+      </view>
+    </view>
+
+    <view v-if="showDevTools" class="dev-tools-section">
+    <view class="worker-card">
       <view class="section-head">
         <view class="worker-title">推送状态</view>
         <view class="worker-tag" :class="pushRegistered ? 'worker-tag--success' : 'worker-tag--warning'">
@@ -622,34 +660,6 @@
         <view class="result-block__value">{{ acceptanceEvidenceDraftText }}</view>
       </view>
     </view>
-    <view class="worker-card">
-      <view class="settings-list">
-        <view class="settings-row" @click="goAccountSecurity">账号安全</view>
-        <view class="settings-row settings-row--switch">
-          <view class="settings-row__main">
-            <view class="settings-row__title">业务通知偏好</view>
-            <view class="settings-row__desc">控制平台业务提醒是否继续发送到当前账号。</view>
-          </view>
-          <switch :checked="notifyEnabled" color="#1f6fd6" @change="toggleNotify" />
-        </view>
-        <view class="settings-row" @click="openSystemNotificationSetting">
-          <view class="settings-row__main">
-            <view class="settings-row__title">系统通知权限</view>
-            <view class="settings-row__desc">{{ permissionHint }}</view>
-          </view>
-          <view class="worker-tag">{{ permissionLabel }}</view>
-        </view>
-        <view class="settings-row" @click="triggerPushTest">
-          <view class="settings-row__main">
-            <view class="settings-row__title">发送测试推送</view>
-            <view class="settings-row__desc">调用服务端推送网关，验证送达和点击跳转链路。</view>
-          </view>
-          <view class="worker-tag">{{ pushTesting ? '发送中' : '测试' }}</view>
-        </view>
-        <view class="settings-row" @click="clearCache">清理缓存</view>
-        <view class="settings-row" @click="goPrivacy">隐私协议</view>
-        <view class="settings-row settings-row--danger" @click="logout">退出登录</view>
-      </view>
     </view>
   </view>
 </template>
@@ -736,6 +746,7 @@ import { openPage } from '../../utils/navigation'
 const WORKER_API_CONNECTIVITY_SNAPSHOT_KEY = 'worker_api_connectivity_snapshot'
 const WORKER_ACCEPTANCE_OPERATOR_KEY = 'worker_acceptance_operator'
 
+const showDevTools = ref(false)
 const notifyEnabled = ref(true)
 const loading = ref(false)
 const pushTesting = ref(false)
@@ -1405,6 +1416,10 @@ async function refreshSettingsSnapshot() {
   refreshAcceptanceResultItems()
 }
 
+function toggleShowDevTools(event) {
+  showDevTools.value = !!event.detail.value
+}
+
 async function toggleNotify(event) {
   const nextValue = !!event.detail.value
   if (loading.value) {
@@ -1908,262 +1923,8 @@ onShow(async () => {
 </script>
 
 <style lang="scss">
-.worker-card + .worker-card {
-  margin-top: 24rpx;
-}
-
-.settings-hint {
-  margin-top: 12rpx;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-  margin-bottom: 18rpx;
-}
-
-.settings-input {
-  width: 100%;
-  margin-top: 12rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
-  font-size: 28rpx;
-  color: #16324f;
-}
-
-.settings-input--compact {
-  padding-top: 18rpx;
-  padding-bottom: 18rpx;
-  font-size: 24rpx;
-}
-
-.settings-action-row {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 20rpx;
-}
-
-.settings-action-row--wrap {
-  flex-wrap: wrap;
-}
-
-.settings-action-row--compact {
-  margin-top: 14rpx;
-}
-
-.settings-textarea {
-  width: 100%;
-  min-height: 112rpx;
-  margin-top: 14rpx;
-  padding: 18rpx 20rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
-  font-size: 24rpx;
-  color: #16324f;
-  line-height: 1.6;
-}
-
-.history-row__actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12rpx;
-}
-
-.settings-action-row button {
-  flex: 1;
-}
-
 .api-status-text {
   margin-top: 12rpx;
-  color: #58738f;
-}
-
-.status-item {
-  padding: 20rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.status-item__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.status-item__value {
-  margin-top: 10rpx;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-  word-break: break-all;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.history-row {
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.history-row:last-child {
-  border-bottom: none;
-}
-
-.history-row__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.history-row__title {
-  flex: 1;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-  word-break: break-all;
-}
-
-.history-row__meta {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.history-row__detail {
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: #58738f;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.settings-list {
-  margin-top: 8rpx;
-}
-
-.settings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-  font-size: 28rpx;
-  color: #16324f;
-}
-
-.settings-row:last-child {
-  border-bottom: none;
-}
-
-.settings-row--switch {
-  align-items: flex-start;
-}
-
-.settings-row__main {
-  flex: 1;
-}
-
-.settings-row__title {
-  font-size: 28rpx;
-  color: #16324f;
-}
-
-.settings-row__desc {
-  margin-top: 10rpx;
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: #7890aa;
-}
-
-.settings-row--danger {
-  color: #dc3545;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-tag--success {
-  background: #e9f8ef;
-  color: #1f8b4d;
-}
-
-.worker-tag--warning {
-  background: #fff3e6;
-  color: #c77418;
-}
-
-.worker-tag--danger {
-  background: #fdecec;
-  color: #c24141;
-}
-
-.worker-tag--info {
-  background: #eef6ff;
-  color: #1f6fd6;
+  color: #536b7d;
 }
 </style>

@@ -43,6 +43,8 @@ public class WorkerJobPost extends BaseEntity
 
     private String status;
 
+    private String remark;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date publishTime;
 
@@ -214,6 +216,16 @@ public class WorkerJobPost extends BaseEntity
     public void setStatus(String status)
     {
         this.status = status;
+    }
+
+    public String getRemark()
+    {
+        return remark;
+    }
+
+    public void setRemark(String remark)
+    {
+        this.remark = remark;
     }
 
     public Date getPublishTime()

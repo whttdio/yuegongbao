@@ -139,7 +139,7 @@ public class YgbAiReportServiceImpl implements IYgbAiReportService
     public Long generateReport(YgbAiReportGenerateRequest request, String operator)
     {
         String reportType = normalizeReportType(request.getReportType());
-        String regionCode = regionScopeHelper.resolveAuthorizedRegionCode(request.getRegionCode());
+        String regionCode = resolveAuthorizedRegionCode(request.getRegionCode());
         String enterpriseType = normalizeEnterpriseType(request.getEnterpriseType());
         PeriodRange periodRange = resolvePeriodRange(reportType, request.getStartDate(), request.getEndDate());
         List<String> dimensions = normalizeDimensions(request.getDimensions());
@@ -182,7 +182,7 @@ public class YgbAiReportServiceImpl implements IYgbAiReportService
         report.setTotalScore(totalScore);
         report.setRiskLevel(riskLevel);
         report.setConfigVersion(config.getVersion());
-        report.setSourceMode("stub");
+        report.setSourceMode("SYSTEM");
         report.setReportPdfUrl(buildPdfUrl(reportType, regionCode, periodRange));
         report.setGeneratedTime(new Date());
         report.setRankingNo(aiReportMapper.countHigherScoreReports(reportType, toDate(periodRange.getStart()),
@@ -340,7 +340,7 @@ public class YgbAiReportServiceImpl implements IYgbAiReportService
         cards.add(createCard("高风险样本数", String.valueOf(highRiskCount == null ? 0 : highRiskCount),
             "总样本 " + (totalCount == null ? 0 : totalCount)));
         cards.add(createCard("模型版本",
-            activeReport == null ? "DEFAULT-STUB" : StringUtils.defaultIfEmpty(activeReport.getConfigVersion(), "DEFAULT-STUB"),
+            activeReport == null ? "DEFAULT-V1" : StringUtils.defaultIfEmpty(activeReport.getConfigVersion(), "DEFAULT-V1"),
             "评分标准与目标值同步生效"));
         if (activeReport != null)
         {
@@ -1047,8 +1047,10 @@ public class YgbAiReportServiceImpl implements IYgbAiReportService
 
     private String buildPdfUrl(String reportType, String regionCode, PeriodRange periodRange)
     {
-        return "stub://ai-report/" + reportType.toLowerCase() + "/" + regionCode + "/"
-            + periodRange.getStart() + "_" + periodRange.getEnd() + ".pdf";
+        return "/ygb/aiReport/download?reportType=" + reportType
+            + "&regionCode=" + regionCode
+            + "&periodStart=" + periodRange.getStart()
+            + "&periodEnd=" + periodRange.getEnd();
     }
 
     private BigDecimal scale(BigDecimal value)
@@ -1090,6 +1092,15 @@ public class YgbAiReportServiceImpl implements IYgbAiReportService
     private Date toDate(LocalDate localDate)
     {
         return java.sql.Date.valueOf(localDate);
+    }
+
+    private String resolveAuthorizedRegionCode(String regionCode)
+    {
+        if (regionScopeHelper == null)
+        {
+            return YgbRegionHelper.defaultDashboardRegion(regionCode);
+        }
+        return regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
     }
 
     private static final class PeriodRange

@@ -11,7 +11,7 @@
         </p>
       </div>
       <div class="ygb-table-tip">
-        当前继续复用统一预防项目后台接口，不拆第二套项目业务表。后续如接预算拨付、验收材料和预防报告，仍在本台账链路内扩展。
+        当前页面围绕项目申报、预算拨付、验收材料和预防报告组织办理动作，持续沉淀项目全过程台账。
       </div>
     </section>
 
@@ -63,7 +63,7 @@
           <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['ygb:preventionProject:edit']">修改项目</el-button>
         </el-col>
         <el-col v-if="!isReadOnlyRole" :span="1.5">
-          <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['ygb:preventionProject:remove']">删除项目</el-button>
+          <el-button type="danger" plain icon="Delete" :disabled="multiple || hasSelectedNonDraftProject" @click="handleDelete()" v-hasPermi="['ygb:preventionProject:remove']">删除项目</el-button>
         </el-col>
         <el-col :span="1.5">
           <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:preventionProject:export']">导出</el-button>
@@ -110,7 +110,7 @@
           <template #default="scope">
             <el-button link type="info" icon="View" @click.stop="openDetail(scope.row)">详情</el-button>
             <el-button v-if="!isReadOnlyRole" link type="primary" icon="Edit" @click.stop="handleUpdate(scope.row)" v-hasPermi="['ygb:preventionProject:edit']">修改</el-button>
-            <el-button v-if="!isReadOnlyRole" link type="danger" icon="Delete" @click.stop="handleDelete(scope.row)" v-hasPermi="['ygb:preventionProject:remove']">删除</el-button>
+            <el-button v-if="!isReadOnlyRole && isProjectDeleteAllowed(scope.row)" link type="danger" icon="Delete" @click.stop="handleDelete(scope.row)" v-hasPermi="['ygb:preventionProject:remove']">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -135,7 +135,7 @@
           </el-form-item>
           <el-form-item label="项目状态" prop="projectStatus">
             <el-select v-model="form.projectStatus" placeholder="请选择项目状态">
-              <el-option v-for="item in projectStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
+              <el-option v-for="item in editableProjectStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="预算金额" prop="budgetAmount">
@@ -210,6 +210,7 @@ import {
   projectTypeLabel,
   projectTypeOptions,
   scoreText,
+  isProjectDeleteAllowed,
   usePreventionProjectPage,
   valueOrDefault
 } from '@/views/preventionProject/usePreventionProjectPage'
@@ -239,11 +240,13 @@ const {
   showSearch,
   single,
   multiple,
+  ids,
   total,
   title,
   currentProject,
   detailProject,
   summaryData,
+  editableProjectStatusOptions,
   queryParams,
   form,
   rules,
@@ -265,6 +268,11 @@ const {
   canMutate: () => !isReadOnlyRole.value,
   onBlockedAction: blockReadOnlyAction,
   initialQueryParams: preventionProjectInitialQuery
+})
+
+const hasSelectedNonDraftProject = computed(() => {
+  const selectedIds = Array.isArray(ids.value) ? ids.value : []
+  return projectList.value.some(item => selectedIds.includes(item.projectId) && !isProjectDeleteAllowed(item))
 })
 
 function buildPreventionProjectExplanationQuery(extraQuery = {}) {
@@ -456,11 +464,12 @@ function resetQuery() {
   })
   applyWorkbenchRouteQuery(route.query, queryParams.value, preventionProjectWorkbenchFields)
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '????????' || '????????',
-    description: '????????????????????????????' || '????????????????????????????',
+    title: '工伤预防项目',
+    description: '跟踪工伤预防项目申报、培训、AI管控和验收评价，支撑预防治理闭环。',
     portalExplanation: portalExplanationItems.value,
     focus: [],
     selection: selectedProjectOverview.value,
@@ -468,8 +477,6 @@ watchEffect(() => {
     hints: []
   })
 })
-
-}
 
 function clearWorkbenchContext() {
   Object.assign(queryParams.value, {

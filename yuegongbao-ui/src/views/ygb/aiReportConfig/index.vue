@@ -12,7 +12,7 @@
       <div class="ygb-page__tip">
         <div class="ygb-page__tip-item">当前视角：{{ roleBadge }}</div>
         <div class="ygb-page__tip-item">{{ roleTip }}</div>
-        <div class="ygb-page__tip-item">当前继续复用统一 AI 评分模型配置接口，不拆第二套门户专属模型表和服务。</div>
+        <div class="ygb-page__tip-item">当前配置将同步影响 AI 报告、信用评分和预警解释口径，请在启用前完成校准复核。</div>
       </div>
     </section>
 
@@ -87,7 +87,7 @@
           <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['ygb:aiReportConfig:edit']">修改版本</el-button>
         </el-col>
         <el-col v-if="canActivate" :span="1.5">
-          <el-button type="warning" plain icon="Select" :disabled="single" @click="handleActivate()" v-hasPermi="['ygb:aiReportConfig:activate']">启用版本</el-button>
+          <el-button type="warning" plain icon="Select" :disabled="!canActivateRow(currentConfigRow)" @click="handleActivate()" v-hasPermi="['ygb:aiReportConfig:activate']">启用版本</el-button>
         </el-col>
         <el-col v-if="canExport" :span="1.5">
           <el-button type="info" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:aiReportConfig:export']">导出</el-button>
@@ -160,6 +160,7 @@
               link
               type="primary"
               icon="Select"
+              :disabled="!canActivateRow(scope.row)"
               @click.stop="handleActivate(scope.row)"
               v-hasPermi="['ygb:aiReportConfig:activate']"
             >
@@ -364,6 +365,10 @@ function weightValues(config) {
 function weightTotal(config) {
   const weights = weightValues(config)
   return Number(weights.A || 0) + Number(weights.B || 0) + Number(weights.C || 0) + Number(weights.D || 0) + Number(weights.E || 0)
+}
+
+function canActivateRow(config) {
+  return Boolean(config?.configId) && config.configStatus !== '1' && weightTotal(config) === 100
 }
 
 function countRows(predicate) {
@@ -681,7 +686,7 @@ const visibleConfigList = computed(() => prioritizeFocusRows(configList.value, r
 const workbenchContext = computed(() => buildWorkbenchContext(route.query, {
   fields: aiReportConfigWorkbenchFields,
   title: '当前 AI 配置页沿用了上游来源条件。',
-  description: '当前页面复用了上游工作台筛选，可在同一门户语境下继续处理配置校准和生效范围。',
+  description: '当前页面已带入工作台筛选条件，可继续处理配置校准和生效范围。',
   fieldLabels: {
     regionCode: 'Region',
     focusKey: 'Focus'
@@ -739,7 +744,7 @@ const primaryConfigAction = computed(() => {
     }
     return { label: '查看详情', action: 'detail' }
   }
-  if (canActivate.value && currentConfigRow.value.configStatus !== '1') {
+  if (canActivate.value && canActivateRow(currentConfigRow.value)) {
     return { label: '启用版本', action: 'activate' }
   }
   if (canEdit.value && (roleView.value === 'finance' || roleView.value === 'hrss')) {
@@ -753,15 +758,15 @@ const primaryConfigAction = computed(() => {
 
 const secondaryAction = computed(() => {
   if (activeFocus.value?.key === 'closeRate' || roleView.value === 'hrss') {
-    return { label: '进入预警中心', path: '/ygb/warning' }
+    return { label: '进入预警中心', path: '/warning-center/workOrder' }
   }
   if (activeFocus.value?.key === 'payTarget' || activeFocus.value?.key === 'attendanceTarget' || roleView.value === 'finance') {
-    return { label: '进入个税比对', path: '/ygb/taxCompare' }
+    return { label: '进入个税比对', path: '/tax-supervision/personalTax' }
   }
   if (activeFocus.value?.key === 'weight') {
-    return { label: '进入信用评价', path: '/ygb/creditScore' }
+    return { label: '进入信用评价', path: '/credit-evaluation/overview' }
   }
-  return { label: '进入 AI 报告', path: '/ygb/aiReport' }
+  return { label: '进入 AI 报告', path: '/ai-report/report' }
 })
 
 const currentConfigActionSummary = computed(() => {
@@ -884,6 +889,10 @@ function handlePrimaryConfigAction() {
     return
   }
   if (primaryConfigAction.value.action === 'activate') {
+    if (!canActivateRow(currentConfigRow.value)) {
+      proxy.$modal.msgWarning('当前版本需停用状态且权重总和为100后才能启用')
+      return
+    }
     handleActivate(currentConfigRow.value)
     return
   }

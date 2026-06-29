@@ -87,6 +87,7 @@ public class SysLoginController
         ajax.put("permissions", permissions);
         ajax.put("allowedPortalCodes", allowedPortalCodes);
         ajax.put("allowedRegionCodes", regionScopeHelper.selectAllowedRegionCodes());
+        ajax.put("enterpriseId", user.getEnterpriseId());
         ajax.put("defaultPortalCode", defaultPortalCode);
         ajax.put("effectivePortalCode", effectivePortalCode);
         ajax.put("pwdChrtype", getSysAccountChrtype());

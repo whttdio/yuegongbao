@@ -7,7 +7,7 @@ import EnterpriseSubledgerPage from '@/views/ygb/shared/EnterpriseSubledgerPage.
 
 const config = {
   title: '劳务派遣公司',
-  description: '聚焦派遣主体主数据，继续复用企业台账完成查询、维护、导出和主链承接。',
+  description: '聚焦派遣主体主数据，完成查询、维护、导出和主链承接。',
   fixedEnterpriseType: '1',
   filePrefix: 'enterprise_dispatch'
 }

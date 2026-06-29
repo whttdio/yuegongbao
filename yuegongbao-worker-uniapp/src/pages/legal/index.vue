@@ -1,13 +1,35 @@
 <template>
   <view class="worker-page">
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">法律咨询</view>
+      <view class="worker-subtitle">提交维权咨询、检索常见问题或拨打法律服务热线</view>
+      <view class="hotline" @click="callHotline">热线：{{ hotlineText }}</view>
+    </view>
+
     <view class="worker-card">
-      <view class="worker-title">发起法律咨询</view>
-      <picker class="form-picker" :range="typeOptions" @change="handleTypeChange">
-        <view class="form-picker__text">{{ typeLabel }}</view>
-      </picker>
-      <input v-model="form.title" class="form-input" placeholder="请输入标题" />
-      <textarea v-model="form.content" class="form-textarea" placeholder="请描述咨询问题" />
-      <input v-model="form.contactMobile" class="form-input" placeholder="请输入联系电话" />
+      <view class="section-head">
+        <view class="worker-title">发起咨询</view>
+      </view>
+      <view class="form-stack">
+        <view class="form-field">
+          <view class="form-field__label">咨询类型</view>
+          <picker class="form-picker" :range="typeOptions" @change="handleTypeChange">
+            <view class="form-picker__text">{{ typeLabel }}</view>
+          </picker>
+        </view>
+        <view class="form-field">
+          <view class="form-field__label">标题</view>
+          <input v-model="form.title" class="form-input" placeholder="请输入标题" />
+        </view>
+        <view class="form-field">
+          <view class="form-field__label">问题描述</view>
+          <textarea v-model="form.content" class="form-textarea" placeholder="请描述咨询问题" />
+        </view>
+        <view class="form-field">
+          <view class="form-field__label">联系电话</view>
+          <input v-model="form.contactMobile" class="form-input" placeholder="请输入联系电话" />
+        </view>
+      </view>
 
       <view class="section-head section-head--compact">
         <view class="worker-title worker-title--small">咨询附件</view>
@@ -26,7 +48,6 @@
       <view v-else class="worker-empty worker-empty--inline">暂无咨询附件</view>
 
       <button class="worker-button" @click="submitConsult">提交咨询</button>
-      <view class="hotline" @click="callHotline">热线：{{ hotlineText }}</view>
       <view class="shortcut-actions">
         <button class="worker-button worker-button--secondary" @click="goArticleList">法律讲座</button>
         <button class="worker-button" @click="goUnion">工会服务</button>
@@ -38,12 +59,15 @@
         <view class="worker-title">常见法律问题</view>
         <view class="worker-tag">{{ faqRows.length }} 条</view>
       </view>
-      <input
-        v-model="faqKeyword"
-        class="form-input form-input--compact"
-        placeholder="输入关键词检索常见问题"
-        @confirm="handleFaqSearch"
-      />
+      <view class="form-field">
+        <view class="form-field__label">关键词</view>
+        <input
+          v-model="faqKeyword"
+          class="form-input"
+          placeholder="输入关键词检索常见问题"
+          @confirm="handleFaqSearch"
+        />
+      </view>
       <button class="worker-button worker-button--secondary worker-button--compact" @click="handleFaqSearch">
         检索 FAQ
       </button>
@@ -399,185 +423,3 @@ function copyText(content, successTitle) {
 onShow(loadData)
 </script>
 
-<style lang="scss">
-.form-input,
-.form-textarea,
-.form-picker {
-  width: 100%;
-  margin-top: 18rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
-  font-size: 28rpx;
-  color: #16324f;
-}
-
-.form-textarea {
-  min-height: 180rpx;
-}
-
-.form-input--compact {
-  margin-bottom: 8rpx;
-}
-
-.form-picker__text {
-  color: #16324f;
-}
-
-.worker-button--compact {
-  margin-top: 10rpx;
-}
-
-.hotline {
-  margin-top: 18rpx;
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.shortcut-actions {
-  display: flex;
-  gap: 20rpx;
-  margin-top: 18rpx;
-}
-
-.shortcut-actions button {
-  flex: 1;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.section-head--compact {
-  margin-top: 22rpx;
-  margin-bottom: 12rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.attachment-actions {
-  margin-top: 8rpx;
-}
-
-.attachment-list {
-  margin-top: 16rpx;
-}
-
-.attachment-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16rpx;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.attachment-row:last-child {
-  border-bottom: none;
-}
-
-.attachment-row__text {
-  flex: 1;
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: #7890aa;
-  word-break: break-all;
-}
-
-.attachment-row__action {
-  font-size: 24rpx;
-  color: #d9480f;
-  white-space: nowrap;
-}
-
-.worker-empty--inline {
-  margin-top: 10rpx;
-}
-
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-</style>

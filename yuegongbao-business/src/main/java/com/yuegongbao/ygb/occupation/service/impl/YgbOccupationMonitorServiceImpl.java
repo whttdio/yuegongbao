@@ -20,6 +20,7 @@ import com.yuegongbao.ygb.occupation.domain.YgbOccupationMonitorSummary;
 import com.yuegongbao.ygb.occupation.mapper.YgbOccupationMonitorMapper;
 import com.yuegongbao.ygb.occupation.service.IYgbOccupationMonitorService;
 import com.yuegongbao.ygb.util.YgbRegionHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
 @Service
@@ -35,6 +36,9 @@ public class YgbOccupationMonitorServiceImpl implements IYgbOccupationMonitorSer
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
 
     @Override
     public List<YgbOccupationMonitor> selectOccupationMonitorList(YgbOccupationMonitor query)
@@ -102,11 +106,16 @@ public class YgbOccupationMonitorServiceImpl implements IYgbOccupationMonitorSer
     public int syncOccupationMonitor(String statMonth, String operator)
     {
         validateMonth(statMonth);
-        occupationMonitorMapper.deleteByScope(statMonth, null);
+        YgbOccupationMonitor deleteScope = buildScopedMonitorQuery(statMonth);
+        occupationMonitorMapper.deleteByScope(deleteScope);
         List<YgbOccupationMonitorStubItem> records = occupationClient.pullMonitorRecords(statMonth);
         int rows = 0;
         for (YgbOccupationMonitorStubItem item : records)
         {
+            if (!isItemInScope(item.getRegionCode()))
+            {
+                continue;
+            }
             YgbOccupationMonitor monitor = new YgbOccupationMonitor();
             monitor.setStatMonth(statMonth);
             monitor.setRegionCode(item.getRegionCode());
@@ -143,6 +152,27 @@ public class YgbOccupationMonitorServiceImpl implements IYgbOccupationMonitorSer
             }
         }
         return rows;
+    }
+
+    private YgbOccupationMonitor buildScopedMonitorQuery(String statMonth)
+    {
+        YgbOccupationMonitor query = new YgbOccupationMonitor();
+        query.setStatMonth(statMonth);
+        regionScopeHelper.applyRegionDataScope(query, "region_code");
+        return query;
+    }
+
+    private boolean isItemInScope(String regionCode)
+    {
+        try
+        {
+            regionScopeHelper.assertRegionAuthorized(regionCode);
+            return true;
+        }
+        catch (ServiceException e)
+        {
+            return false;
+        }
     }
 
     static String resolveWarningLevel(BigDecimal incidenceRate, Integer caseCount)

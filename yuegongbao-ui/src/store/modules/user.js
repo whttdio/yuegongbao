@@ -20,6 +20,7 @@ const useUserStore = defineStore(
       permissions: [],
       allowedPortalCodes: [],
       allowedRegionCodes: [],
+      enterpriseId: null,
       defaultPortalCode: '',
       effectivePortalCode: ''
     }),
@@ -57,6 +58,7 @@ const useUserStore = defineStore(
             }
             this.allowedPortalCodes = Array.isArray(res.allowedPortalCodes) ? res.allowedPortalCodes : []
             this.allowedRegionCodes = Array.isArray(res.allowedRegionCodes) ? res.allowedRegionCodes : []
+            this.enterpriseId = user.enterpriseId ?? null
             this.defaultPortalCode = res.defaultPortalCode || ''
             this.effectivePortalCode = res.effectivePortalCode || ''
             this.id = user.userId
@@ -96,6 +98,7 @@ const useUserStore = defineStore(
             this.permissions = []
             this.allowedPortalCodes = []
             this.allowedRegionCodes = []
+            this.enterpriseId = null
             this.defaultPortalCode = ''
             this.effectivePortalCode = ''
             removeToken()

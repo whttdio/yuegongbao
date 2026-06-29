@@ -1,15 +1,81 @@
-﻿# 粤工保管理平台
+# 粤工保联调工程
 
-## 项目说明
+## 运行基线
 
-本项目基于 `Spring Boot 3` 单体后台框架改造，当前定位为 **粤工保管理平台初版基座**。
+- 后端：`JDK 17+`
+- Node：`20.20.2`
+- Maven：`3.8+`
+- Windows 下请使用 `npm.cmd`，不要直接在 PowerShell 中执行 `npm`
 
-当前技术栈：
-- 后端：Java 17、Spring Boot 3、Spring Security、MyBatis
-- 前端：Vue 3、Vite、Element Plus
-- 架构：模块化单体
+本仓库默认联调脚本优先使用：
 
-## 当前模块
+1. `YGB_JAVA_HOME`
+2. `JAVA_HOME`
+3. `D:\JAVA\JDK21\jdk-21`
+
+## 交付模块
+
+- `yuegongbao-admin` / `yuegongbao-business`
+- `yuegongbao-ui`：`ygb` / `azb`
+- `yuegongbao-worker-miniapp`
+- `yuegongbao-enterprise-miniapp`
+- `yuegongbao-worker-screen-app`
+- `yuegongbao-worker-uniapp`
+
+## 本地联调默认值
+
+- `YGB_DB_URL=jdbc:mysql://127.0.0.1:3306/yuegongbao?...`
+- `YGB_DB_USERNAME=root`
+- `YGB_DB_PASSWORD=root123456`
+- `YGB_REDIS_HOST=127.0.0.1`
+- `YGB_REDIS_PORT=6379`
+- `YGB_REDIS_DATABASE=0`
+- `YGB_UPLOAD_DIR=D:\yuegongbao\uploadPath`
+- `YGB_SPRING_PROFILE=druid`
+- `YGB_INTEGRATION_MODE=stub`
+
+说明：
+
+- 默认配置以本地联调可启动为目标，均支持通过环境变量覆盖
+- `stub` 仍保留给非核心外部依赖模块；核心劳动者、企业端、用工屏链路以真实后端接口联调
+
+## 常用命令
+
+后端：
+
+```bat
+scripts\test-backend.cmd
+scripts\dev-backend.cmd
+```
+
+管理端：
+
+```bat
+scripts\dev-admin.cmd ygb
+scripts\dev-admin.cmd azb
+cd yuegongbao-ui && npm.cmd run build:ygb
+cd yuegongbao-ui && npm.cmd run build:azb
+```
+
+三端与 UniApp：
+
+```bat
+scripts\dev-worker-miniapp.cmd
+scripts\dev-enterprise-miniapp.cmd
+scripts\dev-worker-screen.cmd
+scripts\dev-worker-uniapp.cmd
+```
+
+```bat
+cd yuegongbao-worker-miniapp && npm.cmd run build:h5
+cd yuegongbao-enterprise-miniapp && npm.cmd run build:h5
+cd yuegongbao-worker-screen-app && npm.cmd run build:h5
+cd yuegongbao-worker-uniapp && npm.cmd run build:h5
+cd yuegongbao-worker-uniapp && npm.cmd run build:app
+cd yuegongbao-worker-uniapp && npm.cmd run build:mp-weixin
+```
+
+## 工程结构
 
 - `yuegongbao-admin`：启动入口
 - `yuegongbao-framework`：安全、拦截器、通用框架能力
@@ -18,25 +84,4 @@
 - `yuegongbao-quartz`：定时任务模块
 - `yuegongbao-generator`：代码生成模块
 - `yuegongbao-common`：公共组件模块
-- `yuegongbao-ui`：前端管理端
-
-## 本次基座改造内容
-
-- 接入 `yuegongbao-business` 业务模块
-- 替换前后端默认品牌为“粤工保”
-- 调整系统标题、首页、Swagger、初始化数据
-- 统一模块名、包名、脚本名为 `yuegongbao`
-
-## 启动前要求
-
-1. 安装 JDK 17
-2. 安装 Maven 3.8+
-3. 准备 MySQL 8、Redis
-4. 导入 `sql/yuegongbao_20260417.sql`
-
-## 后续建议
-
-1. 补齐企业、项目、班组、工人、合同、考勤、工资等核心业务表设计
-2. 基于业务模型继续生成和完善后台 CRUD
-3. 补充菜单、权限、首页看板和统计能力
-4. 对接 UniApp 端业务接口
+- `yuegongbao-ui`：管理端双门户

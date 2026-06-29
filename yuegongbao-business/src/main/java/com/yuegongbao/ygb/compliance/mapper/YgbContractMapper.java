@@ -13,6 +13,10 @@ public interface YgbContractMapper
 {
     public List<YgbContract> selectContractList(YgbContract contract);
 
+    public List<YgbContract> selectContractExpiryList(YgbContract contract);
+
+    public List<YgbContract> selectContractUnfiledList(YgbContract contract);
+
     public List<YgbContract> selectContractOptions();
 
     public YgbContract selectContractById(Long contractId);

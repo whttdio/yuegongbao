@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -127,6 +127,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and region_code like concat(#{regionCode}, '%')
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
     </sql>
 
     <insert id="insertNewformWorker" parameterType="YgbNewformWorker" useGeneratedKeys="true" keyProperty="workerRecordId">
@@ -143,12 +144,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         )
     </insert>
 
-    <delete id="deleteByScope">
+    <delete id="deleteByScope" parameterType="YgbNewformWorker">
         delete from t_newform_worker
         where stat_month = #{statMonth}
         <if test="enterpriseId != null">
             and enterprise_id = #{enterpriseId}
         </if>
+        ${params.regionDataScope}
+        ${params.enterpriseDataScope}
     </delete>
 
 </mapper>

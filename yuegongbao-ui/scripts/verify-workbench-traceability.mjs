@@ -28,25 +28,11 @@ const fileChecks = [
     ]
   },
   {
-    file: 'src/views/ygb/cockpit/index.vue',
+    file: 'src/views/cockpit/CyberCockpitScreen.vue',
     includes: [
-      'function createCockpitAction(target = {}, fallback = {}) {',
-      'query.wbSourceLabel = sourceLabel',
-      'query.wbSourceDescription = sourceDescription',
-      'query.wbSourceTitle = sourceTitle',
-      '.map(item => createCockpitAction(item, {',
-      'return createCockpitAction({'
-    ]
-  },
-  {
-    file: 'src/views/azb/cockpit/index.vue',
-    includes: [
-      'function createCockpitAction(target = {}, fallback = {}) {',
-      'query.wbSourceLabel = sourceLabel',
-      'query.wbSourceDescription = sourceDescription',
-      'query.wbSourceTitle = sourceTitle',
-      '.map(item => createCockpitAction(item, {',
-      'return createCockpitAction({'
+      'openModule',
+      'useWorkbenchAssist',
+      'setPageGuide'
     ]
   }
 ]

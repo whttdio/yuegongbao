@@ -10,7 +10,7 @@
         </p>
       </div>
       <div class="ygb-table-tip">
-        当前阶段仍为 Stub 同步，字段结构已与后续正式接口保持一致；达到阈值的区域行业组合会自动联动预警中心。
+        当前页面按月份同步职业病监测数据；达到阈值的区域行业组合会自动联动预警中心。
       </div>
     </section>
 
@@ -77,7 +77,7 @@
     <el-card class="toolbar-card ygb-toolbar-card" shadow="never">
       <el-row :gutter="10">
         <el-col v-if="!isReadOnlyRole" :span="1.5">
-          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:occupationMonitor:sync']">模拟同步</el-button>
+          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:occupationMonitor:sync']">同步监测数据</el-button>
         </el-col>
         <el-col :span="1.5">
           <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:occupationMonitor:export']">导出</el-button>
@@ -170,6 +170,8 @@ import { useWorkbenchAssist } from '@/composables/useWorkbenchAssist'
 import { decoratePortalExplanationItems, openPortalExplanationAction } from '@/utils/portalExplanation'
 import { useRoleViewMode } from '@/utils/roleView'
 import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQuery } from '@/utils/workbenchLink'
+import { useAuthorizedRegionOptions } from '@/utils/regionScope'
+import { gdRegionOptions } from '@/utils/regionName'
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -178,12 +180,7 @@ const router = useRouter()
 const { isReadOnlyRole, readOnlyRoleLabel, readOnlyRoleDescription } = useRoleViewMode()
 const occupationMonitorWorkbenchFields = ['statMonth', 'regionCode', 'industryType', 'warningLevel', 'warningStatus', 'focusKey']
 
-const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+const regionOptions = useAuthorizedRegionOptions(gdRegionOptions)
 
 const industryOptions = ['建筑施工', '制造加工', '平台配送']
 
@@ -354,7 +351,7 @@ const activeFocus = computed(() => focusQueues.value.find(item => item.key === a
 const workbenchContext = computed(() => buildWorkbenchContext(route.query, {
   fields: occupationMonitorWorkbenchFields,
   title: '当前职业监测页沿用了上游来源条件。',
-  description: '当前页面复用了上游工作台筛选，可在同一门户语境下继续处理监测对象和风险问题。',
+  description: '当前页面已带入工作台筛选条件，可继续处理监测对象和风险问题。',
   fieldLabels: {
     statMonth: 'Month',
     regionCode: 'Region',
@@ -404,17 +401,17 @@ const submoduleEntries = computed(() => ([
   {
     key: 'prevention',
     title: '职业病预防项目',
-    desc: '进入只读预防项目台账，沿用月份、区域、行业和预警级别条件。',
+    desc: '进入预防项目申报、验收和整改跟踪台账，沿用月份、区域、行业和预警级别条件。',
     actionText: '打开预防台账',
-    path: '/ygb-occupation/occupationPrevention',
+    path: '/occupational-disease/prevention',
     query: buildOccupationSubmoduleQuery()
   },
   {
     key: 'healthArchive',
     title: '职业健康档案',
-    desc: '进入只读健康档案台账，继续按同口径核查月份、区域和行业对象。',
+    desc: '进入体检档案、异常复查提醒和处置记录台账，继续按同口径核查月份、区域和行业对象。',
     actionText: '打开档案台账',
-    path: '/ygb-occupation/occupationHealthArchive',
+    path: '/occupational-disease/healthArchive',
     query: buildOccupationSubmoduleQuery()
   }
 ]))
@@ -432,7 +429,7 @@ const workflowSteps = computed(() => ([
     desc: '先按统计月份、区域和行业范围锁定本次监测台账，避免跨月和跨行业混查。'
   },
   {
-    label: '执行卫健 Stub 同步',
+    label: '执行卫健数据同步',
     desc: '按月份重新拉取区域行业监测记录，统一回写发病人数、千人发病率和来源消息。'
   },
   {
@@ -543,20 +540,19 @@ function syncCurrentMonitor() {
 function handleQuery() {
   queryParams.value.pageNum = 1
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '????????' || '????????',
-    description: '?????????????????????????????????' || '?????????????????????????????????',
+    title: '职业病监测',
+    description: '统计职业病发病、复查和预防线索，支撑职业健康风险监测与处置。',
     portalExplanation: portalExplanationItems.value,
     focus: focusQueues.value,
-    selection: [...selectedMonitorOverview.value, { label: '??????', value: currentMonitorActionSummary.value }],
+    selection: [...selectedMonitorOverview.value, { label: '当前处置建议', value: currentMonitorActionSummary.value }],
     workflow: workflowSteps.value,
     hints: [...currentMonitorActionTags.value].slice(0, 6)
   })
 })
-
-}
 
 function resetQuery() {
   proxy.resetForm('queryRef')
@@ -638,7 +634,7 @@ function handleSync() {
   syncOccupationMonitor({
     statMonth: queryParams.value.statMonth
   }).then(response => {
-    proxy.$modal.msgSuccess(response.msg || '模拟同步完成')
+    proxy.$modal.msgSuccess(response.msg || '监测数据同步完成')
     getList()
   })
 }

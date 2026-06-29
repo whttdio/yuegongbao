@@ -1,45 +1,146 @@
 <template>
-  <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">我的简历</view>
-      <input v-model="form.expectedJob" class="form-input" placeholder="期望岗位" />
-      <input v-model="form.expectedCity" class="form-input" placeholder="期望城市" />
-      <input v-model="form.expectedSalary" class="form-input" placeholder="期望薪资" />
-      <input v-model="form.skillTags" class="form-input" placeholder="技能标签，多个用逗号分隔" />
-      <view class="section-head">
-        <view class="worker-title worker-title--small">证书管理</view>
-        <view class="worker-tag">{{ certificateCountText }}</view>
-      </view>
-      <view class="worker-subtitle">
-        按证书名称、编号、发证单位和到期日期维护，支持继续兼容历史证书文本。
-      </view>
-      <view
-        v-for="(item, index) in form.certificateList"
-        :key="`cert-${index}`"
-        class="certificate-card"
-      >
-        <input v-model="item.certificateName" class="form-input form-input--nested" placeholder="证书名称" />
-        <input v-model="item.certificateNo" class="form-input form-input--nested" placeholder="证书编号" />
-        <input v-model="item.issuer" class="form-input form-input--nested" placeholder="发证单位" />
-        <input v-model="item.expireDate" class="form-input form-input--nested" placeholder="到期日期，如 2027-12-31" />
-        <view class="certificate-card__actions">
-          <view class="certificate-card__remove" @click="removeCertificate(index)">删除证书</view>
+  <view class="worker-page resume-page">
+    <view class="resume-hero worker-card worker-hero">
+      <view class="resume-hero__top">
+        <view>
+          <view class="resume-hero__name">{{ form.personName || '劳动者用户' }}</view>
+          <view class="resume-hero__meta">{{ form.mobile || '-' }} · {{ form.jobType || '未填写工种' }}</view>
+        </view>
+        <view class="worker-tag" :class="resumeComplete ? 'worker-tag--success' : 'worker-tag--warning'">
+          {{ resumeComplete ? '可投递' : '待完善' }}
         </view>
       </view>
-      <view class="certificate-actions">
-        <button class="worker-button worker-button--secondary" @click="addCertificate">新增证书</button>
-      </view>
-      <textarea v-model="form.intro" class="form-textarea" placeholder="个人介绍" />
-      <button class="worker-button" @click="submitResume">保存简历</button>
+      <view class="resume-hero__hint">{{ resumeGateText }}</view>
     </view>
 
-    <view class="worker-card">
-      <view class="worker-title">{{ form.personName || '-' }}</view>
-      <view class="worker-subtitle">{{ form.mobile || '-' }} / {{ form.jobType || '-' }}</view>
-      <view class="worker-subtitle">期望岗位：{{ form.expectedJob || '-' }}</view>
-      <view class="worker-subtitle">期望城市：{{ form.expectedCity || '-' }}</view>
-      <view class="worker-subtitle">期望薪资：{{ form.expectedSalary || '-' }}</view>
-      <view class="worker-subtitle">证书状态：{{ form.certificateStatusText || '-' }}</view>
+    <view class="worker-card resume-form-card">
+      <view class="section-head">
+        <view class="worker-title">求职意向</view>
+      </view>
+
+      <view class="form-stack">
+        <view class="form-field">
+          <view class="form-field__label">期望岗位 <text class="form-field__required">*</text></view>
+          <input v-model="form.expectedJob" class="form-input" placeholder="如：焊工、装配工" />
+        </view>
+        <view class="form-field">
+          <view class="form-field__label">期望城市</view>
+          <input v-model="form.expectedCity" class="form-input" placeholder="如：广州、深圳" />
+        </view>
+        <view class="form-field">
+          <view class="form-field__label">期望薪资</view>
+          <input v-model="form.expectedSalary" class="form-input" placeholder="如：9000-12000" />
+        </view>
+        <view class="form-field">
+          <view class="form-field__label">技能标签</view>
+          <input v-model="form.skillTags" class="form-input" placeholder="多个技能用逗号分隔" />
+        </view>
+      </view>
+
+      <view class="form-section">
+        <view class="form-field">
+          <view class="form-field__label">个人介绍 <text class="form-field__required">*</text></view>
+          <textarea
+            v-model="form.intro"
+            class="form-textarea"
+            placeholder="简要介绍工作经验、擅长工种、持证情况与求职诉求"
+          />
+        </view>
+      </view>
+
+      <view class="form-section">
+        <view class="section-head section-head--compact">
+          <view>
+            <view class="worker-title worker-title--small">证书管理</view>
+            <view class="form-field__hint">维护证书名称、编号、发证单位与到期日期</view>
+          </view>
+          <view class="worker-tag worker-tag--info">{{ certificateCountText }}</view>
+        </view>
+
+        <view v-if="form.certificateList.length" class="certificate-list">
+          <view
+            v-for="(item, index) in form.certificateList"
+            :key="`cert-${index}`"
+            class="certificate-card"
+          >
+            <view class="certificate-card__head">
+              <view class="certificate-card__index">证书 {{ index + 1 }}</view>
+              <view class="certificate-card__remove" @click="removeCertificate(index)">删除</view>
+            </view>
+            <view class="form-stack certificate-card__fields">
+              <view class="form-field">
+                <view class="form-field__label">证书名称</view>
+                <input v-model="item.certificateName" class="form-input form-input--nested" placeholder="如：焊工特种作业证" />
+              </view>
+              <view class="form-field">
+                <view class="form-field__label">证书编号</view>
+                <input v-model="item.certificateNo" class="form-input form-input--nested" placeholder="请输入证书编号" />
+              </view>
+              <view class="form-field">
+                <view class="form-field__label">发证单位</view>
+                <input v-model="item.issuer" class="form-input form-input--nested" placeholder="请输入发证单位" />
+              </view>
+              <view class="form-field">
+                <view class="form-field__label">到期日期</view>
+                <input v-model="item.expireDate" class="form-input form-input--nested" placeholder="如 2027-12-31" />
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view v-else class="worker-empty worker-empty--inline resume-cert-empty">
+          <view class="worker-empty__title">暂未添加证书</view>
+          <view class="worker-empty__desc">如有特种作业证、高处作业证等，可在此补充。</view>
+        </view>
+
+        <button class="worker-button worker-button--secondary resume-add-cert" @click="addCertificate">
+          新增证书
+        </button>
+      </view>
+
+      <button class="worker-button resume-submit" @click="submitResume">保存简历</button>
+    </view>
+
+    <view class="worker-card resume-preview-card">
+      <view class="section-head">
+        <view class="worker-title">简历预览</view>
+      </view>
+      <view class="preview-grid">
+        <view class="preview-item">
+          <view class="preview-item__label">姓名</view>
+          <view class="preview-item__value">{{ form.personName || '-' }}</view>
+        </view>
+        <view class="preview-item">
+          <view class="preview-item__label">手机号</view>
+          <view class="preview-item__value">{{ form.mobile || '-' }}</view>
+        </view>
+        <view class="preview-item">
+          <view class="preview-item__label">工种</view>
+          <view class="preview-item__value">{{ form.jobType || '-' }}</view>
+        </view>
+        <view class="preview-item">
+          <view class="preview-item__label">证书状态</view>
+          <view class="preview-item__value">{{ form.certificateStatusText || certificateCountText }}</view>
+        </view>
+      </view>
+      <view class="preview-block">
+        <view class="preview-block__label">期望岗位</view>
+        <view class="preview-block__value">{{ form.expectedJob || '-' }}</view>
+      </view>
+      <view class="preview-block">
+        <view class="preview-block__label">期望城市 / 薪资</view>
+        <view class="preview-block__value">
+          {{ form.expectedCity || '-' }} · {{ form.expectedSalary || '-' }}
+        </view>
+      </view>
+      <view class="preview-block">
+        <view class="preview-block__label">技能标签</view>
+        <view class="preview-block__value">{{ form.skillTags || '-' }}</view>
+      </view>
+      <view class="preview-block">
+        <view class="preview-block__label">个人介绍</view>
+        <view class="preview-block__value preview-block__value--multiline">{{ form.intro || '-' }}</view>
+      </view>
     </view>
   </view>
 </template>
@@ -79,7 +180,7 @@ const resumeCompletenessText = computed(() => {
 })
 const resumeGateText = computed(() => {
   const missing = requiredResumeFieldStatus.value.filter((item) => !item.ok).map((item) => item.label)
-  return missing.length ? `投递仍缺 ${missing.join('、')}` : '已满足当前前端投递门槛'
+  return missing.length ? `投递仍缺：${missing.join('、')}` : '已满足当前投递必填项'
 })
 const resumeFieldSummaryText = computed(() => {
   return [
@@ -215,114 +316,145 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.form-input,
-.form-textarea {
-  width: 100%;
-  margin-top: 18rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
-  font-size: 28rpx;
-  color: #16324f;
-}
-
-.form-textarea {
-  min-height: 180rpx;
-}
-
-.section-head {
+.resume-hero__top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-top: 24rpx;
+  gap: 16rpx;
 }
 
-.worker-title--small {
-  font-size: 28rpx;
+.resume-hero__name {
+  font-size: 38rpx;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+}
+
+.resume-hero__meta {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.resume-hero__hint {
+  margin-top: 18rpx;
+  padding: 14rpx 18rpx;
+  border-radius: 16rpx;
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 24rpx;
+  line-height: 1.55;
+}
+
+.form-field__required {
+  color: #ffd166;
+}
+
+.certificate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
 }
 
 .certificate-card {
-  margin-top: 18rpx;
-  padding: 20rpx;
+  padding: 22rpx 20rpx;
   border-radius: 20rpx;
-  background: #f8fbff;
+  background: linear-gradient(180deg, #f8fcfb 0%, #f2f7f8 100%);
+  border: 1rpx solid $ygb-border-light;
 }
 
-.form-input--nested {
-  margin-top: 12rpx;
-  background: #ffffff;
-}
-
-.certificate-card__actions {
+.certificate-card__head {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 18rpx;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.certificate-card__index {
+  font-size: 26rpx;
+  font-weight: 650;
+  color: $ygb-text-body;
 }
 
 .certificate-card__remove {
   font-size: 24rpx;
-  color: #dc3545;
+  color: $ygb-danger;
 }
 
-.certificate-actions {
-  margin-top: 18rpx;
+.certificate-card__fields {
+  gap: 16rpx;
 }
 
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
+.form-input--nested {
+  background: #ffffff;
 }
 
-.detail-row:last-child {
-  border-bottom: none;
+.resume-cert-empty {
+  margin-bottom: 16rpx;
+  padding: 28rpx 16rpx;
+  border-radius: 18rpx;
+  background: $ygb-surface-muted;
 }
 
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
+.resume-add-cert {
+  width: 100%;
   margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
 }
 
-.result-block__label {
+.resume-submit {
+  width: 100%;
+  margin-top: 32rpx;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14rpx;
+}
+
+.preview-item {
+  padding: 18rpx 16rpx;
+  border-radius: 16rpx;
+  background: $ygb-surface-muted;
+  border: 1rpx solid $ygb-border-light;
+}
+
+.preview-item__label {
   font-size: 22rpx;
-  color: #7890aa;
+  color: $ygb-text-tertiary;
 }
 
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
+.preview-item__value {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  font-weight: 650;
+  color: $ygb-text-body;
+  line-height: 1.45;
   word-break: break-all;
 }
 
-.section-head--sub {
-  margin-top: 20rpx;
+.preview-block {
+  margin-top: 16rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fafb 100%);
+  border: 1rpx solid $ygb-border-light;
 }
 
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
+.preview-block__label {
+  font-size: 22rpx;
+  color: $ygb-text-tertiary;
+}
+
+.preview-block__value {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  color: $ygb-text-body;
+  line-height: 1.55;
+  word-break: break-all;
+}
+
+.preview-block__value--multiline {
+  white-space: pre-wrap;
 }
 </style>

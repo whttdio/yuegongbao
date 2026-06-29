@@ -59,6 +59,6 @@ public class YgbOccupationMonitorController extends BaseController
     public AjaxResult sync(@Validated @RequestBody YgbMonthScopeRequest request)
     {
         int rows = occupationMonitorService.syncOccupationMonitor(request.getStatMonth(), getUsername());
-        return success("职业病监测模拟同步完成，本次处理 " + rows + " 条记录。");
+        return success("职业病监测数据同步完成，本次处理 " + rows + " 条记录。");
     }
 }

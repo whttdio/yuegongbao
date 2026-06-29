@@ -26,29 +26,40 @@ function createEmptyGuide() {
   }
 }
 
+function cleanGuideText(value) {
+  if (value === undefined || value === null) {
+    return ''
+  }
+  const text = String(value).trim()
+  if (!text || /\?{2,}/.test(text)) {
+    return ''
+  }
+  return text
+}
+
 function normalizeGuide(payload = {}) {
   return {
-    title: payload.title || '',
-    description: payload.description || '',
-    portalExplanation: Array.isArray(payload.portalExplanation) ? payload.portalExplanation.filter(Boolean) : [],
+    title: cleanGuideText(payload.title),
+    description: cleanGuideText(payload.description),
+    portalExplanation: Array.isArray(payload.portalExplanation) ? payload.portalExplanation.map(cleanGuideText).filter(Boolean) : [],
     focus: normalizeGuideSection(payload.focus, item => ({
-      label: item.label || item.title || '',
+      label: cleanGuideText(item.label || item.title),
       value: item.value ?? item.count ?? '',
-      tip: item.tip || item.desc || item.actionText || '',
+      tip: cleanGuideText(item.tip || item.desc || item.actionText),
       type: item.type || ''
-    })),
+    })).filter(item => item.label),
     selection: normalizeGuideSection(payload.selection, item => ({
-      label: item.label || '',
+      label: cleanGuideText(item.label),
       value: item.value ?? ''
-    })),
+    })).filter(item => item.label),
     workflow: normalizeGuideSection(payload.workflow, item => ({
-      label: item.label || item.title || '',
-      desc: item.desc || item.summary || ''
-    })),
+      label: cleanGuideText(item.label || item.title),
+      desc: cleanGuideText(item.desc || item.summary)
+    })).filter(item => item.label || item.desc),
     hints: normalizeGuideSection(payload.hints, item => ({
-      label: item.label || item.title || '',
+      label: cleanGuideText(item.label || item.title),
       type: item.type || 'info'
-    }))
+    })).filter(item => item.label)
   }
 }
 

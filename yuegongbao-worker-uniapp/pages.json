@@ -3,19 +3,22 @@
     {
       "path": "pages/login/index",
       "style": {
-        "navigationBarTitleText": "登录"
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/home/index",
       "style": {
-        "navigationBarTitleText": "阳光劳务"
+        "navigationBarTitleText": "阳光劳务",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/workbench/index",
       "style": {
-        "navigationBarTitleText": "工作台"
+        "navigationBarTitleText": "工作台",
+        "navigationStyle": "custom"
       }
     },
     {
@@ -69,7 +72,8 @@
     {
       "path": "pages/profile/index",
       "style": {
-        "navigationBarTitleText": "我的"
+        "navigationBarTitleText": "我的",
+        "navigationStyle": "custom"
       }
     },
     {

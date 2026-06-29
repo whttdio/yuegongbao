@@ -3,9 +3,11 @@ package com.yuegongbao.ygb.compliance.service.impl;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,18 +15,24 @@ import org.springframework.stereotype.Service;
 import com.yuegongbao.common.constant.UserConstants;
 import com.yuegongbao.common.exception.ServiceException;
 import com.yuegongbao.common.utils.StringUtils;
+import com.yuegongbao.ygb.compliance.domain.ContractBatchActionRequest;
+import com.yuegongbao.ygb.compliance.domain.YgbContractActionLog;
 import com.yuegongbao.ygb.compliance.service.IYgbContractService;
 import com.yuegongbao.ygb.compliance.domain.YgbContract;
 import com.yuegongbao.ygb.compliance.domain.YgbContractSummary;
+import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
 import com.yuegongbao.ygb.domain.vo.YgbBlockchainStoreResponse;
 import com.yuegongbao.ygb.domain.vo.YgbOcrExtractResponse;
 import com.yuegongbao.ygb.foundation.domain.YgbEnterprise;
 import com.yuegongbao.ygb.foundation.domain.YgbPerson;
 import com.yuegongbao.ygb.compliance.mapper.YgbContractMapper;
+import com.yuegongbao.ygb.compliance.mapper.YgbContractActionLogMapper;
 import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
 import com.yuegongbao.ygb.foundation.mapper.YgbPersonMapper;
 import com.yuegongbao.ygb.integration.BlockchainClient;
 import com.yuegongbao.ygb.integration.OcrClient;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
+import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
 @Service
 public class YgbContractServiceImpl implements IYgbContractService
@@ -33,6 +41,9 @@ public class YgbContractServiceImpl implements IYgbContractService
 
     @Autowired
     private YgbContractMapper contractMapper;
+
+    @Autowired
+    private YgbContractActionLogMapper contractActionLogMapper;
 
     @Autowired
     private YgbEnterpriseMapper enterpriseMapper;
@@ -46,6 +57,12 @@ public class YgbContractServiceImpl implements IYgbContractService
     @Autowired
     private BlockchainClient blockchainClient;
 
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
+
+    @Autowired
+    private IYgbWarningService warningService;
+
     @Override
     public List<YgbContract> selectContractList(YgbContract contract)
     {
@@ -53,9 +70,40 @@ public class YgbContractServiceImpl implements IYgbContractService
     }
 
     @Override
+    public List<YgbContract> selectContractExpiryList(YgbContract contract)
+    {
+        return contractMapper.selectContractExpiryList(contract);
+    }
+
+    @Override
+    public List<YgbContract> selectContractUnfiledList(YgbContract contract)
+    {
+        return contractMapper.selectContractUnfiledList(contract);
+    }
+
+    @Override
     public YgbContractSummary selectContractSummary(YgbContract contract)
     {
         List<YgbContract> list = selectContractList(contract);
+        return buildSummary(contract, list);
+    }
+
+    @Override
+    public YgbContractSummary selectContractExpirySummary(YgbContract contract)
+    {
+        List<YgbContract> list = selectContractExpiryList(contract);
+        return buildSummary(contract, list);
+    }
+
+    @Override
+    public YgbContractSummary selectContractUnfiledSummary(YgbContract contract)
+    {
+        List<YgbContract> list = selectContractUnfiledList(contract);
+        return buildSummary(contract, list);
+    }
+
+    private YgbContractSummary buildSummary(YgbContract contract, List<YgbContract> list)
+    {
         YgbContractSummary summary = new YgbContractSummary();
         summary.setTotalCount(list.size());
 
@@ -121,7 +169,12 @@ public class YgbContractServiceImpl implements IYgbContractService
     @Override
     public YgbContract selectContractById(Long contractId)
     {
-        return contractMapper.selectContractById(contractId);
+        YgbContract contract = contractMapper.selectContractById(contractId);
+        if (contract != null)
+        {
+            dataScopeGuard.assertEntityAllowed(contract);
+        }
+        return contract;
     }
 
     @Override
@@ -140,6 +193,7 @@ public class YgbContractServiceImpl implements IYgbContractService
     public int insertContract(YgbContract contract)
     {
         fillSnapshots(contract);
+        dataScopeGuard.assertEntityAllowed(contract);
         syncContractEvidence(contract, null);
         return contractMapper.insertContract(contract);
     }
@@ -147,8 +201,9 @@ public class YgbContractServiceImpl implements IYgbContractService
     @Override
     public int updateContract(YgbContract contract)
     {
-        YgbContract previous = contract.getContractId() == null ? null : contractMapper.selectContractById(contract.getContractId());
+        YgbContract previous = requireContractAllowed(contract.getContractId());
         fillSnapshots(contract);
+        dataScopeGuard.assertEntityAllowed(contract);
         syncContractEvidence(contract, previous);
         return contractMapper.updateContract(contract);
     }
@@ -156,7 +211,149 @@ public class YgbContractServiceImpl implements IYgbContractService
     @Override
     public int deleteContractByIds(Long[] contractIds, String updateBy)
     {
+        for (Long contractId : contractIds)
+        {
+            requireContractAllowed(contractId);
+        }
         return contractMapper.deleteContractByIds(contractIds, updateBy);
+    }
+
+    private YgbContract requireContractAllowed(Long contractId)
+    {
+        if (contractId == null)
+        {
+            throw new ServiceException("合同ID不能为空。");
+        }
+        YgbContract contract = contractMapper.selectContractById(contractId);
+        if (contract == null)
+        {
+            throw new ServiceException("合同不存在。");
+        }
+        dataScopeGuard.assertEntityAllowed(contract);
+        return contract;
+    }
+
+    @Override
+    public Map<String, Object> batchRemindExpiry(ContractBatchActionRequest request, String operator)
+    {
+        List<YgbContract> contracts = resolveActionContracts(request, true);
+        int handled = 0;
+        for (YgbContract contract : contracts)
+        {
+            insertActionLog(contract, null, "expiry_remind", "recorded",
+                "已记录30日到期提醒，等待企业/人员侧协同处理。", safePortalScope(request), null, request.getRemark(), operator);
+            handled++;
+        }
+        return actionResult(contracts.size(), handled, 0);
+    }
+
+    @Override
+    public Map<String, Object> batchWarnUnfiled(ContractBatchActionRequest request, String operator)
+    {
+        List<YgbContract> contracts = resolveActionContracts(request, false);
+        int created = 0;
+        int skipped = 0;
+        for (YgbContract contract : contracts)
+        {
+            YgbWarningCreateRequest warningRequest = new YgbWarningCreateRequest();
+            warningRequest.setWarnLevel("2");
+            warningRequest.setWarnType("UNFILED_CONTRACT");
+            warningRequest.setSourceModule("CONTRACT");
+            warningRequest.setTargetObjectId(contract.getContractId());
+            warningRequest.setTargetType("3");
+            warningRequest.setEnterpriseId(contract.getEmployerEnterpriseId());
+            warningRequest.setEnterpriseName(contract.getEmployerEnterpriseName());
+            warningRequest.setRegionCode(contract.getRegionCode());
+            warningRequest.setContent(buildUnfiledWarningContent(contract));
+            warningRequest.setEvidenceUrl(contract.getContractFileUrl());
+            Long warnId = warningService.createWarningIfAbsent(warningRequest, operator);
+            if (warnId != null && warnId > 0)
+            {
+                created++;
+            }
+            else
+            {
+                skipped++;
+            }
+            insertActionLog(contract, null, "unfiled_warn", warnId != null && warnId > 0 ? "created" : "skipped",
+                warnId != null && warnId > 0 ? "已生成未备案合同预警工单。" : "已有活动预警工单，未重复创建。",
+                safePortalScope(request), warnId, request.getRemark(), operator);
+        }
+        return actionResult(contracts.size(), created, skipped);
+    }
+
+    private List<YgbContract> resolveActionContracts(ContractBatchActionRequest request, boolean expiry)
+    {
+        if (request == null)
+        {
+            throw new ServiceException("批量操作请求不能为空。");
+        }
+        List<YgbContract> source = expiry
+            ? selectContractExpiryList(request.getQuery() == null ? new YgbContract() : request.getQuery())
+            : selectContractUnfiledList(request.getQuery() == null ? new YgbContract() : request.getQuery());
+        Long[] contractIds = request.getContractIds();
+        if (contractIds == null || contractIds.length == 0)
+        {
+            return source;
+        }
+        Set<Long> selected = new HashSet<>();
+        for (Long contractId : contractIds)
+        {
+            selected.add(contractId);
+        }
+        List<YgbContract> filtered = new ArrayList<>();
+        for (YgbContract contract : source)
+        {
+            if (selected.contains(contract.getContractId()))
+            {
+                filtered.add(contract);
+            }
+        }
+        if (filtered.size() != selected.size())
+        {
+            throw new ServiceException("所选合同不在当前可办理范围，请刷新列表后重试。");
+        }
+        return filtered;
+    }
+
+    private void insertActionLog(YgbContract contract, Long templateId, String actionType, String actionStatus,
+        String actionResult, String portalScope, Long warningId, String remark, String operator)
+    {
+        YgbContractActionLog log = new YgbContractActionLog();
+        log.setContractId(contract == null ? null : contract.getContractId());
+        log.setContractNo(contract == null ? null : contract.getContractNo());
+        log.setTemplateId(templateId);
+        log.setActionType(actionType);
+        log.setActionStatus(actionStatus);
+        log.setActionResult(actionResult);
+        log.setPortalScope(portalScope);
+        log.setWarningId(warningId);
+        log.setActionTime(new Date());
+        log.setRemark(remark);
+        log.setCreateBy(operator);
+        contractActionLogMapper.insertContractActionLog(log);
+    }
+
+    private Map<String, Object> actionResult(int total, int handled, int skipped)
+    {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("total", total);
+        result.put("handled", handled);
+        result.put("skipped", skipped);
+        return result;
+    }
+
+    private String safePortalScope(ContractBatchActionRequest request)
+    {
+        return request != null && StringUtils.isNotEmpty(request.getPortalScope()) ? request.getPortalScope() : "ygb";
+    }
+
+    private String buildUnfiledWarningContent(YgbContract contract)
+    {
+        String reason = StringUtils.defaultIfEmpty(contract.getRiskReason(), "合同未完成备案");
+        return "合同 " + contract.getContractNo() + " 存在未备案风险：" + reason + "。劳动者："
+            + StringUtils.defaultIfEmpty(contract.getPersonName(), "-") + "，用工单位："
+            + StringUtils.defaultIfEmpty(contract.getEmployerEnterpriseName(), "-") + "。";
     }
 
     private void fillSnapshots(YgbContract contract)

@@ -92,8 +92,8 @@
           <template #default="scope">
             <el-button link type="primary" @click="handleUpdate(scope.row)" v-hasPermi="['ygb:aiReportTask:edit']">修改</el-button>
             <el-button link type="info" @click="handleView(scope.row)" v-hasPermi="['ygb:aiReportTask:query']">详情</el-button>
-            <el-button link type="success" @click="changeStatus(scope.row, 'processing')" v-hasPermi="['ygb:aiReportTask:status']">开始处理</el-button>
-            <el-button link type="warning" @click="changeStatus(scope.row, 'closed')" v-hasPermi="['ygb:aiReportTask:status']">办结</el-button>
+            <el-button link type="success" :disabled="!canChangeStatus(scope.row, 'processing')" @click="changeStatus(scope.row, 'processing')" v-hasPermi="['ygb:aiReportTask:status']">开始处理</el-button>
+            <el-button link type="warning" :disabled="!canChangeStatus(scope.row, 'closed')" @click="changeStatus(scope.row, 'closed')" v-hasPermi="['ygb:aiReportTask:status']">办结</el-button>
             <el-button link type="danger" @click="handleDelete(scope.row)" v-hasPermi="['ygb:aiReportTask:remove']">删除</el-button>
           </template>
         </el-table-column>
@@ -162,7 +162,7 @@
           <el-col :span="12">
             <el-form-item label="状态" prop="handleStatus">
               <el-select v-model="form.handleStatus">
-                <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
+                <el-option v-for="item in editableStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -230,6 +230,8 @@ import {
   updateAiReportTask,
   updateAiReportTaskStatus
 } from '@/api/ygb/aiReportTask'
+import { useAuthorizedRegionOptions } from '@/utils/regionScope'
+import { gdRegionOptions } from '@/utils/regionName'
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -243,12 +245,7 @@ const detail = ref(null)
 const summary = ref({})
 const { setPageGuide } = useWorkbenchAssist()
 
-const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+const regionOptions = useAuthorizedRegionOptions(gdRegionOptions)
 
 const reportTypeOptions = [
   { label: '日报', value: 'DAILY' },
@@ -276,6 +273,8 @@ const statusOptions = [
   { label: '已逾期', value: 'overdue' }
 ]
 
+const editableStatusOptions = statusOptions.filter(item => ['draft', 'pending'].includes(item.value))
+
 const data = reactive({
   queryParams: {
     pageNum: 1,
@@ -299,29 +298,29 @@ const { queryParams, form, rules } = toRefs(data)
 const selectedTaskOverview = computed(() => {
   const record = detail.value || {}
   return [
-    { label: '????', value: record.taskName || '-' },
-    { label: '????', value: reportTypeLabel(record.reportType) },
-    { label: '????', value: taskTypeLabel(record.taskType) },
-    { label: '????', value: statusLabel(record.handleStatus) }
+    { label: '任务名称', value: record.taskName || '-' },
+    { label: '报告类型', value: reportTypeLabel(record.reportType) },
+    { label: '任务类型', value: taskTypeLabel(record.taskType) },
+    { label: '处理状态', value: statusLabel(record.handleStatus) }
   ]
 })
 
 const taskWorkflow = computed(() => ([
-  { label: '??????', desc: '???????????????????????????' },
-  { label: '??????', desc: '?????????????????????????????' },
-  { label: '??????', desc: '???????????????????????' }
+  { label: '生成建议', desc: '从 AI 监测报告生成监管建议和任务事项' },
+  { label: '分派处置', desc: '按区域、风险等级和接收人推进处置闭环' },
+  { label: '反馈归档', desc: '记录处理反馈并沉淀整改结果' }
 ]))
 
 const taskHintTags = computed(() => {
   const tags = []
   if (Number(summary.value.pendingCount || 0) > 0) {
-    tags.push({ label: `??? ${summary.value.pendingCount} ???????`, type: 'warning' })
+    tags.push({ label: `待处理 ${summary.value.pendingCount} 项建议任务`, type: 'warning' })
   }
   if (Number(summary.value.processingCount || 0) > 0) {
-    tags.push({ label: `??? ${summary.value.processingCount} ???????`, type: 'info' })
+    tags.push({ label: `处理中 ${summary.value.processingCount} 项任务`, type: 'info' })
   }
   if (Number(summary.value.overdueCount || 0) > 0) {
-    tags.push({ label: `??? ${summary.value.overdueCount} ??????????????`, type: 'danger' })
+    tags.push({ label: `逾期 ${summary.value.overdueCount} 项任务需要优先跟进`, type: 'danger' })
   }
   return tags
 })
@@ -355,15 +354,26 @@ function statusTagType(value) {
   return 'info'
 }
 
+function canChangeStatus(row, nextStatus) {
+  const currentStatus = String(row?.handleStatus || '')
+  if (nextStatus === 'processing') {
+    return ['draft', 'pending'].includes(currentStatus)
+  }
+  if (nextStatus === 'closed' || nextStatus === 'rejected') {
+    return currentStatus === 'processing'
+  }
+  return false
+}
+
 watchEffect(() => {
   setPageGuide({
-    title: 'AI ??????',
-    description: '????????????????????????????',
+    title: 'AI 监测建议任务',
+    description: '跟踪 AI 报告生成的监管建议、接收对象、处置状态和反馈结果。',
     focus: [
-      { label: '????', value: summary.value.totalCount || 0, tip: '?????????????', type: 'info' },
-      { label: '???', value: summary.value.pendingCount || 0, tip: '??????????', type: 'warning' },
-      { label: '???', value: summary.value.processingCount || 0, tip: '???????????', type: 'primary' },
-      { label: '???', value: summary.value.overdueCount || 0, tip: '???????????', type: 'danger' }
+      { label: '任务总量', value: summary.value.totalCount || 0, tip: '当前筛选范围内的任务数', type: 'info' },
+      { label: '待处理', value: summary.value.pendingCount || 0, tip: '尚未开始处置的任务', type: 'warning' },
+      { label: '处理中', value: summary.value.processingCount || 0, tip: '正在推进处置的任务', type: 'primary' },
+      { label: '已逾期', value: summary.value.overdueCount || 0, tip: '超过截止时间的任务', type: 'danger' }
     ],
     selection: selectedTaskOverview.value,
     workflow: taskWorkflow.value,
@@ -475,6 +485,26 @@ function submitForm() {
 }
 
 function changeStatus(row, status) {
+  if (!canChangeStatus(row, status)) {
+    proxy.$modal.msgWarning('当前任务状态不支持该操作')
+    return
+  }
+  if (status === 'closed') {
+    proxy.$modal.prompt('请输入办结反馈').then(({ value }) => {
+      if (!value) {
+        proxy.$modal.msgWarning('办结反馈不能为空')
+        return
+      }
+      return updateAiReportTaskStatus(row.taskId, { handleStatus: status, feedbackText: value })
+    }).then(response => {
+      if (!response) {
+        return
+      }
+      proxy.$modal.msgSuccess('状态已更新')
+      getList()
+    })
+    return
+  }
   updateAiReportTaskStatus(row.taskId, { handleStatus: status }).then(() => {
     proxy.$modal.msgSuccess('状态已更新')
     getList()

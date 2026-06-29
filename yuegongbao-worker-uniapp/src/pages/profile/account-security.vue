@@ -1,9 +1,29 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">账号安全</view>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">账号安全</view>
       <view class="worker-subtitle">
         查看当前账号安全状态，切换登录方式、重新认证或联系支持处理异常。
+      </view>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ detail.realNameStatusText || '-' }}</view>
+          <view class="hero-stat__label">实名状态</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ detail.certStatusText || '-' }}</view>
+          <view class="hero-stat__label">持证状态</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ loginModeText }}</view>
+          <view class="hero-stat__label">登录方式</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">账号信息</view>
       </view>
       <view class="status-panel">
         <view class="status-panel__title">{{ securityStatus.title }}</view>
@@ -276,14 +296,6 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
 .worker-card + .worker-card {
   margin-top: 24rpx;
 }
@@ -293,47 +305,20 @@ onShow(loadData)
   margin-bottom: 12rpx;
   padding: 22rpx 24rpx;
   border-radius: 20rpx;
-  background: linear-gradient(135deg, #eef5ff 0%, #f8fbff 100%);
+  background: linear-gradient(135deg, #e6f2ef 0%, #f8fbff 100%);
 }
 
 .status-panel__title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #16324f;
+  color: #122d42;
 }
 
 .status-panel__desc {
   margin-top: 10rpx;
   font-size: 24rpx;
   line-height: 1.7;
-  color: #58738f;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
+  color: #536b7d;
 }
 
 .action-list {
@@ -342,9 +327,9 @@ onShow(loadData)
 
 .action-row {
   padding: 24rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
+  border-bottom: 1rpx solid #e4edf2;
   font-size: 28rpx;
-  color: #16324f;
+  color: #122d42;
 }
 
 .action-row:last-child {
@@ -359,13 +344,7 @@ onShow(loadData)
   margin-top: 18rpx;
   font-size: 26rpx;
   line-height: 1.7;
-  color: #36506b;
-}
-
-.service-actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 24rpx;
+  color: #183247;
 }
 
 .service-actions button {
@@ -375,40 +354,6 @@ onShow(loadData)
 .service-hint {
   margin-top: 14rpx;
   font-size: 24rpx;
-  color: #7890aa;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
+  color: #607789;
 }
 </style>

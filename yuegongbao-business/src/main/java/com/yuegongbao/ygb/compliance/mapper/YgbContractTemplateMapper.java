@@ -22,5 +22,10 @@ public interface YgbContractTemplateMapper
     int updateTemplateStatus(@Param("templateId") Long templateId, @Param("status") String status,
         @Param("updateBy") String updateBy);
 
+    int submitTemplateReview(@Param("templateId") Long templateId, @Param("updateBy") String updateBy);
+
+    int reviewTemplate(@Param("templateId") Long templateId, @Param("reviewStatus") String reviewStatus,
+        @Param("reviewRemark") String reviewRemark, @Param("reviewBy") String reviewBy);
+
     int deleteContractTemplateByIds(@Param("templateIds") Long[] templateIds, @Param("updateBy") String updateBy);
 }

@@ -113,7 +113,7 @@ function lockScreen() {
 .navbar {
   display: flex;
   align-items: center;
-  height: 56px;
+  height: var(--layout-header-height, 60px);
   padding: 0 24px 0 16px;
   background: #fff;
   color: #1e293b;
@@ -163,6 +163,7 @@ function lockScreen() {
   min-width: 160px;
   padding: 0 16px 0 8px;
   margin-right: 16px;
+  height: 100%;
   border-right: 1px solid #edf2f7;
 }
 

@@ -1,12 +1,10 @@
 <template>
   <view class="worker-page union-page">
-    <view class="union-hero worker-card">
-      <view class="union-hero__content">
-        <view class="union-hero__kicker">工会服务</view>
-        <view class="union-hero__title">维权咨询、合同查阅和工会通知</view>
-        <view class="union-hero__desc">
-          常用服务已放在首页，遇到合同、欠薪、工时等问题，可以先从这里进入。
-        </view>
+    <view class="union-hero worker-card worker-hero">
+      <view class="worker-subtitle">工会服务</view>
+      <view class="worker-title worker-title--display">维权咨询、合同查阅和工会通知</view>
+      <view class="worker-subtitle">
+        常用服务已放在首页，遇到合同、欠薪、工时等问题，可以先从这里进入。
       </view>
       <view class="union-hotline" @click="callHotline">
         <view>
@@ -17,18 +15,17 @@
       </view>
     </view>
 
-    <view class="entry-grid union-grid">
+    <view class="entry-grid entry-grid--two">
       <view
         v-for="item in displayQuickActions"
         :key="item.key"
         class="entry-item"
         @click="openAction(item)"
       >
-        <view class="entry-item__mark">{{ item.mark }}</view>
-        <view class="entry-item__content">
-          <view class="entry-item__label">{{ item.label }}</view>
-          <view class="entry-item__hint">{{ item.hint }}</view>
+        <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone">
+          <text class="entry-item__glyph" :class="{ 'entry-item__glyph--compact': getEntryIcon(item).compact }">{{ getEntryIcon(item).glyph }}</text>
         </view>
+        <view class="entry-item__label">{{ item.label }}</view>
       </view>
     </view>
 
@@ -100,7 +97,12 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getLaborContractList, getUnionCases, getUnionNotices, getUnionServiceHome } from '../../api/worker'
+import { resolveEntryIcon } from '../../utils/entry-icon.js'
 import { normalizeWorkerJumpTarget, openWorkerJumpTarget } from '../../utils/worker-jump'
+
+function getEntryIcon(item) {
+  return resolveEntryIcon(item)
+}
 
 const home = ref({})
 const cases = ref([])
@@ -352,199 +354,5 @@ onShow(loadData)
 <style lang="scss">
 .union-page {
   padding-bottom: 40rpx;
-}
-
-.union-hero {
-  position: relative;
-  overflow: hidden;
-  padding: 34rpx;
-  color: #ffffff;
-  background:
-    radial-gradient(circle at 90% 0%, rgba(255, 255, 255, 0.22), transparent 34%),
-    linear-gradient(135deg, #0f6d8f 0%, #16745f 100%);
-}
-
-.union-hero::after {
-  content: '';
-  position: absolute;
-  right: -70rpx;
-  bottom: -100rpx;
-  width: 260rpx;
-  height: 260rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.union-hero__content {
-  position: relative;
-  z-index: 1;
-}
-
-.union-hero__kicker {
-  font-size: 24rpx;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.union-hero__title {
-  max-width: 520rpx;
-  margin-top: 12rpx;
-  font-size: 40rpx;
-  line-height: 1.28;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.union-hero__desc {
-  max-width: 560rpx;
-  margin-top: 14rpx;
-  font-size: 25rpx;
-  line-height: 1.65;
-  color: rgba(255, 255, 255, 0.82);
-}
-
-.union-hotline {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-top: 28rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.union-hotline__label {
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.74);
-}
-
-.union-hotline__value {
-  margin-top: 6rpx;
-  font-size: 29rpx;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.union-hotline__action {
-  flex-shrink: 0;
-  padding: 12rpx 22rpx;
-  border-radius: 999rpx;
-  background: #ffffff;
-  color: #0f6d8f;
-  font-size: 24rpx;
-  font-weight: 800;
-}
-
-.worker-card + .worker-card,
-.union-grid + .worker-card {
-  margin-top: 24rpx;
-}
-
-.section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-desc {
-  margin-top: 8rpx;
-  font-size: 23rpx;
-  line-height: 1.5;
-  color: #6d8298;
-}
-
-.union-grid {
-  margin-top: 24rpx;
-}
-
-.entry-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-}
-
-.entry-item {
-  min-height: 132rpx;
-  padding: 22rpx;
-  border-radius: 22rpx;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-}
-
-.entry-item__mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 58rpx;
-  height: 58rpx;
-  border-radius: 18rpx;
-  background: #e7f4f1;
-  color: #16745f;
-  font-size: 27rpx;
-  font-weight: 800;
-}
-
-.entry-item__content {
-  min-width: 0;
-}
-
-.entry-item__label {
-  font-size: 27rpx;
-  color: #16324f;
-  font-weight: 800;
-}
-
-.entry-item__hint {
-  margin-top: 8rpx;
-  font-size: 21rpx;
-  line-height: 1.35;
-  color: #6d8298;
-}
-
-.more-link {
-  flex-shrink: 0;
-  padding-top: 4rpx;
-  font-size: 24rpx;
-  font-weight: 700;
-  color: #16745f;
-}
-
-.list-row {
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 28rpx;
-  font-weight: 800;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 9rpx;
-  font-size: 23rpx;
-  color: #60758c;
-  line-height: 1.65;
-}
-
-.union-empty-actions {
-  display: flex;
-  gap: 20rpx;
-  margin-top: 20rpx;
-}
-
-.union-empty-actions button {
-  flex: 1;
 }
 </style>

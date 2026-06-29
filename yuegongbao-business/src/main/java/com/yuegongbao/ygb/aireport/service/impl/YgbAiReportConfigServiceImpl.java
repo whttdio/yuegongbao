@@ -122,6 +122,7 @@ public class YgbAiReportConfigServiceImpl implements IYgbAiReportConfigService
         YgbAiReportConfig config = aiReportMapper.selectAiReportConfigById(configId);
         if (config != null)
         {
+            regionScopeHelper.assertEntityRegionAllowed(config);
             hydrateRegionName(config);
         }
         return config;
@@ -130,7 +131,7 @@ public class YgbAiReportConfigServiceImpl implements IYgbAiReportConfigService
     @Override
     public YgbAiReportConfig selectCurrentConfig(String regionCode, Date effectiveDate)
     {
-        String normalizedRegionCode = regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
+        String normalizedRegionCode = resolveAuthorizedRegionCode(regionCode);
         Date compareDate = effectiveDate == null ? new Date() : effectiveDate;
 
         YgbAiReportConfig config = aiReportMapper.selectActiveConfigByRegion(normalizedRegionCode, compareDate);
@@ -156,6 +157,7 @@ public class YgbAiReportConfigServiceImpl implements IYgbAiReportConfigService
         }
 
         config.setRegionCode(YgbRegionHelper.defaultDashboardRegion(config.getRegionCode()));
+        regionScopeHelper.assertEntityRegionAllowed(config);
         if (config.getEffectiveDate() == null)
         {
             config.setEffectiveDate(new Date());
@@ -166,15 +168,20 @@ public class YgbAiReportConfigServiceImpl implements IYgbAiReportConfigService
         }
         if (StringUtils.isEmpty(config.getConfigStatus()))
         {
-            config.setConfigStatus("1");
+            config.setConfigStatus("0");
         }
         if (StringUtils.isEmpty(config.getSourceMode()))
         {
-            config.setSourceMode("stub");
+            config.setSourceMode("SYSTEM");
         }
 
         validateJsonPayload(config.getDimensionWeights(), "维度权重");
         validateJsonPayload(config.getTargetValues(), "目标值");
+        validateConfigStatus(config.getConfigStatus());
+        if ("1".equals(config.getConfigStatus()))
+        {
+            validateActivatable(config);
+        }
 
         int rows;
         if (config.getConfigId() == null)
@@ -211,6 +218,12 @@ public class YgbAiReportConfigServiceImpl implements IYgbAiReportConfigService
         {
             throw new ServiceException("评分模型配置不存在。");
         }
+        regionScopeHelper.assertEntityRegionAllowed(config);
+        validateActivatable(config);
+        if ("1".equals(config.getConfigStatus()))
+        {
+            return 1;
+        }
         aiReportMapper.deactivateConfigsByRegion(config.getRegionCode(), configId, operator);
         config.setConfigStatus("1");
         config.setUpdateBy(operator);
@@ -239,14 +252,32 @@ public class YgbAiReportConfigServiceImpl implements IYgbAiReportConfigService
         }
     }
 
+    private void validateConfigStatus(String status)
+    {
+        if (!"0".equals(status) && !"1".equals(status))
+        {
+            throw new ServiceException("评分模型状态不正确。");
+        }
+    }
+
+    private void validateActivatable(YgbAiReportConfig config)
+    {
+        validateJsonPayload(config.getDimensionWeights(), "维度权重");
+        validateJsonPayload(config.getTargetValues(), "目标值");
+        if (sumWeights(config.getDimensionWeights()) != 100)
+        {
+            throw new ServiceException("维度权重总和必须为100后才能启用。");
+        }
+    }
+
     private YgbAiReportConfig buildDefaultConfig(String regionCode, Date effectiveDate)
     {
         YgbAiReportConfig config = new YgbAiReportConfig();
         config.setRegionCode(regionCode);
-        config.setVersion("DEFAULT-STUB");
+        config.setVersion("DEFAULT-V1");
         config.setConfigStatus("1");
         config.setEffectiveDate(effectiveDate);
-        config.setSourceMode("stub");
+        config.setSourceMode("SYSTEM");
         config.setDimensionWeights(JSON.toJSONString(defaultDimensionWeights()));
         config.setTargetValues(JSON.toJSONString(defaultTargetValues()));
         config.setRemark("系统默认评分模型，可在评分模型配置中调整。");
@@ -427,5 +458,14 @@ public class YgbAiReportConfigServiceImpl implements IYgbAiReportConfigService
     private boolean isAbove(BigDecimal value, BigDecimal target)
     {
         return value != null && value.compareTo(target) > 0;
+    }
+
+    private String resolveAuthorizedRegionCode(String regionCode)
+    {
+        if (regionScopeHelper == null)
+        {
+            return YgbRegionHelper.defaultDashboardRegion(regionCode);
+        }
+        return regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
     }
 }

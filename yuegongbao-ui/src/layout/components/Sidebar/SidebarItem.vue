@@ -3,23 +3,28 @@
     <template v-if="isSingleMenu">
       <app-link v-if="singleMenu.meta" :to="singleMenuPath">
         <el-menu-item :index="singleMenuIndex" :class="{ 'submenu-title-noDropdown': !isNest }">
-          <item :icon="singleMenu.meta.icon || (item.meta && item.meta.icon)" :title="singleMenu.meta.title" />
+          <item
+            :icon="resolveMenuIcon(singleMenu, item)"
+            :title="singleMenu.meta.title"
+            :collapse="collapse"
+          />
         </el-menu-item>
       </app-link>
     </template>
 
     <el-sub-menu v-else ref="subMenu" :index="resolvePath(item.path)">
       <template v-if="item.meta" #title>
-        <item :icon="item.meta && item.meta.icon" :title="item.meta.title" />
+        <item :icon="resolveMenuIcon(item)" :title="item.meta.title" :collapse="collapse" />
       </template>
 
       <sidebar-item
         v-for="(child, index) in item.children"
         :key="child.path + index"
-        :is-nest="true"
-        :item="child"
-        :base-path="resolvePath(child.path)"
-        class="nest-menu"
+          :is-nest="true"
+          :item="child"
+          :base-path="resolvePath(child.path)"
+          :collapse="collapse"
+          class="nest-menu"
       />
     </el-sub-menu>
   </div>
@@ -29,8 +34,9 @@
 import { isExternal } from '@/utils/validate'
 import AppLink from './Link'
 import Item from './Item'
-import { getNormalPath } from '@/utils/yuegongbao'
+import { getNormalPath, parseMenuQuery } from '@/utils/yuegongbao'
 import { isOfficialPortalPath } from '@/utils/portal'
+import { resolveMenuIcon } from '@/utils/menuIcon'
 
 const props = defineProps({
   // route object
@@ -39,6 +45,10 @@ const props = defineProps({
     required: true
   },
   isNest: {
+    type: Boolean,
+    default: false
+  },
+  collapse: {
     type: Boolean,
     default: false
   },
@@ -92,11 +102,9 @@ function resolvePath(routePath, routeQuery) {
     return props.basePath
   }
   if (routeQuery) {
-    let query = JSON.parse(routeQuery)
-    return { path: getNormalPath(props.basePath + '/' + routePath), query: query }
+    return { path: getNormalPath(props.basePath + '/' + routePath), query: parseMenuQuery(routeQuery) }
   }
   return getNormalPath(props.basePath + '/' + routePath)
 }
 
 </script>
-

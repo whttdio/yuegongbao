@@ -9,7 +9,7 @@
         </p>
       </div>
       <div class="ygb-page__tip">
-        当前继续复用统一后台和 Stub 同步链路，不新增第二套保单业务表；页面重点从“只看静态保单”升级为“按办理顺序推进台账闭环”。
+        当前页面围绕保单同步、续保提醒、预防费留痕和赔付跟踪组织办理动作，按办理顺序推进台账闭环。
       </div>
     </section>
 
@@ -58,7 +58,7 @@
     <el-card class="toolbar-card ygb-toolbar-card" shadow="never">
       <el-row :gutter="10">
         <el-col v-if="!isReadOnlyRole" :span="1.5">
-          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:aqInsurance:sync']">模拟同步</el-button>
+          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:aqInsurance:sync']">同步保单</el-button>
         </el-col>
         <el-col :span="1.5">
           <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:aqInsurance:export']">导出</el-button>
@@ -286,7 +286,7 @@ const portalExplanations = computed(() => {
       dimensionName: '有效覆盖',
       currentValue: valueOrDefault(summaryData.value.validCount, 0),
       targetValue: '持续稳定',
-      summary: '有效保单是当前投保覆盖底座，应保持可用于归档和下游复核。',
+      summary: '有效保单是当前投保覆盖依据，应保持可用于归档和下游复核。',
       evidenceModule: 'aqInsurance',
       recommendModule: 'aqInsurance',
       defaultQuery: buildAqInsuranceExplanationQuery({ policyStatus: '1', focusKey: 'valid' }),
@@ -429,11 +429,12 @@ function resetQuery() {
   })
   applyWorkbenchRouteQuery(route.query, queryParams.value, aqInsuranceWorkbenchFields)
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '???????' || '???????',
-    description: '????????????????????????????' || '????????????????????????????',
+    title: '安责险投保监管',
+    description: '核查高危企业安责险投保、到期续保和同步状态，支撑保险监管闭环。',
     portalExplanation: portalExplanationItems.value,
     focus: [],
     selection: selectedPolicyOverview.value,
@@ -441,8 +442,6 @@ watchEffect(() => {
     hints: []
   })
 })
-
-}
 
 function clearWorkbenchContext() {
   Object.assign(queryParams.value, {

@@ -8,6 +8,7 @@ import {
   updatePreventionProject
 } from '@/api/ygb/preventionProject'
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
+import { gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
 export const projectTypeOptions = [
   { label: '宣传', value: '1' },
@@ -24,19 +25,9 @@ export const projectStatusOptions = [
   { label: '结项', value: '4' }
 ]
 
-export const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const regionOptions = gdRegionOptions
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440106': '广州市天河区',
-  '440305': '深圳市南山区',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
 function createDefaultQueryParams() {
   return {
@@ -128,6 +119,23 @@ export function isActiveProject(value) {
   return ['1', '2', '3'].includes(String(value))
 }
 
+export function isProjectDeleteAllowed(project) {
+  return String(project?.projectStatus ?? '0') === '0'
+}
+
+export function nextProjectStatusOptions(project) {
+  const status = String(project?.projectStatus ?? '0')
+  const allowedMap = {
+    0: ['0', '1'],
+    1: ['1', '2'],
+    2: ['2', '3'],
+    3: ['3', '4'],
+    4: ['4']
+  }
+  const allowed = allowedMap[status] || ['0']
+  return projectStatusOptions.filter(item => allowed.includes(item.value))
+}
+
 export function matchProjectFocus(project, focusKey) {
   if (!focusKey || focusKey === 'all') {
     return true
@@ -188,6 +196,7 @@ export function usePreventionProjectPage(options = {}) {
   const currentProject = ref(undefined)
   const detailProject = ref(undefined)
   const summaryData = ref({})
+  const editableProjectStatusOptions = ref(nextProjectStatusOptions())
 
   const data = reactive({
     form: createDefaultForm(),
@@ -268,6 +277,7 @@ export function usePreventionProjectPage(options = {}) {
 
   function reset() {
     form.value = createDefaultForm()
+    editableProjectStatusOptions.value = nextProjectStatusOptions()
     proxy.resetForm('projectRef')
   }
 
@@ -302,6 +312,7 @@ export function usePreventionProjectPage(options = {}) {
       return
     }
     reset()
+    editableProjectStatusOptions.value = nextProjectStatusOptions()
     open.value = true
     title.value = '新增预防项目'
   }
@@ -321,6 +332,7 @@ export function usePreventionProjectPage(options = {}) {
         ...createDefaultForm(),
         ...(response.data || {})
       }
+      editableProjectStatusOptions.value = nextProjectStatusOptions(response.data || {})
       currentProject.value = response.data || currentProject.value
       open.value = true
       title.value = '修改预防项目'
@@ -359,6 +371,14 @@ export function usePreventionProjectPage(options = {}) {
         form.value.enterpriseName = current.enterpriseName
         form.value.regionCode = current.regionCode
       }
+      if (['2', '3', '4'].includes(String(form.value.projectStatus || '')) && (!form.value.startDate || !form.value.endDate)) {
+        proxy.$modal.msgWarning('进入实施、验收或结项阶段前必须填写计划起止日期')
+        return
+      }
+      if (String(form.value.projectStatus || '') === '4' && (!form.value.evaluationScore || !form.value.evaluationReport)) {
+        proxy.$modal.msgWarning('结项前必须填写评价分和评价报告')
+        return
+      }
       const request = form.value.projectId ? updatePreventionProject(form.value) : addPreventionProject(form.value)
       request.then(() => {
         proxy.$modal.msgSuccess(form.value.projectId ? '修改成功' : '新增成功')
@@ -373,6 +393,18 @@ export function usePreventionProjectPage(options = {}) {
       return
     }
     const projectIds = row?.projectId || ids.value
+    if (row && !isProjectDeleteAllowed(row)) {
+      proxy.$modal.msgWarning('已立项、实施、验收或结项的预防项目不允许删除')
+      return
+    }
+    if (!row) {
+      const currentList = resolveCurrentList()
+      const selectedRows = currentList.filter(item => ids.value.includes(item.projectId))
+      if (selectedRows.some(item => !isProjectDeleteAllowed(item))) {
+        proxy.$modal.msgWarning('已选择项目中包含已推进项目，请仅删除申报状态项目')
+        return
+      }
+    }
     if (!projectIds || (Array.isArray(projectIds) && projectIds.length === 0)) {
       proxy.$modal.msgWarning('请选择要删除的项目')
       return
@@ -416,6 +448,7 @@ export function usePreventionProjectPage(options = {}) {
     currentProject,
     detailProject,
     summaryData,
+    editableProjectStatusOptions,
     queryParams,
     form,
     rules,

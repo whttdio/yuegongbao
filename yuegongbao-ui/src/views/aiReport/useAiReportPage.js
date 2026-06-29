@@ -2,20 +2,11 @@ import { computed, getCurrentInstance, reactive, ref } from 'vue'
 import { generateAiReport, getAiReport, getAiReportDashboard, listAiReport } from '@/api/ygb/aiReport'
 import { getCurrentAiReportConfig } from '@/api/ygb/aiReportConfig'
 import { authorizedDefaultRegionCode } from '@/utils/regionScope'
+import { gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
-export const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const regionOptions = gdRegionOptions
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440106': '广州市天河区',
-  '440305': '深圳市南山区',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
 export const reportTypeOptions = [
   { label: '日报', value: 'DAILY' },
@@ -162,7 +153,7 @@ export function buildBaseAiReportHintTags(report, options = {}) {
     detailMode = false,
     averageScore = 0,
     highRiskCount = 0,
-    currentConfigVersion = 'DEFAULT-STUB'
+    currentConfigVersion = 'DEFAULT-V1'
   } = options
 
   if (!report) {
@@ -201,16 +192,16 @@ export function buildBaseAiReportHintTags(report, options = {}) {
   }
 
   if (!report.reportPdfUrl) {
-    tags.push({ label: 'PDF 地址仍为预留占位，当前以页面预览和导出列表为主。', type: 'info' })
+    tags.push({ label: '当前报告未生成单独下载地址，可通过页面预览和导出列表完成复核归档。', type: 'info' })
   }
 
   tags.push({
-    label: `模型版本 ${report.configVersion || currentConfigVersion || 'DEFAULT-STUB'} 已加载，请保持解释口径一致。`,
+    label: `模型版本 ${report.configVersion || currentConfigVersion || 'DEFAULT-V1'} 已加载，请保持解释口径一致。`,
     type: 'info'
   })
 
   if (detailMode && !report.reportHtml) {
-    tags.push({ label: '当前详情未返回报告 HTML 片段，属于后端占位结构。', type: 'warning' })
+    tags.push({ label: '当前详情未返回报告 HTML 片段，请以维度明细和导出结果完成复核。', type: 'warning' })
   }
 
   return tags.slice(0, 5)
@@ -259,7 +250,7 @@ export function useAiReportPage(options = {}) {
   const generateRange = ref(currentMonthRange())
   const activeReportId = ref(undefined)
   const currentConfig = ref({
-    version: 'DEFAULT-STUB',
+    version: 'DEFAULT-V1',
     dimensionWeights: '{}',
     targetValues: '{}'
   })
@@ -388,13 +379,13 @@ export function useAiReportPage(options = {}) {
         effectiveDate: range?.[1] || currentMonthRange()[1]
       })
       currentConfig.value = response.data || {
-        version: 'DEFAULT-STUB',
+        version: 'DEFAULT-V1',
         dimensionWeights: '{}',
         targetValues: '{}'
       }
     } catch (error) {
       currentConfig.value = {
-        version: 'DEFAULT-STUB',
+        version: 'DEFAULT-V1',
         dimensionWeights: '{}',
         targetValues: '{}'
       }

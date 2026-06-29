@@ -27,5 +27,7 @@ public interface WorkerJobMapper
 
     int updateJobPost(WorkerJobPost job);
 
+    int updateJobReview(WorkerJobPost job);
+
     int deleteJobPostByIds(@Param("jobIds") Long[] jobIds, @Param("updateBy") String updateBy);
 }

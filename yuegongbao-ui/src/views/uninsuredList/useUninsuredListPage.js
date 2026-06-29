@@ -8,6 +8,7 @@ import {
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
 import useUserStore from '@/store/modules/user'
 import { filterAuthorizedRegionOptions } from '@/utils/regionScope'
+import { formatRegionName, gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
 export const disposalStatusOptions = [
   { label: '待核查', value: '0' },
@@ -23,25 +24,11 @@ export const warningStatusOptions = [
   { label: '已预警', value: '1' }
 ]
 
-export const uninsuredRegionNameMap = {
-  '440000': '广东省',
-  '440100': '广州市',
-  '440106': '广州市天河区',
-  '440300': '深圳市',
-  '440305': '深圳市南山区',
-  '440600': '佛山市',
-  '440606': '佛山市顺德区'
-}
+export const terminalDisposalStatuses = ['3', '4', '5']
 
-export const uninsuredBaseRegionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市', value: '440100' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市', value: '440300' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市', value: '440600' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const uninsuredRegionNameMap = gdRegionNameMap
+
+export const uninsuredBaseRegionOptions = gdRegionOptions
 
 function createDefaultQueryParams(includeRegion = false) {
   return {
@@ -69,6 +56,28 @@ function createHandleRules(message = '处置状态不能为空') {
   }
 }
 
+export function requiresUninsuredRemark(targetStatus) {
+  return ['2', '3', '4', '5'].includes(String(targetStatus || ''))
+}
+
+export function isUninsuredHandleAllowed(row) {
+  return row && !terminalDisposalStatuses.includes(String(row.disposalStatus || ''))
+}
+
+export function getNextDisposalStatusOptions(row) {
+  const status = String(row?.disposalStatus ?? '0')
+  if (status === '0') {
+    return disposalStatusOptions.filter(item => ['1', '5'].includes(item.value))
+  }
+  if (status === '1') {
+    return disposalStatusOptions.filter(item => ['2', '5'].includes(item.value))
+  }
+  if (status === '2') {
+    return disposalStatusOptions.filter(item => ['3', '4', '5'].includes(item.value))
+  }
+  return []
+}
+
 export function optionLabel(options, value, fallback = '-') {
   const normalizedOptions = Array.isArray(options) ? options : []
   const matched = normalizedOptions.find(item => item.value === value)
@@ -87,12 +96,7 @@ export function valueOrDefault(value, fallback = 0) {
   return value === undefined || value === null ? fallback : value
 }
 
-export function formatRegionName(code, fallback = '全部区域') {
-  if (!code) {
-    return fallback
-  }
-  return uninsuredRegionNameMap[code] || code
-}
+export { formatRegionName } from '@/utils/regionName'
 
 export function useUninsuredListPage(options = {}) {
   const {
@@ -121,6 +125,7 @@ export function useUninsuredListPage(options = {}) {
   const currentRow = ref(undefined)
   const detailRow = ref(undefined)
   const summaryData = ref({})
+  const availableDisposalStatusOptions = ref([])
 
   const data = reactive({
     queryParams: {
@@ -282,10 +287,20 @@ export function useUninsuredListPage(options = {}) {
     if (!guardMutation('执行漏保处置')) {
       return
     }
+    if (!isUninsuredHandleAllowed(row)) {
+      proxy.$modal.msgWarning('该漏保对象已进入终态，只能查看详情')
+      return
+    }
+    const nextOptions = getNextDisposalStatusOptions(row)
+    if (!nextOptions.length) {
+      proxy.$modal.msgWarning('当前状态没有可执行的下一步处置')
+      return
+    }
     currentListId.value = row.listId
     currentRow.value = row
+    availableDisposalStatusOptions.value = nextOptions
     handleForm.value = {
-      disposalStatus: row.disposalStatus || '1',
+      disposalStatus: nextOptions[0].value,
       remark: row.remark
     }
     handleOpen.value = true
@@ -297,6 +312,10 @@ export function useUninsuredListPage(options = {}) {
     }
     proxy.$refs.handleRef.validate(valid => {
       if (!valid) {
+        return
+      }
+      if (requiresUninsuredRemark(handleForm.value.disposalStatus) && !String(handleForm.value.remark || '').trim()) {
+        proxy.$modal.msgWarning('催缴、补缴、强制执行或误报必须填写处置说明')
         return
       }
       handleUninsured(currentListId.value, handleForm.value).then(response => {
@@ -328,6 +347,7 @@ export function useUninsuredListPage(options = {}) {
     currentRow,
     detailRow,
     summaryData,
+    availableDisposalStatusOptions,
     queryParams,
     handleForm,
     handleRules,

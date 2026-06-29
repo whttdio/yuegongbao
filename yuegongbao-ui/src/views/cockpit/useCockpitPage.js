@@ -2,20 +2,12 @@ import { computed, getCurrentInstance, nextTick, onActivated, onBeforeUnmount, o
 import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import { authorizedDefaultRegionCode } from '@/utils/regionScope'
+import { gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
+import { normalizeRouteTarget } from '@/utils/routeAlias'
 
-export const cockpitRegionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const cockpitRegionOptions = gdRegionOptions
 
-export const cockpitRegionNameMap = {
-  '440000': '广东省',
-  '440106': '广州市天河区',
-  '440305': '深圳市南山区',
-  '440606': '佛山市顺德区'
-}
+export const cockpitRegionNameMap = gdRegionNameMap
 
 export const cockpitDayOptions = [
   { label: '最近 7 天', value: 7 },
@@ -114,6 +106,52 @@ export function buildBounds(features) {
   }
 }
 
+export function normalizeColorCode(value) {
+  const text = String(value || '').toUpperCase()
+  if (text === 'RED' || text === '红' || text === '红码') return 'RED'
+  if (text === 'YELLOW' || text === '黄' || text === '黄码') return 'YELLOW'
+  if (text === 'GREEN' || text === '绿' || text === '绿码') return 'GREEN'
+  return text || 'GREEN'
+}
+
+export function colorCodeTone(value) {
+  const code = normalizeColorCode(value)
+  if (code === 'RED') return 'red'
+  if (code === 'YELLOW') return 'yellow'
+  return 'green'
+}
+
+export function colorCodeLabel(value) {
+  const code = normalizeColorCode(value)
+  if (code === 'RED') return '红码'
+  if (code === 'YELLOW') return '黄码'
+  if (code === 'GREEN') return '绿码'
+  return value || '--'
+}
+
+export function filterFeaturesByBounds(features, bounds) {
+  if (!bounds) return features
+  return features.filter(item => {
+    const coordinates = item.geometry?.coordinates || []
+    if (!Array.isArray(coordinates) || coordinates.length < 2) return false
+    const lng = Number(coordinates[0])
+    const lat = Number(coordinates[1])
+    return lng >= bounds.minLng && lng <= bounds.maxLng && lat >= bounds.minLat && lat <= bounds.maxLat
+  })
+}
+
+function formatCellPercent(value) {
+  if (value === undefined || value === null || value === '') return '--'
+  const number = Number(value)
+  return Number.isNaN(number) ? '--' : `${number.toFixed(1)}%`
+}
+
+function formatCellCount(value) {
+  if (value === undefined || value === null || value === '') return '--'
+  const number = Number(value)
+  return Number.isNaN(number) ? '--' : String(number)
+}
+
 export function sortByKeyOrder(items, keys = [], fallbackSorter) {
   if (!Array.isArray(items)) {
     return []
@@ -160,7 +198,9 @@ export function useCockpitPage(options = {}) {
     },
     createTrendChartOption,
     createDistributionChartOption,
-    createMapChartOption
+    createMapChartOption,
+    mapConfigRef = null,
+    onMapViewChange = null
   } = options
 
   const { proxy } = getCurrentInstance()
@@ -176,6 +216,9 @@ export function useCockpitPage(options = {}) {
   let trendChartInstance
   let distributionChartInstance
   let mapChartInstance
+  let georoamHandler = null
+
+  const mapViewBounds = ref(null)
 
   const data = reactive({
     queryParams: createDefaultQueryParams(authorizedRegionCode)
@@ -188,22 +231,65 @@ export function useCockpitPage(options = {}) {
   const distributionList = computed(() => dashboardData.value.distribution || [])
   const featureCollection = computed(() => dashboardData.value.map || { features: [] })
 
-  const featureTableList = computed(() => {
-    const features = featureCollection.value.features || []
-    return features.map(item => {
-      const geometry = item.geometry || {}
-      const properties = item.properties || {}
-      return {
-        id: item.id,
-        featureName: properties.featureName || '-',
-        featureType: featureTypeLabel(properties.featureType),
-        regionName: cockpitRegionNameMap[properties.regionCode] || properties.regionCode || '-',
-        featureStatus: featureStatusLabel(properties.featureStatus),
-        geometryType: geometry.type || '-',
-        coordinateText: coordinateText(geometry)
-      }
-    })
-  })
+  const enterpriseFeatures = computed(() => (featureCollection.value.features || []).filter(item => {
+    const type = item.properties?.featureType
+    return type === 'ENTERPRISE' && item.geometry?.type === 'Point'
+  }))
+
+  const enterpriseTableRows = computed(() => enterpriseFeatures.value.map(item => {
+    const geometry = item.geometry || {}
+    const properties = item.properties || {}
+    const colorCode = normalizeColorCode(properties.colorCode || properties.riskLevel || properties.risk)
+    const tone = colorCodeTone(colorCode)
+    const coordinates = geometry.coordinates || []
+    return {
+      id: item.id,
+      enterpriseName: properties.featureName || properties.enterpriseName || '-',
+      colorCode,
+      riskTone: tone,
+      riskLabel: colorCodeLabel(colorCode),
+      regionName: cockpitRegionNameMap[properties.regionCode] || properties.regionName || properties.regionCode || '-',
+      insuranceRateText: formatCellPercent(properties.insuranceRate),
+      violationCountText: formatCellCount(properties.violationCount),
+      deviceCountText: formatCellCount(properties.deviceCount),
+      warningStatusText: properties.warningStatusText
+        || (properties.warningStatus === '1' || properties.featureStatus === '2' ? '预警中' : '正常'),
+      coordinates,
+      lng: Number(coordinates[0] || 0),
+      lat: Number(coordinates[1] || 0),
+      raw: properties
+    }
+  }))
+
+  const visibleEnterpriseRows = computed(() => filterFeaturesByBounds(
+    enterpriseTableRows.value.map(item => ({ geometry: { coordinates: item.coordinates }, ...item })),
+    mapViewBounds.value
+  ).map(item => ({
+    id: item.id,
+    enterpriseName: item.enterpriseName,
+    colorCode: item.colorCode,
+    riskTone: item.riskTone,
+    riskLabel: item.riskLabel,
+    regionName: item.regionName,
+    insuranceRateText: item.insuranceRateText,
+    violationCountText: item.violationCountText,
+    deviceCountText: item.deviceCountText,
+    warningStatusText: item.warningStatusText,
+    coordinates: item.coordinates,
+    lng: item.lng,
+    lat: item.lat,
+    raw: item.raw
+  })))
+
+  const featureTableList = computed(() => enterpriseTableRows.value.map(item => ({
+    id: item.id,
+    featureName: item.enterpriseName,
+    featureType: '企业',
+    regionName: item.regionName,
+    featureStatus: item.warningStatusText,
+    geometryType: 'Point',
+    coordinateText: item.coordinates.length ? `${item.coordinates[0]}, ${item.coordinates[1]}` : '-'
+  })))
 
   function handleQuery() {
     loadDashboard()
@@ -228,16 +314,17 @@ export function useCockpitPage(options = {}) {
     if (!target) {
       return
     }
-    if (typeof target === 'string') {
-      router.push(target)
+    const normalizedTarget = normalizeRouteTarget(target)
+    if (typeof normalizedTarget === 'string') {
+      router.push(normalizedTarget)
       return
     }
-    if (!target.path) {
+    if (!normalizedTarget?.path) {
       return
     }
     router.push({
-      path: target.path,
-      query: sanitizeRouteQuery(target.query || {})
+      path: normalizedTarget.path,
+      query: sanitizeRouteQuery(normalizedTarget.query || {})
     })
   }
 
@@ -369,12 +456,74 @@ export function useCockpitPage(options = {}) {
     distributionChartInstance.setOption(option, true)
   }
 
+  function updateMapViewBoundsFromChart() {
+    if (!mapChartInstance) {
+      mapViewBounds.value = null
+      return
+    }
+    const model = mapChartInstance.getModel().getComponent('geo', 0)
+    if (!model?.coordinateSystem) {
+      mapViewBounds.value = null
+      return
+    }
+    const rect = model.coordinateSystem.getBoundingRect()
+    const sw = mapChartInstance.convertFromPixel({ geoIndex: 0 }, [rect.x, rect.y + rect.height])
+    const ne = mapChartInstance.convertFromPixel({ geoIndex: 0 }, [rect.x + rect.width, rect.y])
+    if (!sw || !ne) {
+      mapViewBounds.value = null
+      return
+    }
+    mapViewBounds.value = {
+      minLng: Math.min(sw[0], ne[0]),
+      maxLng: Math.max(sw[0], ne[0]),
+      minLat: Math.min(sw[1], ne[1]),
+      maxLat: Math.max(sw[1], ne[1])
+    }
+    if (typeof onMapViewChange === 'function') {
+      onMapViewChange(mapViewBounds.value)
+    }
+  }
+
+  function bindMapGeoroam() {
+    if (!mapChartInstance) return
+    if (georoamHandler) {
+      mapChartInstance.off('georoam', georoamHandler)
+    }
+    georoamHandler = () => updateMapViewBoundsFromChart()
+    mapChartInstance.on('georoam', georoamHandler)
+  }
+
+  function highlightMapPoint(row = {}) {
+    if (!mapChartInstance || !row.lng || !row.lat) return
+    const zoom = mapConfigRef?.value?.zoom || 9
+    mapChartInstance.setOption({
+      geo: {
+        center: [row.lng, row.lat],
+        zoom
+      }
+    })
+    updateMapViewBoundsFromChart()
+    const enterpriseSeriesIndex = mapChartInstance.getOption()?.series?.findIndex(item => item.name === '企业点位')
+    if (enterpriseSeriesIndex >= 0) {
+      const series = mapChartInstance.getOption().series[enterpriseSeriesIndex]
+      const dataIndex = (series.data || []).findIndex(item => {
+        const value = item.value || []
+        return Number(value[0]) === Number(row.lng) && Number(value[1]) === Number(row.lat)
+      })
+      if (dataIndex >= 0) {
+        mapChartInstance.dispatchAction({ type: 'showTip', seriesIndex: enterpriseSeriesIndex, dataIndex })
+        mapChartInstance.dispatchAction({ type: 'highlight', seriesIndex: enterpriseSeriesIndex, dataIndex })
+      }
+    }
+  }
+
   function renderMapChart() {
     if (!mapChartRef.value) {
       return
     }
     if (!mapChartInstance) {
       mapChartInstance = echarts.init(mapChartRef.value)
+      bindMapGeoroam()
     }
 
     const features = featureCollection.value.features || []
@@ -437,6 +586,7 @@ export function useCockpitPage(options = {}) {
         }
 
     mapChartInstance.setOption(option, true)
+    nextTick(() => updateMapViewBoundsFromChart())
   }
 
   function resizeCharts() {
@@ -446,12 +596,16 @@ export function useCockpitPage(options = {}) {
   }
 
   function disposeCharts() {
+    if (mapChartInstance && georoamHandler) {
+      mapChartInstance.off('georoam', georoamHandler)
+    }
     trendChartInstance?.dispose()
     distributionChartInstance?.dispose()
     mapChartInstance?.dispose()
     trendChartInstance = null
     distributionChartInstance = null
     mapChartInstance = null
+    georoamHandler = null
   }
 
   function renderCharts() {
@@ -514,6 +668,9 @@ export function useCockpitPage(options = {}) {
     distributionList,
     featureCollection,
     featureTableList,
+    enterpriseTableRows,
+    visibleEnterpriseRows,
+    mapViewBounds,
     trendChartRef,
     distributionChartRef,
     mapChartRef,
@@ -521,6 +678,8 @@ export function useCockpitPage(options = {}) {
     resetQuery,
     handleExport,
     openModule,
-    loadDashboard
+    loadDashboard,
+    highlightMapPoint,
+    updateMapViewBoundsFromChart
   }
 }

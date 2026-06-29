@@ -1,10 +1,35 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">{{ detail.title || '-' }}</view>
+    <view class="worker-card worker-hero">
+      <view class="section-head">
+        <view class="worker-title">{{ detail.title || '-' }}</view>
+        <view class="worker-tag worker-tag--info">{{ noticeTypeText }}</view>
+      </view>
       <view class="worker-subtitle">发布时间：{{ detail.publishTime || '-' }}</view>
-      <view v-if="detail.noticeId" class="worker-subtitle">消息类型：{{ noticeTypeText }}</view>
-      <view v-if="detail.sourceLabel" class="worker-subtitle notice-source">来源：{{ detail.sourceLabel }}</view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">基本信息</view>
+      </view>
+      <view v-if="detail.noticeId" class="detail-row">
+        <view class="detail-row__label">消息类型</view>
+        <view class="detail-row__value">{{ noticeTypeText }}</view>
+      </view>
+      <view v-if="detail.sourceLabel" class="detail-row">
+        <view class="detail-row__label">来源</view>
+        <view class="detail-row__value">{{ detail.sourceLabel }}</view>
+      </view>
+      <view class="detail-row">
+        <view class="detail-row__label">发布时间</view>
+        <view class="detail-row__value">{{ detail.publishTime || '-' }}</view>
+      </view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">通知内容</view>
+      </view>
       <view class="detail-block">{{ detail.content || '-' }}</view>
       <button v-if="actionButtonText" class="worker-button notice-action" @click="openNoticeAction">
         {{ actionButtonText }}
@@ -150,86 +175,7 @@ onLoad((options) => {
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.detail-block {
-  margin-top: 24rpx;
-  padding: 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  font-size: 28rpx;
-  color: #16324f;
-  line-height: 1.7;
-  white-space: pre-wrap;
-}
-
-.notice-source {
-  margin-top: 8rpx;
-}
-
 .notice-action {
   margin-top: 24rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 20rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 24rpx;
-  color: #5f7893;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.8;
-  color: #36506b;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 </style>

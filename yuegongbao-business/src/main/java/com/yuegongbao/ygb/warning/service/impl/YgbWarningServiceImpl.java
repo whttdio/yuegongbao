@@ -19,6 +19,7 @@ import com.yuegongbao.ygb.warning.mapper.YgbWarningHandleLogMapper;
 import com.yuegongbao.ygb.warning.mapper.YgbWarningMapper;
 import com.yuegongbao.ygb.util.YgbWarningTransitionHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 
 @Service
 public class YgbWarningServiceImpl implements IYgbWarningService
@@ -28,6 +29,9 @@ public class YgbWarningServiceImpl implements IYgbWarningService
 
     @Autowired
     private YgbWarningHandleLogMapper warningHandleLogMapper;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbWarning> selectWarningList(YgbWarning warning)
@@ -69,6 +73,7 @@ public class YgbWarningServiceImpl implements IYgbWarningService
         {
             throw new ServiceException("预警记录不存在。");
         }
+        assertEntityAllowed(warning);
         return warning;
     }
 
@@ -122,6 +127,10 @@ public class YgbWarningServiceImpl implements IYgbWarningService
     @Transactional(rollbackFor = Exception.class)
     public int handleWarning(Long warnId, String action, String opinion, String attachmentUrls, String operator)
     {
+        if (StringUtils.isEmpty(opinion))
+        {
+            throw new ServiceException("处置意见不能为空。");
+        }
         YgbWarning warning = selectWarningById(warnId);
         String afterStatus = YgbWarningTransitionHelper.transit(warning.getWarnStatus(), action);
         warningMapper.updateWarningStatus(warnId, afterStatus, operator, operator, "2".equals(afterStatus));
@@ -258,5 +267,13 @@ public class YgbWarningServiceImpl implements IYgbWarningService
     private int safeCount(Integer value)
     {
         return value == null ? 0 : value;
+    }
+
+    private void assertEntityAllowed(Object entity)
+    {
+        if (dataScopeGuard != null)
+        {
+            dataScopeGuard.assertEntityAllowed(entity);
+        }
     }
 }

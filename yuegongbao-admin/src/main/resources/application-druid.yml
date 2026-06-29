@@ -6,16 +6,22 @@ spring:
         druid:
             # 主库数据源
             master:
-                url: jdbc:mysql://localhost:3306/yuegongbao?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
-                username: root
-                password: root
+#                url: jdbc:mysql://localhost:3306/yuegongbao?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+#                username: root
+#                password: root123456
+#                 url: jdbc:mysql://101.133.226.223:33060/yuegongbao?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+#                 username: root
+#                 password: root123456
+                url: ${YGB_DB_URL:jdbc:mysql://127.0.0.1:3306/yuegongbao?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+                username: ${YGB_DB_USERNAME:root}
+                password: ${YGB_DB_PASSWORD:root123456}
             # 从库数据源
             slave:
                 # 从数据源开关/默认关闭
                 enabled: false
-                url: 
-                username: 
-                password: 
+                url:
+                username:
+                password:
             # 初始连接数
             initialSize: 5
             # 最小连接池数量
@@ -39,7 +45,7 @@ spring:
             testWhileIdle: true
             testOnBorrow: false
             testOnReturn: false
-            webStatFilter: 
+            webStatFilter:
                 enabled: true
             statViewServlet:
                 enabled: true
@@ -47,8 +53,8 @@ spring:
                 allow:
                 url-pattern: /druid/*
                 # 控制台管理用户名和密码
-                login-username: ygbadmin
-                login-password: 123456
+                login-username: ${YGB_DRUID_USERNAME:ygbadmin}
+                login-password: ${YGB_DRUID_PASSWORD:123456}
             filter:
                 stat:
                     enabled: true

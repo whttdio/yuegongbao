@@ -33,33 +33,42 @@ public class YgbStatReportController extends BaseController
             + "ygb:statReport:socialTax:query,ygb:statReport:employment:query,ygb:statReport:attendance:query,"
             + "ygb:statReport:social:query,ygb:statReport:tax:query,ygb:statReport:aqInsurance:query,"
             + "ygb:statReport:newform:query,ygb:statReport:occupation:query,ygb:statReport:union:query,"
-            + "ygb:statReport:custom:query,azb:statReport:injury:query,azb:statReport:warning:query,"
-            + "azb:statReport:salary:query,azb:statReport:socialTax:query,azb:statReport:employment:query,"
-            + "azb:statReport:attendance:query,azb:statReport:social:query,azb:statReport:tax:query,"
-            + "azb:statReport:aqInsurance:query,azb:statReport:newform:query,azb:statReport:occupation:query,"
-            + "azb:statReport:union:query,azb:statReport:custom:query')";
+            + "ygb:statReport:custom:query,ygb:statReport:device:query,ygb:statReport:expansion:query,"
+            + "ygb:statReport:rectification:query,"
+            + "azb:statReport:injury:query,azb:statReport:warning:query,azb:statReport:salary:query,"
+            + "azb:statReport:socialTax:query,azb:statReport:employment:query,azb:statReport:attendance:query,"
+            + "azb:statReport:social:query,azb:statReport:tax:query,azb:statReport:aqInsurance:query,"
+            + "azb:statReport:newform:query,azb:statReport:occupation:query,azb:statReport:union:query,"
+            + "azb:statReport:custom:query,azb:statReport:device:query,azb:statReport:expansion:query,"
+            + "azb:statReport:rectification:query')";
 
     private static final String GENERATE_EXPR =
         "@ss.hasAnyPermi('ygb:statReport:injury:generate,ygb:statReport:warning:generate,ygb:statReport:salary:generate,"
             + "ygb:statReport:socialTax:generate,ygb:statReport:employment:generate,ygb:statReport:attendance:generate,"
             + "ygb:statReport:social:generate,ygb:statReport:tax:generate,ygb:statReport:aqInsurance:generate,"
             + "ygb:statReport:newform:generate,ygb:statReport:occupation:generate,ygb:statReport:union:generate,"
-            + "ygb:statReport:custom:generate,azb:statReport:injury:generate,azb:statReport:warning:generate,"
-            + "azb:statReport:salary:generate,azb:statReport:socialTax:generate,azb:statReport:employment:generate,"
-            + "azb:statReport:attendance:generate,azb:statReport:social:generate,azb:statReport:tax:generate,"
-            + "azb:statReport:aqInsurance:generate,azb:statReport:newform:generate,azb:statReport:occupation:generate,"
-            + "azb:statReport:union:generate,azb:statReport:custom:generate')";
+            + "ygb:statReport:custom:generate,ygb:statReport:device:generate,ygb:statReport:expansion:generate,"
+            + "ygb:statReport:rectification:generate,"
+            + "azb:statReport:injury:generate,azb:statReport:warning:generate,azb:statReport:salary:generate,"
+            + "azb:statReport:socialTax:generate,azb:statReport:employment:generate,azb:statReport:attendance:generate,"
+            + "azb:statReport:social:generate,azb:statReport:tax:generate,azb:statReport:aqInsurance:generate,"
+            + "azb:statReport:newform:generate,azb:statReport:occupation:generate,azb:statReport:union:generate,"
+            + "azb:statReport:custom:generate,azb:statReport:device:generate,azb:statReport:expansion:generate,"
+            + "azb:statReport:rectification:generate')";
 
     private static final String EXPORT_EXPR =
         "@ss.hasAnyPermi('ygb:statReport:injury:export,ygb:statReport:warning:export,ygb:statReport:salary:export,"
             + "ygb:statReport:socialTax:export,ygb:statReport:employment:export,ygb:statReport:attendance:export,"
             + "ygb:statReport:social:export,ygb:statReport:tax:export,ygb:statReport:aqInsurance:export,"
             + "ygb:statReport:newform:export,ygb:statReport:occupation:export,ygb:statReport:union:export,"
-            + "ygb:statReport:custom:export,azb:statReport:injury:export,azb:statReport:warning:export,"
-            + "azb:statReport:salary:export,azb:statReport:socialTax:export,azb:statReport:employment:export,"
-            + "azb:statReport:attendance:export,azb:statReport:social:export,azb:statReport:tax:export,"
-            + "azb:statReport:aqInsurance:export,azb:statReport:newform:export,azb:statReport:occupation:export,"
-            + "azb:statReport:union:export,azb:statReport:custom:export')";
+            + "ygb:statReport:custom:export,ygb:statReport:device:export,ygb:statReport:expansion:export,"
+            + "ygb:statReport:rectification:export,"
+            + "azb:statReport:injury:export,azb:statReport:warning:export,azb:statReport:salary:export,"
+            + "azb:statReport:socialTax:export,azb:statReport:employment:export,azb:statReport:attendance:export,"
+            + "azb:statReport:social:export,azb:statReport:tax:export,azb:statReport:aqInsurance:export,"
+            + "azb:statReport:newform:export,azb:statReport:occupation:export,azb:statReport:union:export,"
+            + "azb:statReport:custom:export,azb:statReport:device:export,azb:statReport:expansion:export,"
+            + "azb:statReport:rectification:export')";
 
     @Autowired
     private IYgbStatReportService statReportService;
@@ -93,38 +102,50 @@ public class YgbStatReportController extends BaseController
         return result;
     }
 
-    @Log(title = "缁熻鎶ヨ〃", businessType = BusinessType.OTHER)
+    @Log(title = "统计报表", businessType = BusinessType.OTHER)
     @PreAuthorize(GENERATE_EXPR)
     @PostMapping("/generate")
     public AjaxResult generate(@Validated @RequestBody YgbStatReportGenerateRequest request)
     {
         checkReportPermission(request == null ? null : request.getReportCode(), "generate");
         Long reportId = statReportService.generateReport(request, getUsername());
-        AjaxResult result = success("缁熻鎶ヨ〃鐢熸垚瀹屾垚");
+        AjaxResult result = success("统计报表生成完成");
         result.put("reportId", reportId);
         return result;
     }
 
-    @Log(title = "缁熻鎶ヨ〃", businessType = BusinessType.EXPORT)
+    @Log(title = "统计报表", businessType = BusinessType.EXPORT)
     @PreAuthorize(EXPORT_EXPR)
     @PostMapping("/export")
     public void export(HttpServletResponse response, YgbStatReport report)
     {
+        exportReport(response, report);
+    }
+
+    @PreAuthorize(EXPORT_EXPR)
+    @GetMapping("/download")
+    public void download(HttpServletResponse response, YgbStatReport report)
+    {
+        exportReport(response, report);
+    }
+
+    private void exportReport(HttpServletResponse response, YgbStatReport report)
+    {
         checkReportPermission(report == null ? null : report.getReportCode(), "export");
         List<YgbStatReport> list = statReportService.selectStatReportList(report);
         ExcelUtil<YgbStatReport> util = new ExcelUtil<>(YgbStatReport.class);
-        util.exportExcel(response, list, "缁熻鎶ヨ〃");
+        util.exportExcel(response, list, "统计报表");
     }
 
     private void checkReportPermission(String reportCode, String action)
     {
         if (StringUtils.isEmpty(reportCode))
         {
-            throw new ServiceException("鏈堟姤绫诲瀷涓嶈兘涓虹┖");
+            throw new ServiceException("月报类型不能为空");
         }
         if (!hasTypedPermission(reportCode, action))
         {
-            throw new ServiceException("鏃犳潈璁块棶褰撳墠鏈堟姤");
+            throw new ServiceException("无权访问当前月报");
         }
     }
 
@@ -190,6 +211,18 @@ public class YgbStatReportController extends BaseController
         {
             return "custom";
         }
-        throw new ServiceException("涓嶆敮鎸佺殑鏈堟姤绫诲瀷");
+        if ("DEVICE_STATS".equals(normalizedReportCode))
+        {
+            return "device";
+        }
+        if ("EXPANSION_REDUCTION".equals(normalizedReportCode))
+        {
+            return "expansion";
+        }
+        if ("SPECIAL_RECTIFICATION".equals(normalizedReportCode))
+        {
+            return "rectification";
+        }
+        throw new ServiceException("不支持的月报类型");
     }
 }

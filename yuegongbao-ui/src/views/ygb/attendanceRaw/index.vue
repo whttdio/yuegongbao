@@ -1014,20 +1014,19 @@ function resetQuery() {
   applyWorkbenchRouteQuery(route.query, queryParams.value, attendanceRawWorkbenchFilterFields)
   activeFocusKey.value = resolveAttendanceFocusKey(route.query.focusKey)
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '??????' || '??????',
-    description: '?????????????????????????????????' || '?????????????????????????????????',
+    title: '考勤明细查询',
+    description: '围绕考勤上报明细开展查询、校验、归集和异常处置，支撑用工考勤闭环管理。',
     portalExplanation: portalExplanationItems.value,
     focus: resolvedFocusQueues.value,
-    selection: [...selectedAttendanceOverview.value, { label: '??????', value: currentAttendanceActionSummary.value }],
+    selection: [...selectedAttendanceOverview.value, { label: '当前处置建议', value: currentAttendanceActionSummary.value }],
     workflow: resolvedWorkflowSteps.value,
     hints: [...currentAttendanceActionTags.value].slice(0, 6)
   })
 })
-
-}
 
 function clearWorkbenchContext() {
   proxy.resetForm('queryRef')

@@ -26,6 +26,7 @@ import com.yuegongbao.ygb.safety.domain.YgbInjuryEvent;
 import com.yuegongbao.ygb.safety.domain.YgbInjuryEventSummary;
 import com.yuegongbao.ygb.safety.mapper.YgbInjuryEventMapper;
 import com.yuegongbao.ygb.safety.service.IYgbInjuryEventService;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
 @Service
@@ -42,6 +43,9 @@ public class YgbInjuryEventServiceImpl implements IYgbInjuryEventService
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbInjuryEvent> selectInjuryEventList(YgbInjuryEvent injuryEvent)
@@ -109,6 +113,7 @@ public class YgbInjuryEventServiceImpl implements IYgbInjuryEventService
         {
             throw new ServiceException("工伤事件不存在");
         }
+        dataScopeGuard.assertEntityAllowed(injuryEvent);
         return injuryEvent;
     }
 
@@ -183,6 +188,15 @@ public class YgbInjuryEventServiceImpl implements IYgbInjuryEventService
     public int insertInjuryEvent(YgbInjuryEvent injuryEvent)
     {
         fillSnapshot(injuryEvent);
+        if (StringUtils.isEmpty(injuryEvent.getInjuryStatus()))
+        {
+            injuryEvent.setInjuryStatus("0");
+        }
+        if (!"0".equals(injuryEvent.getInjuryStatus()))
+        {
+            throw new ServiceException("新增工伤事件只能从已报告状态开始");
+        }
+        dataScopeGuard.assertEntityAllowed(injuryEvent);
         recalculateDeadline(injuryEvent);
         int rows = injuryEventMapper.insertInjuryEvent(injuryEvent);
         createOverdueWarningIfNeeded(injuryEvent, injuryEvent.getCreateBy());
@@ -193,7 +207,14 @@ public class YgbInjuryEventServiceImpl implements IYgbInjuryEventService
     @Transactional(rollbackFor = Exception.class)
     public int updateInjuryEvent(YgbInjuryEvent injuryEvent)
     {
+        YgbInjuryEvent previous = selectInjuryEventById(injuryEvent.getEventId());
         fillSnapshot(injuryEvent);
+        if (StringUtils.isEmpty(injuryEvent.getInjuryStatus()))
+        {
+            injuryEvent.setInjuryStatus(previous.getInjuryStatus());
+        }
+        validateStatusTransition(previous.getInjuryStatus(), injuryEvent.getInjuryStatus(), injuryEvent.getApprovalResult());
+        dataScopeGuard.assertEntityAllowed(injuryEvent);
         recalculateDeadline(injuryEvent);
         int rows = injuryEventMapper.updateInjuryEvent(injuryEvent);
         createOverdueWarningIfNeeded(injuryEvent, injuryEvent.getUpdateBy());
@@ -205,6 +226,7 @@ public class YgbInjuryEventServiceImpl implements IYgbInjuryEventService
     public int updateStatus(Long eventId, String injuryStatus, String approvalResult, String operator)
     {
         YgbInjuryEvent injuryEvent = selectInjuryEventById(eventId);
+        validateStatusTransition(injuryEvent.getInjuryStatus(), injuryStatus, approvalResult);
         injuryEvent.setInjuryStatus(injuryStatus);
         injuryEvent.setApprovalResult(approvalResult);
         injuryEvent.setUpdateBy(operator);
@@ -217,7 +239,47 @@ public class YgbInjuryEventServiceImpl implements IYgbInjuryEventService
     @Override
     public int deleteInjuryEventByIds(Long[] eventIds, String updateBy)
     {
+        for (Long eventId : eventIds)
+        {
+            selectInjuryEventById(eventId);
+        }
         return injuryEventMapper.deleteInjuryEventByIds(eventIds, updateBy);
+    }
+
+    private void validateStatusTransition(String currentStatus, String targetStatus, String approvalResult)
+    {
+        if (StringUtils.isEmpty(targetStatus))
+        {
+            throw new ServiceException("工伤事件状态不能为空");
+        }
+        int current = injuryStatusOrder(currentStatus);
+        int target = injuryStatusOrder(targetStatus);
+        if (target < current)
+        {
+            throw new ServiceException("工伤事件状态不能回退");
+        }
+        if (target - current > 1)
+        {
+            throw new ServiceException("工伤事件状态只能按办理链路逐步流转");
+        }
+        if (target >= 2 && StringUtils.isEmpty(approvalResult))
+        {
+            throw new ServiceException("进入已认定、待遇申领或已完结状态时，审批结果不能为空");
+        }
+    }
+
+    private int injuryStatusOrder(String injuryStatus)
+    {
+        if (StringUtils.isEmpty(injuryStatus))
+        {
+            return 0;
+        }
+        if ("0".equals(injuryStatus) || "1".equals(injuryStatus) || "2".equals(injuryStatus)
+            || "3".equals(injuryStatus) || "4".equals(injuryStatus))
+        {
+            return Integer.parseInt(injuryStatus);
+        }
+        throw new ServiceException("工伤事件状态值不合法");
     }
 
     private void fillSnapshot(YgbInjuryEvent injuryEvent)

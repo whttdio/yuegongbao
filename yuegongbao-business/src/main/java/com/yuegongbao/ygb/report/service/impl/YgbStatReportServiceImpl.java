@@ -20,6 +20,7 @@ import com.yuegongbao.ygb.report.domain.YgbStatReportItem;
 import com.yuegongbao.ygb.report.domain.YgbStatReportSummary;
 import com.yuegongbao.ygb.report.mapper.YgbStatReportMapper;
 import com.yuegongbao.ygb.report.service.IYgbStatReportService;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 import com.yuegongbao.ygb.util.YgbRegionHelper;
 import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 
@@ -34,10 +35,15 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
     @Autowired
     private YgbRegionScopeHelper regionScopeHelper;
 
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
+
     @Override
     public List<YgbStatReport> selectStatReportList(YgbStatReport report)
     {
-        return statReportMapper.selectStatReportList(report);
+        YgbStatReport scopedQuery = report == null ? new YgbStatReport() : report;
+        applyListScope(scopedQuery);
+        return statReportMapper.selectStatReportList(scopedQuery);
     }
 
     @Override
@@ -148,6 +154,7 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
         {
             throw new ServiceException("统计报表不存在");
         }
+        assertEntityAllowed(report);
         return report;
     }
 
@@ -163,7 +170,7 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
     {
         String reportCode = normalizeReportCode(request.getReportCode());
         String statMonth = normalizeMonth(request.getStatMonth());
-        String regionCode = regionScopeHelper.resolveAuthorizedRegionCode(request.getRegionCode());
+        String regionCode = resolveAuthorizedRegionCode(request.getRegionCode());
         String regionPrefix = YgbRegionHelper.toRegionPrefix(regionCode);
 
         List<YgbStatReportItem> items = buildReportItems(reportCode, statMonth, regionPrefix);
@@ -180,9 +187,9 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
         }
         report.setReportName(resolveReportName(reportCode));
         report.setReportStatus("1");
-        report.setSourceMode("stub");
+        report.setSourceMode("SYSTEM");
         report.setGeneratedTime(new Date());
-        report.setAttachmentUrl("stub://report/" + reportCode.toLowerCase() + "/" + statMonth);
+        report.setAttachmentUrl(buildDownloadUrl(reportCode, statMonth, regionCode));
         fillSummary(report, items);
         report.setUpdateBy(operator);
         report.setUpdateTime(new Date());
@@ -251,9 +258,26 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
                 return statReportMapper.selectUnionSupervisionItems(statMonth, regionPrefix);
             case "CUSTOM":
                 return statReportMapper.selectCustomItems(statMonth, regionPrefix);
+            case "DEVICE_STATS":
+                return statReportMapper.selectDeviceStatsItems(statMonth, regionPrefix);
+            case "EXPANSION_REDUCTION":
+            {
+                List<YgbStatReportItem> items = statReportMapper.selectExpansionReductionItems(statMonth, regionPrefix);
+                items.forEach(item -> item.setItemName(YgbRegionHelper.resolveRegionName(item.getItemDimension())));
+                return items;
+            }
+            case "SPECIAL_RECTIFICATION":
+                return statReportMapper.selectSpecialRectificationItems(statMonth, regionPrefix);
             default:
                 throw new ServiceException("暂不支持的统计报表类型");
         }
+    }
+
+    private String buildDownloadUrl(String reportCode, String statMonth, String regionCode)
+    {
+        return "/ygb/report/download?reportCode=" + reportCode
+            + "&statMonth=" + statMonth
+            + "&regionCode=" + regionCode;
     }
 
     private List<YgbStatReportItem> buildSocialTaxItems(String statMonth, String regionPrefix)
@@ -315,10 +339,10 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
             case "INJURY_RATE":
             {
                 BigDecimal injuryRate = totalValue.compareTo(BigDecimal.ZERO) <= 0 ? BigDecimal.ZERO
-                    : BigDecimal.valueOf(totalCount * 1000D).divide(totalValue, 2, RoundingMode.HALF_UP);
+                    : BigDecimal.valueOf(totalCount * 100D).divide(totalValue, 2, RoundingMode.HALF_UP);
                 report.setMetricRate(injuryRate);
                 report.setReportSummary("本月工伤事件 " + totalCount + " 起，参保样本 " + totalValue.intValue()
-                    + " 人，工伤发生率 " + injuryRate + "‰");
+                    + " 人，工伤发生率 " + injuryRate + "%");
                 return;
             }
             case "WARNING_OVERVIEW":
@@ -362,6 +386,18 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
             case "CUSTOM":
                 report.setReportSummary("本月自定义月报汇总 " + items.size() + " 个维度，综合值 " + totalValue
                     + "，综合率 " + weightedRate + "%");
+                return;
+            case "DEVICE_STATS":
+                report.setReportSummary("本月设备月报覆盖 " + items.size() + " 家企业，设备总数 " + totalCount
+                    + " 台，平均在线率 " + weightedRate + "%");
+                return;
+            case "EXPANSION_REDUCTION":
+                report.setReportSummary("本月扩面减损月报扩面人数 " + totalCount + " 人，补缴金额 " + totalValue
+                    + " 元，完成率 " + weightedRate + "%");
+                return;
+            case "SPECIAL_RECTIFICATION":
+                report.setReportSummary("本月专项整治问题 " + totalCount + " 个，已闭环 " + totalValue.intValue()
+                    + " 个，整改率 " + weightedRate + "%");
                 return;
             default:
                 report.setReportSummary("本月联动风险项 " + totalCount + " 条，综合风险率 " + weightedRate + "%");
@@ -463,6 +499,12 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
                 return "工会监督月报";
             case "CUSTOM":
                 return "自定义月报";
+            case "DEVICE_STATS":
+                return "设备月报";
+            case "EXPANSION_REDUCTION":
+                return "扩面减损月报";
+            case "SPECIAL_RECTIFICATION":
+                return "专项整治月报";
             default:
                 return reportCode;
         }
@@ -507,11 +549,6 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
             "草稿越多，越需要继续承接归档链和办理闭环。", "statReport", "statReport", "530.1 办理链解释", query));
         list.add(explanationItem("联动结果", summary.getSocialTaxCount(), 0,
             "统计解释突出工资、社保税务联动和整改闭环结果。", "socialTax", "socialBaseCompare", "530.1 办理链解释", query));
-        list.add(explanationItem("P4专题月报",
-            defaultNumber(summary.getAqInsuranceCount()) + defaultNumber(summary.getNewformCount())
-                + defaultNumber(summary.getOccupationCount()) + defaultNumber(summary.getUnionCount())
-                + defaultNumber(summary.getCustomCount()),
-            0, "P4 扩展月报已纳入同一 typed report 主链。", "statReport", "statReport", "530.1 办理链解释", query));
         return list;
     }
 
@@ -567,5 +604,30 @@ public class YgbStatReportServiceImpl implements IYgbStatReportService
         item.put("sourceLabel", sourceLabel);
         item.put("sourceDescription", summary);
         return item;
+    }
+
+    private String resolveAuthorizedRegionCode(String regionCode)
+    {
+        if (regionScopeHelper == null)
+        {
+            return YgbRegionHelper.defaultDashboardRegion(regionCode);
+        }
+        return regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
+    }
+
+    private void assertEntityAllowed(Object entity)
+    {
+        if (dataScopeGuard != null)
+        {
+            dataScopeGuard.assertEntityAllowed(entity);
+        }
+    }
+
+    private void applyListScope(YgbStatReport report)
+    {
+        if (regionScopeHelper != null)
+        {
+            regionScopeHelper.applyRegionDataScope(report, "r.region_code");
+        }
     }
 }

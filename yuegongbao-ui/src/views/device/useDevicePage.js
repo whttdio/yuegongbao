@@ -18,26 +18,11 @@ import { optionselectEnterprise } from '@/api/ygb/enterprise'
 import { optionselectPerson } from '@/api/ygb/person'
 import useUserStore from '@/store/modules/user'
 import { filterAuthorizedRegionOptions } from '@/utils/regionScope'
+import { formatRegionName, gdRegionNameMap, gdRegionOptions, normalizeRegionCode } from '@/utils/regionName'
 
-export const baseRegionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市', value: '440100' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市', value: '440300' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市', value: '440600' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const baseRegionOptions = gdRegionOptions
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440100': '广州市',
-  '440106': '广州市天河区',
-  '440300': '深圳市',
-  '440305': '深圳市南山区',
-  '440600': '佛山市',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
 export const deviceTypeOptions = [
   { label: '考勤机', value: '1' },
@@ -159,15 +144,22 @@ export function optionLabel(options, value, fallback = '-') {
   return matched ? matched.label : fallback
 }
 
-export function formatRegionName(code, fallback = '全部区域') {
-  if (!code) {
-    return fallback
-  }
-  return regionNameMap[code] || code
-}
+export { formatRegionName } from '@/utils/regionName'
 
 export function valueOrDefault(value, fallback) {
   return value === undefined || value === null ? fallback : value
+}
+
+export function canLockDevice(row) {
+  return String(row?.deviceStatus) === '1'
+}
+
+export function canUnlockDevice(row) {
+  return String(row?.deviceStatus) === '2'
+}
+
+export function canOperateDevice(row) {
+  return row && !['2', '3'].includes(String(row.deviceStatus))
 }
 
 function buildDeleteLabel(deviceIds) {
@@ -225,18 +217,20 @@ export function useDevicePage(options = {}) {
   const regionOptions = computed(() => {
     const optionMap = new Map(baseRegionOptions.map(item => [item.value, item]))
     enterpriseOptions.value.forEach(item => {
-      if (item.regionCode && !optionMap.has(item.regionCode)) {
-        optionMap.set(item.regionCode, {
-          value: item.regionCode,
-          label: formatRegionName(item.regionCode, item.regionCode)
+      const regionCode = normalizeRegionCode(item.regionCode)
+      if (regionCode && !optionMap.has(regionCode)) {
+        optionMap.set(regionCode, {
+          value: regionCode,
+          label: formatRegionName(regionCode, regionCode)
         })
       }
     })
     deviceList.value.forEach(item => {
-      if (item.regionCode && !optionMap.has(item.regionCode)) {
-        optionMap.set(item.regionCode, {
-          value: item.regionCode,
-          label: formatRegionName(item.regionCode, item.regionCode)
+      const regionCode = normalizeRegionCode(item.regionCode)
+      if (regionCode && !optionMap.has(regionCode)) {
+        optionMap.set(regionCode, {
+          value: regionCode,
+          label: formatRegionName(regionCode, regionCode)
         })
       }
     })
@@ -471,6 +465,10 @@ export function useDevicePage(options = {}) {
     if (!guardMutation('锁定设备')) {
       return
     }
+    if (!canLockDevice(row)) {
+      proxy.$modal.msgWarning('只有在线设备才能锁机')
+      return
+    }
     currentDevice.value = row
     proxy.$modal.confirm(`是否确认对设备"${row.deviceCode}"下发锁机指令？`).then(() => {
       return lockDevice(row.deviceId)
@@ -482,6 +480,10 @@ export function useDevicePage(options = {}) {
 
   function handleUnlock(row) {
     if (!guardMutation('解锁设备')) {
+      return
+    }
+    if (!canUnlockDevice(row)) {
+      proxy.$modal.msgWarning('只有锁定设备才能解锁')
       return
     }
     currentDevice.value = row
@@ -498,6 +500,10 @@ export function useDevicePage(options = {}) {
       return
     }
     if (!guardMutation('发起设备授权')) {
+      return
+    }
+    if (!canOperateDevice(row)) {
+      proxy.$modal.msgWarning('锁定或故障设备不能发起授权')
       return
     }
     currentDevice.value = row
@@ -526,7 +532,11 @@ export function useDevicePage(options = {}) {
     if (!row?.deviceId) {
       return
     }
-    if (!guardMutation('模拟心跳')) {
+    if (!guardMutation('发起心跳回写')) {
+      return
+    }
+    if (canUnlockDevice(row)) {
+      proxy.$modal.msgWarning('锁定设备不能通过心跳直接改为在线，请先解锁')
       return
     }
     currentDevice.value = row
@@ -539,7 +549,7 @@ export function useDevicePage(options = {}) {
       return
     }
     heartbeatDevice(heartbeatForm.value).then(response => {
-      proxy.$modal.msgSuccess(response.msg || '模拟心跳完成')
+      proxy.$modal.msgSuccess(response.msg || '心跳回写完成')
       heartbeatOpen.value = false
       getList()
     })
@@ -552,6 +562,10 @@ export function useDevicePage(options = {}) {
     if (!guardMutation('上报AI事件')) {
       return
     }
+    if (!canOperateDevice(row)) {
+      proxy.$modal.msgWarning('锁定或故障设备不能上报AI事件')
+      return
+    }
     currentDevice.value = row
     aiForm.value = createAiForm(row.deviceId)
     aiOpen.value = true
@@ -562,7 +576,7 @@ export function useDevicePage(options = {}) {
       return
     }
     aiEventDevice(aiForm.value).then(response => {
-      proxy.$modal.msgSuccess(response.msg || '模拟AI事件完成')
+      proxy.$modal.msgSuccess(response.msg || 'AI事件回写完成')
       aiOpen.value = false
       getList()
     })
@@ -631,6 +645,9 @@ export function useDevicePage(options = {}) {
     submitForm,
     handleDelete,
     handleExport,
+    canLockDevice,
+    canUnlockDevice,
+    canOperateDevice,
     handleLock,
     handleUnlock,
     openAuthorizeDialog,

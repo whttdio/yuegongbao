@@ -1,8 +1,28 @@
 <template>
   <view class="worker-page">
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">我的劳动合同</view>
+      <view class="worker-subtitle">查看劳动合同电子版、备案状态和到期提醒</view>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ rows.length }}</view>
+          <view class="hero-stat__label">合同数量</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ activeCount }}</view>
+          <view class="hero-stat__label">生效中</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ expiringCount }}</view>
+          <view class="hero-stat__label">即将到期</view>
+        </view>
+      </view>
+    </view>
+
     <view class="worker-card">
-      <view class="worker-title">我的劳动合同</view>
-      <view class="worker-subtitle">可查看本人劳动合同电子版、备案状态和到期提醒。</view>
+      <view class="section-head">
+        <view class="worker-title">合同列表</view>
+      </view>
       <view v-if="rows.length">
         <view v-for="item in rows" :key="item.contractId" class="list-row" @click="openDetail(item)">
           <view class="list-row__title">{{ item.title }}</view>
@@ -36,6 +56,8 @@ import { getLaborContractList, getUnionContracts } from '../../api/worker'
 
 const EXPECTED_LABOR_CONTRACT_CHAIN_PAGES = ['我的劳动合同', '劳动合同详情', '集体合同']
 const rows = ref([])
+const activeCount = computed(() => rows.value.filter((item) => String(item.contractStatusText || '').includes('生效')).length)
+const expiringCount = computed(() => rows.value.filter((item) => String(item.expireText || '').includes('即将')).length)
 const unionContracts = ref([])
 const laborContractLastLoadedAt = ref('')
 const laborContractLastActionAt = ref('')
@@ -143,33 +165,10 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.list-row {
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
 .list-row__meta {
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: #7890aa;
+  color: #607789;
 }
 
 .list-row__footer {
@@ -184,91 +183,7 @@ onShow(loadData)
   color: #d66b1f;
 }
 
-.worker-empty--panel {
-  padding: 24rpx 0;
-}
-
-.worker-empty__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.worker-empty__desc {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #7890aa;
-}
-
-.worker-empty__actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 22rpx;
-}
-
 .worker-empty__actions button {
   flex: 1;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
 }
 </style>

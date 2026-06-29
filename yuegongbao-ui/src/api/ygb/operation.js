@@ -68,6 +68,14 @@ export function getOperationJobReview(jobId) {
   })
 }
 
+export function reviewOperationJob(jobId, data) {
+  return request({
+    url: `/ygb/operation/jobReview/${jobId}/review`,
+    method: 'put',
+    data
+  })
+}
+
 export function listOperationResume(query) {
   return request({
     url: '/ygb/operation/resume/list',
@@ -80,5 +88,13 @@ export function getOperationResume(resumeId) {
   return request({
     url: `/ygb/operation/resume/${resumeId}`,
     method: 'get'
+  })
+}
+
+export function markOperationResume(resumeId, data) {
+  return request({
+    url: `/ygb/operation/resume/${resumeId}/mark`,
+    method: 'put',
+    data
   })
 }

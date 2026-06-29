@@ -59,7 +59,7 @@ public class YgbTaxCompareController extends BaseController
     public AjaxResult sync(@Validated @RequestBody YgbMonthScopeRequest request)
     {
         int rows = taxCompareService.syncTaxCompare(request.getStatMonth(), request.getEnterpriseId(), getUsername());
-        return success("税务模拟同步完成，本次处理 " + rows + " 条记录。");
+        return success("税务数据同步完成，本次处理 " + rows + " 条记录。");
     }
 
     @Log(title = "税务比对", businessType = BusinessType.OTHER)

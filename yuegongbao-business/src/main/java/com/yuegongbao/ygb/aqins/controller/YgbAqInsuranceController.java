@@ -76,7 +76,7 @@ public class YgbAqInsuranceController extends BaseController
     public AjaxResult sync(@Validated @RequestBody YgbMonthScopeRequest request)
     {
         int rows = aqInsuranceService.syncAqInsurance(request.getStatMonth(), request.getEnterpriseId(), getUsername());
-        return success("模拟同步完成，本次写入 " + rows + " 条安责险保单记录。");
+        return success("安责险保单数据同步完成，本次写入 " + rows + " 条记录。");
     }
 
     @PreAuthorize("@ss.hasPermi('ygb:aqInsuranceClaim:list')")

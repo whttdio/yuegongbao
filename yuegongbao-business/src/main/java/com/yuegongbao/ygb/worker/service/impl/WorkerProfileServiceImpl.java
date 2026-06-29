@@ -38,6 +38,7 @@ import com.yuegongbao.ygb.worker.domain.WorkerResume;
 import com.yuegongbao.ygb.worker.domain.WorkerSetting;
 import com.yuegongbao.ygb.worker.domain.WorkerUploadRecord;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerFeedbackCreateRequest;
+import com.yuegongbao.ygb.worker.domain.vo.WorkerMessageHandleRequest;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerPointExchangeRequest;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerPushRegisterRequest;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerPushTestRequest;
@@ -405,6 +406,43 @@ public class WorkerProfileServiceImpl implements WorkerProfileService
             throw new ServiceException("未找到反馈记录。");
         }
         return feedback;
+    }
+
+    @Override
+    public Map<String, Object> updateFeedbackHandle(Long feedbackId, WorkerMessageHandleRequest request, String operator)
+    {
+        if (request == null || StringUtils.isEmpty(request.getStatus()))
+        {
+            throw new ServiceException("反馈处理状态不能为空。");
+        }
+        String status = request.getStatus();
+        if (!"0".equals(status) && !"1".equals(status))
+        {
+            throw new ServiceException("反馈处理状态不支持。");
+        }
+        if ("1".equals(status) && StringUtils.isEmpty(request.getReplyContent()))
+        {
+            throw new ServiceException("标记已处理时必须填写处理意见。");
+        }
+        WorkerFeedback feedback = workerProfileMapper.selectWorkerFeedbackById(feedbackId);
+        if (feedback == null)
+        {
+            throw new ServiceException("未找到反馈记录。");
+        }
+
+        WorkerFeedback target = new WorkerFeedback();
+        target.setFeedbackId(feedbackId);
+        target.setStatus(status);
+        target.setRemark(buildFeedbackHandleRemark(status, request.getReplyContent()));
+        target.setUpdateBy(operator);
+        int rows = workerProfileMapper.updateWorkerFeedbackHandle(target);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("feedbackId", feedbackId);
+        result.put("status", status);
+        result.put("statusText", "1".equals(status) ? "已处理" : "待处理");
+        result.put("updated", rows > 0);
+        return result;
     }
 
     @Override
@@ -1481,6 +1519,13 @@ public class WorkerProfileServiceImpl implements WorkerProfileService
             }
         }
         return null;
+    }
+
+    private String buildFeedbackHandleRemark(String status, String replyContent)
+    {
+        String label = "1".equals(status) ? "已处理" : "重新打开";
+        String content = StringUtils.isEmpty(replyContent) ? "待继续跟进" : replyContent.trim();
+        return "反馈处理：" + label + "；" + content;
     }
 
     private String trimToEmpty(String value)

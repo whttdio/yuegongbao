@@ -1,8 +1,20 @@
 <template>
-  <view class="worker-page">
+  <view class="worker-page worker-page--tab">
+    <view class="profile-hero worker-card worker-hero">
+      <view class="profile-hero__main">
+        <view class="profile-hero__avatar">{{ avatarInitial }}</view>
+        <view class="profile-hero__info">
+          <view class="profile-hero__name">{{ profile.personNameMasked || profile.personName || '劳动者用户' }}</view>
+          <view class="profile-hero__enterprise">{{ profile.enterpriseName || '未绑定企业' }}</view>
+          <view v-if="profile.jobType" class="profile-hero__tag">{{ profile.jobType }}</view>
+        </view>
+      </view>
+    </view>
+
     <view class="worker-card">
-      <view class="worker-title">{{ profile.personNameMasked || profile.personName || '劳动者用户' }}</view>
-      <view class="worker-subtitle">{{ profile.enterpriseName || '未绑定企业' }}</view>
+      <view class="section-head">
+        <view class="worker-title worker-title--small">基本信息</view>
+      </view>
       <view class="profile-grid">
         <view class="profile-item">
           <view class="profile-item__label">手机号</view>
@@ -23,7 +35,7 @@
       </view>
     </view>
 
-    <view class="worker-card" @click="goSecurity">
+    <view class="worker-card worker-card--pressable" @click="goSecurity">
       <view class="section-head">
         <view class="worker-title">保险保障</view>
         <view class="worker-tag">查看详情</view>
@@ -68,7 +80,7 @@
         <view class="settings-row" @click="goUnion">工会服务</view>
         <view class="settings-row" @click="goHelp">帮助中心</view>
         <view class="settings-row" @click="goSettings">设置</view>
-        <view class="settings-row settings-row--danger" @click="logout">退出登录</view>
+        <view class="settings-row settings-row--danger settings-row--no-arrow" @click="logout">退出登录</view>
       </view>
     </view>
   </view>
@@ -93,6 +105,11 @@ const unreadNoticeText = computed(() => {
     return '99+'
   }
   return String(unreadNoticeCount.value || 0)
+})
+
+const avatarInitial = computed(() => {
+  const name = profile.personNameMasked || profile.personName || '劳'
+  return String(name).charAt(0)
 })
 const profileSummaryText = computed(() => {
   return `${profile.personNameMasked || profile.personName || '劳动者用户'} / ${profile.enterpriseName || '未绑定企业'} / ${profile.jobType || '-'}`
@@ -209,130 +226,48 @@ onShow(loadProfile)
 </script>
 
 <style lang="scss">
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-  margin-top: 24rpx;
+.profile-hero__main {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
 }
 
-.profile-item {
-  padding: 20rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
+.profile-hero__avatar {
+  flex-shrink: 0;
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  border: 3rpx solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  font-size: 44rpx;
+  font-weight: 750;
+  line-height: 108rpx;
+  text-align: center;
 }
 
-.profile-item__label {
-  font-size: 22rpx;
-  color: #7890aa;
+.profile-hero__name {
+  font-size: 38rpx;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
 }
 
-.profile-item__value {
-  margin-top: 10rpx;
-  font-size: 28rpx;
-  color: #16324f;
-  font-weight: 600;
-}
-
-.profile-item__value--small {
-  font-size: 22rpx;
+.profile-hero__enterprise {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.86);
   line-height: 1.5;
 }
 
-.settings-list {
-  margin-top: 18rpx;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.settings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-  font-size: 28rpx;
-  color: #16324f;
-}
-
-.settings-row:last-child {
-  border-bottom: none;
-}
-
-.settings-row--danger {
-  color: #dc3545;
-}
-
-.settings-row__tag,
-.worker-tag--notice {
-  color: #1f6fd6;
-  background: #eaf3ff;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
+.profile-hero__tag {
+  display: inline-flex;
+  margin-top: 14rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.95);
   font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
+  font-weight: 650;
 }
 </style>

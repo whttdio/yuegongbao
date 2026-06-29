@@ -1,5 +1,5 @@
 <template>
-  <view class="worker-page worker-page--tab">
+  <view class="worker-page worker-page--tab worker-page--screen">
     <view class="workbench-hero worker-card worker-hero">
       <view class="section-head">
         <view>

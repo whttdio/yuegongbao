@@ -2,15 +2,15 @@
   <div class="app-container ygb-page">
     <section class="gov-page-header ygb-page__header">
       <div>
-        <p class="ygb-page__eyebrow">主数据底座</p>
+        <p class="ygb-page__eyebrow">企业主数据</p>
         <h1 class="ygb-page__title">企业主数据办理台账</h1>
         <p class="ygb-page__desc">
-          统一维护派遣单位、用工单位和服务机构主数据，作为人员归属、合同备案、考勤汇聚、工资监管和社保税务联动的企业底座。
+          统一维护派遣单位、用工单位和服务机构主数据，作为人员归属、合同备案、考勤汇聚、工资监管和社保税务联动的企业依据。
           当前页面按“先看承接范围，再看同步状态，再进入维护动作”的方式重组，减少企业管理员在多个模块之间来回跳转。
         </p>
       </div>
       <div class="ygb-table-tip">
-        当前页面聚焦 PC 办理链路。后续对接市场监管、银行、社保等外部系统时，继续复用同一套企业主数据和同步状态，不拆后台表。
+        当前页面聚焦 PC 办理链路，优先核对企业归属、同步状态和联系人信息，确保后续跨部门协同口径一致。
       </div>
     </section>
 
@@ -329,7 +329,7 @@ const fallbackPortalExplanations = computed(() => ([
     dimensionName: '派遣单位覆盖',
     currentValue: summaryData.value.dispatchCount != null ? summaryData.value.dispatchCount : 0,
     targetValue: '持续完整',
-    summary: '先核对派遣单位底座，再进入人员归属、合同备案和考勤归集链路，避免办理口径失真。',
+    summary: '先核对派遣单位主体信息，再进入人员归属、合同备案和考勤归集链路，避免办理口径失真。',
     evidenceModule: 'enterprise',
     recommendModule: 'enterprise',
     defaultQuery: buildEnterpriseExplanationQuery({ enterpriseType: '1' }),
@@ -341,7 +341,7 @@ const fallbackPortalExplanations = computed(() => ([
     dimensionName: '用工单位覆盖',
     currentValue: summaryData.value.employerCount != null ? summaryData.value.employerCount : 0,
     targetValue: '持续完整',
-    summary: '用工单位底座会直接影响人员在岗、工资发放和社保税务比对，需优先保证口径稳定。',
+    summary: '用工单位信息会直接影响人员在岗、工资发放和社保税务比对，需优先保证口径稳定。',
     evidenceModule: 'enterprise',
     recommendModule: 'enterprise',
     defaultQuery: buildEnterpriseExplanationQuery({ enterpriseType: '2' }),
@@ -353,7 +353,7 @@ const fallbackPortalExplanations = computed(() => ([
     dimensionName: '同步异常',
     currentValue: summaryData.value.syncErrorCount != null ? summaryData.value.syncErrorCount : 0,
     targetValue: '0',
-    summary: '同步异常会阻断企业底座向后续办理模块传递，应优先回到企业台账补齐同步状态。',
+    summary: '同步异常会阻断企业信息向后续办理模块传递，应优先回到企业台账补齐同步状态。',
     evidenceModule: 'enterprise',
     recommendModule: 'enterprise',
     defaultQuery: buildEnterpriseExplanationQuery({ syncStatus: '2' }),
@@ -555,12 +555,12 @@ const workbenchLinks = computed(() => buildEnterpriseWorkbenchLinks({
   portalCode: 'ygb'
 }))
 const submoduleEntries = [
-  { key: 'regulator', title: '监管单位', desc: '从企业主表筛出监管单位并继续维护主数据。', path: '/ygb-foundation/enterpriseRegulator', kind: 'category', enterpriseType: '4' },
-  { key: 'dispatch', title: '劳务派遣公司', desc: '聚焦派遣主体，继续承接人员归属和合同链路。', path: '/ygb-foundation/enterpriseDispatch', kind: 'category', enterpriseType: '1' },
-  { key: 'employer', title: '用工单位', desc: '聚焦用工主体，继续承接考勤、工资和联动治理。', path: '/ygb-foundation/enterpriseEmployer', kind: 'category', enterpriseType: '2' },
-  { key: 'highRisk', title: '高危企业库', desc: '维护高危企业标识、风险来源和闭环状态。', path: '/ygb-foundation/enterpriseHighRisk', kind: 'record' },
-  { key: 'relation', title: '派遣用工关联', desc: '维护派遣单位与用工单位关系及回写状态。', path: '/ygb-foundation/enterpriseRelation', kind: 'record' },
-  { key: 'union', title: '工会管理', desc: '维护企业工会组织和协同信息。', path: '/ygb-foundation/enterpriseUnion', kind: 'record' }
+  { key: 'regulator', title: '监管单位', desc: '从企业主表筛出监管单位并继续维护主数据。', path: '/enterprise-management/regulator', kind: 'category', enterpriseType: '4' },
+  { key: 'dispatch', title: '劳务派遣公司', desc: '聚焦派遣主体，继续承接人员归属和合同链路。', path: '/enterprise-management/dispatch', kind: 'category', enterpriseType: '1' },
+  { key: 'employer', title: '用工单位', desc: '聚焦用工主体，继续承接考勤、工资和联动治理。', path: '/enterprise-management/employer', kind: 'category', enterpriseType: '2' },
+  { key: 'highRisk', title: '高危企业库', desc: '维护高危企业标识、风险来源和闭环状态。', path: '/enterprise-management/highRisk', kind: 'record' },
+  { key: 'relation', title: '派遣用工关联', desc: '维护派遣单位与用工单位关系及回写状态。', path: '/enterprise-management/relation', kind: 'record' },
+  { key: 'union', title: '工会管理', desc: '维护企业工会组织和协同信息。', path: '/enterprise-management/union', kind: 'record' }
 ]
 
 function resetQuery() {
@@ -580,8 +580,8 @@ function resetQuery() {
 
 watchEffect(() => {
   setPageGuide({
-    title: '?????????' || '?????????',
-    description: '???????????????????????' || '???????????????????????',
+    title: '单位管理',
+    description: '维护监管单位、派遣单位、用工单位和平台企业基础信息，支撑企业合规档案管理。',
     portalExplanation: portalExplanationItems.value,
     focus: [],
     selection: selectedEnterpriseOverview.value,

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -27,6 +27,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="clauseCheckStatus" column="clause_check_status" />
         <result property="blockchainHash" column="blockchain_hash" />
         <result property="contractFileUrl" column="contract_file_url" />
+        <result property="daysToExpire" column="days_to_expire" />
+        <result property="expiryLevel" column="expiry_level" />
+        <result property="lastRemindTime" column="last_remind_time" />
+        <result property="remindStatus" column="remind_status" />
+        <result property="riskReason" column="risk_reason" />
+        <result property="warningId" column="warning_id" />
+        <result property="warningStatus" column="warning_status" />
         <result property="createBy" column="create_by" />
         <result property="createTime" column="create_time" />
         <result property="updateBy" column="update_by" />
@@ -67,6 +74,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="personName != null and personName != ''">
                 and c.person_name like concat('%', #{personName}, '%')
             </if>
+            <if test="personKeyword != null and personKeyword != ''">
+                and (c.person_name like concat('%', #{personKeyword}, '%') or c.id_card like concat('%', #{personKeyword}, '%'))
+            </if>
+            <if test="enterpriseKeyword != null and enterpriseKeyword != ''">
+                and (de.enterprise_name like concat('%', #{enterpriseKeyword}, '%') or ee.enterprise_name like concat('%', #{enterpriseKeyword}, '%'))
+            </if>
             <if test="contractType != null and contractType != ''">
                 and c.contract_type = #{contractType}
             </if>
@@ -79,12 +92,145 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="clauseCheckStatus != null and clauseCheckStatus != ''">
                 and c.clause_check_status = #{clauseCheckStatus}
             </if>
+            <if test="hasBlockchain != null and hasBlockchain == '1'">
+                and c.blockchain_hash is not null and c.blockchain_hash != ''
+            </if>
+            <if test="hasBlockchain != null and hasBlockchain == '0'">
+                and (c.blockchain_hash is null or c.blockchain_hash = '')
+            </if>
+            <if test="filingStatusGroup != null and filingStatusGroup == 'unfiled'">
+                and (c.contract_status in ('0', '1') or c.filing_no is null or c.filing_no = '' or c.filing_time is null)
+            </if>
+            <if test="filingStatusGroup != null and filingStatusGroup == 'filed'">
+                and c.contract_status = '2' and c.filing_no is not null and c.filing_no != '' and c.filing_time is not null
+            </if>
+            <if test="signDateBegin != null">
+                and c.sign_date &gt;= #{signDateBegin}
+            </if>
+            <if test="signDateEnd != null">
+                and c.sign_date &lt;= #{signDateEnd}
+            </if>
+            <if test="endDateBegin != null">
+                and c.end_date &gt;= #{endDateBegin}
+            </if>
+            <if test="endDateEnd != null">
+                and c.end_date &lt;= #{endDateEnd}
+            </if>
             <if test="regionCode != null and regionCode != ''">
                 and c.region_code like concat(#{regionCode}, '%')
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
         </where>
         order by c.create_time desc, c.contract_id desc
+    </select>
+
+    <select id="selectContractExpiryList" parameterType="YgbContract" resultMap="YgbContractResult">
+        select base.*,
+               timestampdiff(day, curdate(), base.end_date) as days_to_expire,
+               case
+                   when base.end_date &lt; curdate() then 'expired'
+                   when timestampdiff(day, curdate(), base.end_date) &lt;= 7 then 'urgent'
+                   else 'soon'
+               end as expiry_level,
+               log.last_remind_time,
+               case when log.last_remind_time is null then 'none' else 'reminded' end as remind_status
+        from (
+            <include refid="selectContractVo" />
+            <where>
+                c.del_flag = '0'
+                and c.end_date is not null
+                and c.contract_status not in ('4', '5')
+                <if test="endDateBegin != null">
+                    and c.end_date &gt;= #{endDateBegin}
+                </if>
+                <if test="endDateEnd != null">
+                    and c.end_date &lt;= #{endDateEnd}
+                </if>
+                <if test="endDateBegin == null and endDateEnd == null">
+                    and c.end_date between curdate() and date_add(curdate(), interval 30 day)
+                </if>
+                <if test="contractNo != null and contractNo != ''">
+                    and c.contract_no like concat('%', #{contractNo}, '%')
+                </if>
+                <if test="dispatchEnterpriseId != null">
+                    and c.dispatch_enterprise_id = #{dispatchEnterpriseId}
+                </if>
+                <if test="employerEnterpriseId != null">
+                    and c.employer_enterprise_id = #{employerEnterpriseId}
+                </if>
+                <if test="contractType != null and contractType != ''">
+                    and c.contract_type = #{contractType}
+                </if>
+                <if test="personKeyword != null and personKeyword != ''">
+                    and (c.person_name like concat('%', #{personKeyword}, '%') or c.id_card like concat('%', #{personKeyword}, '%'))
+                </if>
+                <if test="enterpriseKeyword != null and enterpriseKeyword != ''">
+                    and (de.enterprise_name like concat('%', #{enterpriseKeyword}, '%') or ee.enterprise_name like concat('%', #{enterpriseKeyword}, '%'))
+                </if>
+                <if test="regionCode != null and regionCode != ''">
+                    and c.region_code like concat(#{regionCode}, '%')
+                </if>
+                ${params.regionDataScope}
+                ${params.enterpriseDataScope}
+            </where>
+        ) base
+        left join (
+            select contract_id, max(action_time) as last_remind_time
+            from t_contract_action_log
+            where action_type = 'expiry_remind'
+            group by contract_id
+        ) log on base.contract_id = log.contract_id
+        order by base.end_date asc, base.contract_id desc
+    </select>
+
+    <select id="selectContractUnfiledList" parameterType="YgbContract" resultMap="YgbContractResult">
+        select base.*,
+               trim(both '；' from concat(
+                   case when base.contract_status in ('0', '1') then '合同未完成备案；' else '' end,
+                   case when base.filing_no is null or base.filing_no = '' then '缺少备案编号；' else '' end,
+                   case when base.filing_time is null then '缺少备案时间；' else '' end
+               )) as risk_reason,
+               w.warn_id as warning_id,
+               w.warn_status as warning_status
+        from (
+            <include refid="selectContractVo" />
+            <where>
+                c.del_flag = '0'
+                and (c.contract_status in ('0', '1') or c.filing_no is null or c.filing_no = '' or c.filing_time is null)
+                <if test="contractNo != null and contractNo != ''">
+                    and c.contract_no like concat('%', #{contractNo}, '%')
+                </if>
+                <if test="dispatchEnterpriseId != null">
+                    and c.dispatch_enterprise_id = #{dispatchEnterpriseId}
+                </if>
+                <if test="employerEnterpriseId != null">
+                    and c.employer_enterprise_id = #{employerEnterpriseId}
+                </if>
+                <if test="contractType != null and contractType != ''">
+                    and c.contract_type = #{contractType}
+                </if>
+                <if test="contractStatus != null and contractStatus != ''">
+                    and c.contract_status = #{contractStatus}
+                </if>
+                <if test="personKeyword != null and personKeyword != ''">
+                    and (c.person_name like concat('%', #{personKeyword}, '%') or c.id_card like concat('%', #{personKeyword}, '%'))
+                </if>
+                <if test="enterpriseKeyword != null and enterpriseKeyword != ''">
+                    and (de.enterprise_name like concat('%', #{enterpriseKeyword}, '%') or ee.enterprise_name like concat('%', #{enterpriseKeyword}, '%'))
+                </if>
+                <if test="regionCode != null and regionCode != ''">
+                    and c.region_code like concat(#{regionCode}, '%')
+                </if>
+                ${params.regionDataScope}
+                ${params.enterpriseDataScope}
+            </where>
+        ) base
+        left join t_warning w on w.source_module = 'CONTRACT'
+            and w.warn_type = 'UNFILED_CONTRACT'
+            and w.target_object_id = base.contract_id
+            and w.warn_status in ('0', '1', '4')
+        order by base.create_time desc, base.contract_id desc
     </select>
 
     <select id="selectContractOptions" resultMap="YgbContractResult">

@@ -60,6 +60,6 @@ public class YgbNewformWorkerController extends BaseController
     {
         int rows = newformWorkerService.syncNewformWorker(request.getStatMonth(), request.getEnterpriseId(),
             getUsername());
-        return success("新业态平台模拟同步完成，本次处理 " + rows + " 条记录。");
+        return success("新业态平台数据同步完成，本次处理 " + rows + " 条记录。");
     }
 }

@@ -1,30 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  getOccupationPrevention,
-  getOccupationPreventionSummary,
-  listOccupationPrevention
-} from '@/api/ygb/occupationMonitor'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const config = {
+const config = createBusinessRecordPageConfig({
+  module: 'occupationPrevention',
   title: '职业病预防项目',
-  description: '以只读台账方式承接职业病预防项目、专题任务和项目归档。',
-  permPrefix: 'ygb:occupationPrevention',
-  filePrefix: 'occupation_prevention',
-  defaultCategoryCode: 'prevention',
-  defaultSourceLabel: '职业病监管',
-  recordNameLabel: '项目名称',
-  recordNamePlaceholder: '请输入项目名称',
-  filters: ['statMonth', 'regionCode', 'industryType', 'warningLevel', 'recordName', 'workflowStatus', 'status'],
-  routeQueryFields: ['statMonth', 'regionCode', 'industryType', 'warningLevel'],
-  readOnly: true,
-  listApi: query => listOccupationPrevention(query),
-  summaryApi: query => getOccupationPreventionSummary(query),
-  detailApi: id => getOccupationPrevention(id),
-  exportUrl: 'ygb/occupation/prevention/export'
-}
+  description: '围绕职业病预防项目申报、验收和跟踪开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '预防项目',
+  businessNamePlaceholder: '请输入预防项目',
+  defaultSourceLabel: '职业病预防项目',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

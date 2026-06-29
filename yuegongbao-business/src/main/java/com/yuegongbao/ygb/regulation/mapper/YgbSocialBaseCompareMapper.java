@@ -1,7 +1,6 @@
 package com.yuegongbao.ygb.regulation.mapper;
 
 import java.util.List;
-import org.apache.ibatis.annotations.Param;
 import com.yuegongbao.ygb.regulation.domain.YgbSocialBaseCompare;
 
 public interface YgbSocialBaseCompareMapper
@@ -10,5 +9,5 @@ public interface YgbSocialBaseCompareMapper
 
     public int insertSocialBaseCompare(YgbSocialBaseCompare socialBaseCompare);
 
-    public int deleteByScope(@Param("statMonth") String statMonth, @Param("enterpriseId") Long enterpriseId);
+    public int deleteByScope(YgbSocialBaseCompare socialBaseCompare);
 }

@@ -120,25 +120,39 @@ export const dynamicRoutes = [
         path: 'complaint',
         component: () => import('@/views/ygb/workerComplaint/index.vue'),
         name: 'YgbWorkerComplaint',
-        meta: { title: '劳动者投诉管理' }
+        meta: { title: '劳动者投诉管理', activeMenu: '/operation/workerComplaint' }
       },
       {
         path: 'legal-consult',
         component: () => import('@/views/ygb/workerLegalConsult/index.vue'),
         name: 'YgbWorkerLegalConsult',
-        meta: { title: '劳动者法律咨询管理' }
+        meta: { title: '劳动者法律咨询管理', activeMenu: '/operation/workerLegalConsult' }
       },
       {
         path: 'feedback',
         component: () => import('@/views/ygb/workerFeedback/index.vue'),
         name: 'YgbWorkerFeedback',
-        meta: { title: '劳动者反馈管理' }
+        meta: { title: '劳动者反馈管理', activeMenu: '/operation/workerFeedback' }
       },
       {
         path: 'upload-record',
         component: () => import('@/views/ygb/workerUploadRecord/index.vue'),
         name: 'YgbWorkerUploadRecord',
-        meta: { title: '劳动者上传归档管理' }
+        meta: { title: '劳动者上传归档管理', activeMenu: '/operation/workerUploadRecord' }
+      }
+    ]
+  },
+  {
+    path: '/citizen-service',
+    component: Layout,
+    hidden: true,
+    permissions: ['ygb:citizenService:list', 'ygb:portalContent:list'],
+    children: [
+      {
+        path: 'overview',
+        component: () => import('@/views/ygb/citizenService/overview/index.vue'),
+        name: 'YgbCitizenServiceOverview',
+        meta: { title: '便民服务总览', activeMenu: '/citizen-service/warmMap' }
       }
     ]
   },
@@ -152,7 +166,7 @@ export const dynamicRoutes = [
         path: 'index',
         component: () => import('@/views/ygb/workerActivity/index.vue'),
         name: 'YgbWorkerActivity',
-        meta: { title: '劳动者活动管理' }
+        meta: { title: '劳动者活动管理', activeMenu: '/operation/workerActivity' }
       }
     ]
   },

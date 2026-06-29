@@ -7,10 +7,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import com.yuegongbao.common.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -181,7 +183,7 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
     @Override
     public YgbCockpitIndicator getIndicators(String regionCode, String statDate)
     {
-        String dashboardRegion = regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
+        String dashboardRegion = resolveDashboardRegion(regionCode);
         String regionPrefix = YgbRegionHelper.toRegionPrefix(dashboardRegion);
         String queryDate = normalizeDate(statDate);
         YgbCockpitSnapshot snapshot = cockpitMapper.selectLatestSnapshot(dashboardRegion, queryDate);
@@ -222,7 +224,7 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
     @Override
     public List<YgbCockpitSnapshot> listTrend(String regionCode, String statDate, Integer days)
     {
-        String dashboardRegion = regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
+        String dashboardRegion = resolveDashboardRegion(regionCode);
         String queryDate = normalizeDate(statDate);
         int actualDays = (days == null || days < 3) ? 7 : Math.min(days, 31);
         LocalDate endDate = LocalDate.parse(queryDate, DATE_FORMATTER);
@@ -234,7 +236,7 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
     @Override
     public List<YgbCockpitDistribution> listWarningDistribution(String regionCode, String statMonth)
     {
-        String dashboardRegion = regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
+        String dashboardRegion = resolveDashboardRegion(regionCode);
         String regionPrefix = YgbRegionHelper.toRegionPrefix(dashboardRegion);
         String queryMonth = normalizeMonth(statMonth);
         List<YgbCockpitDistribution> list = cockpitMapper.selectWarningDistribution(regionPrefix, queryMonth);
@@ -264,21 +266,23 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
     @Override
     public YgbGeoJsonFeatureCollection getMapFeatures(String regionCode, String statDate)
     {
-        String dashboardRegion = regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
+        String dashboardRegion = resolveDashboardRegion(regionCode);
         String regionPrefix = YgbRegionHelper.toRegionPrefix(dashboardRegion);
         String queryDate = normalizeOptionalDate(statDate);
         List<YgbCockpitMapFeature> list = cockpitMapper.selectMapFeatureList(regionPrefix, queryDate);
 
         YgbGeoJsonFeatureCollection collection = new YgbGeoJsonFeatureCollection();
         collection.setStatDate(StringUtils.isEmpty(queryDate) ? normalizeDate(null) : queryDate);
-        collection.setFeatures(buildGeoJsonFeatures(list));
+        List<Map<String, Object>> features = buildGeoJsonFeatures(list);
+        enrichEnterpriseMapProperties(features, dashboardRegion, normalizeMonth(null));
+        collection.setFeatures(features);
         return collection;
     }
 
     @Override
     public YgbWorkbenchDashboard getYgbDashboard(String regionCode, String statDate, String statMonth, Integer days)
     {
-        String dashboardRegion = regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
+        String dashboardRegion = resolveDashboardRegion(regionCode);
         String queryDate = normalizeDate(statDate);
         String queryMonth = normalizeMonth(statMonth);
 
@@ -315,6 +319,8 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
         dashboard.setStatReportSummary(statReportService.selectStatReportSummary(buildStatReportQuery(dashboardRegion, queryMonth)));
         dashboard.setEnterpriseSummary(enterpriseService.selectEnterpriseSummary(buildEnterpriseQuery(dashboardRegion)));
         dashboard.setPersonSummary(personService.selectPersonSummary(buildPersonQuery(dashboardRegion)));
+        dashboard.setCreditScoreSummary(creditScoreService.selectCreditScoreSummary(buildCreditScoreQuery(dashboardRegion, queryMonth)));
+        dashboard.setCreditRanking(listTopRiskCreditScores(dashboardRegion, queryMonth));
         dashboard.setDefaultQuery(buildPortalDefaultQuery(dashboardRegion, queryDate, queryMonth));
         dashboard.setSourceLabel("ygb-home");
         dashboard.setSourceDescription("首页办理聚合");
@@ -345,7 +351,7 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
     @Override
     public YgbAzbCockpitDashboard getAzbDashboard(String regionCode, String statDate, String statMonth, Integer days)
     {
-        String dashboardRegion = regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
+        String dashboardRegion = resolveDashboardRegion(regionCode);
         String queryDate = normalizeDate(statDate);
         String queryMonth = normalizeMonth(statMonth);
         String roleView = resolveAzbRoleView();
@@ -361,6 +367,7 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
         dashboard.setAqInsuranceSummary(aqInsuranceService.selectAqInsuranceSummary(buildAqInsuranceQuery(dashboardRegion, queryMonth)));
         dashboard.setPreventionFundSummary(preventionFundService.selectPreventionFundSummary(buildPreventionFundQuery(dashboardRegion, queryMonth)));
         dashboard.setCreditScoreSummary(creditScoreService.selectCreditScoreSummary(buildCreditScoreQuery(dashboardRegion, queryMonth)));
+        dashboard.setCreditRanking(listTopRiskCreditScores(dashboardRegion, queryMonth));
         dashboard.setWarningSummary(warningService.selectWarningSummary(buildWarningQuery(dashboardRegion)));
         dashboard.setHeightWorkReportSummary(heightWorkReportService.selectHeightWorkReportSummary(buildHeightWorkReportQuery(dashboardRegion, queryDate)));
         dashboard.setDeviceSummary(deviceService.selectDeviceSummary(buildDeviceQuery(dashboardRegion)));
@@ -1757,6 +1764,131 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
         return features;
     }
 
+    private List<YgbCreditScore> listTopRiskCreditScores(String regionCode, String statMonth)
+    {
+        List<YgbCreditScore> list = creditScoreService.selectCreditScoreList(buildCreditScoreQuery(regionCode, statMonth));
+        if (list == null || list.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        return list.stream()
+            .sorted(Comparator.comparing(YgbCreditScore::getTotalScore, Comparator.nullsLast(Comparator.naturalOrder())))
+            .limit(10)
+            .collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichEnterpriseMapProperties(List<Map<String, Object>> features, String regionCode, String statMonth)
+    {
+        if (features == null || features.isEmpty())
+        {
+            return;
+        }
+        List<YgbCreditScore> scores = creditScoreService.selectCreditScoreList(buildCreditScoreQuery(regionCode, statMonth));
+        Map<Long, YgbCreditScore> byEnterpriseId = new HashMap<>();
+        Map<String, YgbCreditScore> byEnterpriseName = new HashMap<>();
+        if (scores != null)
+        {
+            for (YgbCreditScore score : scores)
+            {
+                if (score.getEnterpriseId() != null)
+                {
+                    byEnterpriseId.put(score.getEnterpriseId(), score);
+                }
+                if (StringUtils.isNotEmpty(score.getEnterpriseName()))
+                {
+                    byEnterpriseName.put(score.getEnterpriseName(), score);
+                }
+            }
+        }
+        for (Map<String, Object> feature : features)
+        {
+            Object propertiesObject = feature.get("properties");
+            if (!(propertiesObject instanceof Map))
+            {
+                continue;
+            }
+            Map<String, Object> properties = (Map<String, Object>) propertiesObject;
+            if (!"ENTERPRISE".equals(String.valueOf(properties.get("featureType"))))
+            {
+                continue;
+            }
+            YgbCreditScore score = resolveCreditScoreForFeature(properties, byEnterpriseId, byEnterpriseName);
+            if (score == null)
+            {
+                continue;
+            }
+            properties.putIfAbsent("enterpriseId", score.getEnterpriseId());
+            properties.putIfAbsent("colorCode", score.getColorCode());
+            properties.putIfAbsent("riskLevel", score.getColorCode());
+            properties.putIfAbsent("insuranceRate", score.getSocialTaxScore());
+            properties.putIfAbsent("codeRate", score.getGovernanceScore());
+            properties.putIfAbsent("accidentRate", score.getSafetyScore());
+            properties.putIfAbsent("violationCount", resolveViolationCount(score));
+            properties.putIfAbsent("warningStatus", score.getWarningStatus());
+            properties.putIfAbsent("warningStatusText",
+                "1".equals(String.valueOf(score.getWarningStatus())) ? "预警中" : "正常");
+            if (!properties.containsKey("deviceCount"))
+            {
+                properties.put("deviceCount", 0);
+            }
+        }
+    }
+
+    private YgbCreditScore resolveCreditScoreForFeature(Map<String, Object> properties,
+        Map<Long, YgbCreditScore> byEnterpriseId, Map<String, YgbCreditScore> byEnterpriseName)
+    {
+        Object enterpriseId = properties.get("enterpriseId");
+        if (enterpriseId != null)
+        {
+            try
+            {
+                YgbCreditScore score = byEnterpriseId.get(Long.valueOf(String.valueOf(enterpriseId)));
+                if (score != null)
+                {
+                    return score;
+                }
+            }
+            catch (NumberFormatException ignored)
+            {
+            }
+        }
+        Object featureName = properties.get("featureName");
+        if (featureName != null)
+        {
+            return byEnterpriseName.get(String.valueOf(featureName));
+        }
+        return null;
+    }
+
+    private Integer resolveViolationCount(YgbCreditScore score)
+    {
+        if (score == null || StringUtils.isEmpty(score.getFactorJson()))
+        {
+            return 0;
+        }
+        try
+        {
+            Map<String, Object> factors = OBJECT_MAPPER.readValue(score.getFactorJson(),
+                new TypeReference<Map<String, Object>>()
+                {
+                });
+            Object governance = factors.get("governance");
+            if (governance instanceof Map)
+            {
+                Object count = ((Map<String, Object>) governance).get("numerator");
+                if (count instanceof Number)
+                {
+                    return ((Number) count).intValue();
+                }
+            }
+        }
+        catch (Exception ignored)
+        {
+        }
+        return 0;
+    }
+
     private Object readJsonValue(String json)
     {
         if (StringUtils.isEmpty(json))
@@ -1832,6 +1964,15 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
     private Integer defaultNumber(Integer value)
     {
         return value == null ? 0 : value;
+    }
+
+    private String resolveDashboardRegion(String regionCode)
+    {
+        if (regionScopeHelper == null)
+        {
+            return YgbRegionHelper.defaultDashboardRegion(regionCode);
+        }
+        return regionScopeHelper.resolveAuthorizedRegionCode(regionCode);
     }
 
     private BigDecimal defaultDecimal(BigDecimal value)

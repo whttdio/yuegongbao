@@ -222,6 +222,34 @@ export function getNormalPath(p) {
   return res
 }
 
+/** 解析菜单路由参数，兼容 JSON 与 URL 查询串两种格式 */
+export function parseMenuQuery(query) {
+  if (!query) {
+    return {}
+  }
+  if (typeof query === 'object') {
+    return query
+  }
+  const trimmed = String(query).trim()
+  if (!trimmed) {
+    return {}
+  }
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      return JSON.parse(trimmed)
+    } catch {
+      return {}
+    }
+  }
+  return trimmed.split('&').reduce((acc, pair) => {
+    const [key, ...rest] = pair.split('=')
+    if (key) {
+      acc[decodeURIComponent(key)] = decodeURIComponent(rest.join('=') || '')
+    }
+    return acc
+  }, {})
+}
+
 // 验证是否为blob格式
 export function blobValidate(data) {
   return data.type !== 'application/json'

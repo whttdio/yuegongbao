@@ -11,12 +11,16 @@ import com.yuegongbao.ygb.aireport.domain.YgbAiReportSubscriptionSummary;
 import com.yuegongbao.ygb.aireport.mapper.YgbAiReportSubscriptionMapper;
 import com.yuegongbao.ygb.aireport.service.IYgbAiReportSubscriptionService;
 import com.yuegongbao.ygb.util.YgbRegionHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 
 @Service
 public class YgbAiReportSubscriptionServiceImpl implements IYgbAiReportSubscriptionService
 {
     @Autowired
     private YgbAiReportSubscriptionMapper aiReportSubscriptionMapper;
+
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
 
     @Override
     public List<YgbAiReportSubscription> selectAiReportSubscriptionList(YgbAiReportSubscription subscription)
@@ -64,6 +68,7 @@ public class YgbAiReportSubscriptionServiceImpl implements IYgbAiReportSubscript
         YgbAiReportSubscription subscription = aiReportSubscriptionMapper.selectAiReportSubscriptionById(subscriptionId);
         if (subscription != null)
         {
+            regionScopeHelper.assertEntityRegionAllowed(subscription);
             hydrateRegionName(subscription);
         }
         return subscription;
@@ -87,6 +92,7 @@ public class YgbAiReportSubscriptionServiceImpl implements IYgbAiReportSubscript
         {
             throw new ServiceException("Subscription ID cannot be empty");
         }
+        requireAiReportSubscriptionAllowed(subscription.getSubscriptionId());
         fillDefaults(subscription);
         subscription.setUpdateBy(operator);
         subscription.setUpdateTime(new Date());
@@ -96,7 +102,26 @@ public class YgbAiReportSubscriptionServiceImpl implements IYgbAiReportSubscript
     @Override
     public int deleteAiReportSubscriptionByIds(Long[] subscriptionIds, String operator)
     {
+        for (Long subscriptionId : subscriptionIds)
+        {
+            requireAiReportSubscriptionAllowed(subscriptionId);
+        }
         return aiReportSubscriptionMapper.deleteAiReportSubscriptionByIds(subscriptionIds, operator);
+    }
+
+    private YgbAiReportSubscription requireAiReportSubscriptionAllowed(Long subscriptionId)
+    {
+        if (subscriptionId == null)
+        {
+            throw new ServiceException("Subscription ID cannot be empty");
+        }
+        YgbAiReportSubscription subscription = aiReportSubscriptionMapper.selectAiReportSubscriptionById(subscriptionId);
+        if (subscription == null)
+        {
+            throw new ServiceException("AI report subscription does not exist");
+        }
+        regionScopeHelper.assertEntityRegionAllowed(subscription);
+        return subscription;
     }
 
     private void fillDefaults(YgbAiReportSubscription subscription)

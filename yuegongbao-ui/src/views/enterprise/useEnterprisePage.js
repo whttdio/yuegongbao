@@ -1,5 +1,6 @@
 import { getCurrentInstance, reactive, ref, toRefs } from 'vue'
 import { addEnterprise, delEnterprise, getEnterprise, getEnterpriseSummary, listEnterprise, updateEnterprise } from '@/api/ygb/enterprise'
+import { formatRegionName, gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
 export const enterpriseTypeOptions = [
   { label: '派遣单位', value: '1' },
@@ -14,25 +15,9 @@ export const syncStatusOptions = [
   { label: '同步异常', value: '2' }
 ]
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440100': '广州市',
-  '440106': '广州市天河区',
-  '440300': '深圳市',
-  '440305': '深圳市南山区',
-  '440600': '佛山市',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
-export const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市', value: '440100' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市', value: '440300' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市', value: '440600' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const regionOptions = gdRegionOptions
 
 function createDefaultQueryParams() {
   return {
@@ -80,12 +65,7 @@ export function optionLabel(options, value, fallback = '-') {
   return matched ? matched.label : fallback
 }
 
-export function formatRegionName(code, fallback = '全部区域') {
-  if (!code) {
-    return fallback
-  }
-  return regionNameMap[code] || code
-}
+export { formatRegionName } from '@/utils/regionName'
 
 export function useEnterprisePage(options = {}) {
   const {

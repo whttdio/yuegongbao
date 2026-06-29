@@ -60,6 +60,15 @@ public interface YgbStatReportMapper
     List<YgbStatReportItem> selectCustomItems(@Param("statMonth") String statMonth,
         @Param("regionPrefix") String regionPrefix);
 
+    List<YgbStatReportItem> selectDeviceStatsItems(@Param("statMonth") String statMonth,
+        @Param("regionPrefix") String regionPrefix);
+
+    List<YgbStatReportItem> selectExpansionReductionItems(@Param("statMonth") String statMonth,
+        @Param("regionPrefix") String regionPrefix);
+
+    List<YgbStatReportItem> selectSpecialRectificationItems(@Param("statMonth") String statMonth,
+        @Param("regionPrefix") String regionPrefix);
+
     Integer countSocialCompareTotal(@Param("statMonth") String statMonth, @Param("regionPrefix") String regionPrefix);
 
     Integer countSocialCompareAbnormal(@Param("statMonth") String statMonth,

@@ -71,6 +71,18 @@ public class YgbAiReportController extends BaseController
     @PostMapping("/export")
     public void export(HttpServletResponse response, YgbAiReport report)
     {
+        exportReport(response, report);
+    }
+
+    @PreAuthorize("@ss.hasPermi('ygb:aiReport:export')")
+    @GetMapping("/download")
+    public void download(HttpServletResponse response, YgbAiReport report)
+    {
+        exportReport(response, report);
+    }
+
+    private void exportReport(HttpServletResponse response, YgbAiReport report)
+    {
         List<YgbAiReport> list = aiReportService.selectAiReportList(report);
         ExcelUtil<YgbAiReport> util = new ExcelUtil<>(YgbAiReport.class);
         util.exportExcel(response, list, "AI监测报告");

@@ -10,8 +10,8 @@ const viewCode = 'CHIP'
 const config = {
   title: '芯片设备',
   eyebrow: '设备子视图',
-  description: '从统一设备底表拆出芯片设备视图，聚焦芯片、物联卡和授权状态。',
-  tip: '不拆设备主表，直接通过 viewCode=CHIP 过滤设备类型。',
+  description: '聚焦芯片设备、物联卡和授权状态。',
+  tip: '聚焦芯片设备的授权、安装、在线和运维办理状态。',
   permPrefix: 'ygb:device',
   filePrefix: 'device_chip',
   defaultQueryParams: { deviceType: '2' },

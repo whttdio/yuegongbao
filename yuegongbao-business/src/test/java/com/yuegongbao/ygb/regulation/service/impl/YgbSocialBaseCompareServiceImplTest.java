@@ -15,6 +15,8 @@ import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
 import com.yuegongbao.ygb.compliance.mapper.YgbSalaryDetailMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbSocialBaseCompareMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbSocialPaymentMapper;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -41,6 +43,12 @@ class YgbSocialBaseCompareServiceImplTest
     @Mock
     private IYgbWarningService warningService;
 
+    @Mock
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Mock
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
     @InjectMocks
     private YgbSocialBaseCompareServiceImpl service;
 
@@ -59,7 +67,10 @@ class YgbSocialBaseCompareServiceImplTest
         int rows = service.compare("2026-05", 10L, "tester");
 
         assertEquals(2, rows);
-        verify(socialBaseCompareMapper).deleteByScope("2026-05", 10L);
+        ArgumentCaptor<YgbSocialBaseCompare> deleteScopeCaptor = ArgumentCaptor.forClass(YgbSocialBaseCompare.class);
+        verify(socialBaseCompareMapper).deleteByScope(deleteScopeCaptor.capture());
+        assertEquals("2026-05", deleteScopeCaptor.getValue().getStatMonth());
+        assertEquals(Long.valueOf(10L), deleteScopeCaptor.getValue().getEnterpriseId());
 
         ArgumentCaptor<YgbSocialBaseCompare> compareCaptor = ArgumentCaptor.forClass(YgbSocialBaseCompare.class);
         verify(socialBaseCompareMapper, times(2)).insertSocialBaseCompare(compareCaptor.capture());

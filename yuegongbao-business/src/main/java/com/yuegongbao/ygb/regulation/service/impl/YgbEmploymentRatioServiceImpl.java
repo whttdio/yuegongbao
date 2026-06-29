@@ -21,7 +21,10 @@ import com.yuegongbao.ygb.compliance.mapper.YgbContractMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbEmploymentRatioMapper;
 import com.yuegongbao.ygb.foundation.mapper.YgbPersonMapper;
 import com.yuegongbao.ygb.regulation.service.IYgbEmploymentRatioService;
+import com.yuegongbao.ygb.util.EnterpriseScopeMode;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
 import com.yuegongbao.ygb.util.YgbRiskCalculator;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
 @Service
@@ -40,6 +43,12 @@ public class YgbEmploymentRatioServiceImpl implements IYgbEmploymentRatioService
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
 
     @Override
     public List<YgbEmploymentRatio> selectEmploymentRatioList(YgbEmploymentRatio employmentRatio)
@@ -94,12 +103,15 @@ public class YgbEmploymentRatioServiceImpl implements IYgbEmploymentRatioService
         LocalDate monthStart = yearMonth.atDay(1);
         LocalDate monthEnd = yearMonth.atEndOfMonth();
 
-        YgbContract query = new YgbContract();
-        query.setEmployerEnterpriseId(employerEnterpriseId);
-        List<YgbContract> contractList = contractMapper.selectContractList(query);
+        YgbContract contractQuery = new YgbContract();
+        contractQuery.setEmployerEnterpriseId(employerEnterpriseId);
+        applyContractScope(contractQuery);
+        List<YgbContract> contractList = contractMapper.selectContractList(contractQuery);
 
         Map<Long, YgbPerson> personMap = new HashMap<>();
-        for (YgbPerson person : personMapper.selectPersonList(new YgbPerson()))
+        YgbPerson personQuery = new YgbPerson();
+        applyPersonScope(personQuery);
+        for (YgbPerson person : personMapper.selectPersonList(personQuery))
         {
             personMap.put(person.getPersonId(), person);
         }
@@ -107,7 +119,8 @@ public class YgbEmploymentRatioServiceImpl implements IYgbEmploymentRatioService
         Map<Long, YgbEmploymentRatio> resultMap = new HashMap<>();
         for (YgbContract contract : contractList)
         {
-            if (!isActiveInMonth(contract, monthStart, monthEnd))
+            if (!isActiveInMonth(contract, monthStart, monthEnd)
+                || !isContractInScope(contract, employerEnterpriseId))
             {
                 continue;
             }
@@ -139,7 +152,8 @@ public class YgbEmploymentRatioServiceImpl implements IYgbEmploymentRatioService
             }
         }
 
-        employmentRatioMapper.deleteByScope(statMonth, employerEnterpriseId);
+        YgbEmploymentRatio deleteScope = buildScopedRatioQuery(statMonth, employerEnterpriseId);
+        employmentRatioMapper.deleteByScope(deleteScope);
         int rows = 0;
         for (YgbEmploymentRatio ratio : resultMap.values())
         {
@@ -168,6 +182,66 @@ public class YgbEmploymentRatioServiceImpl implements IYgbEmploymentRatioService
             }
         }
         return rows;
+    }
+
+    private YgbEmploymentRatio buildScopedRatioQuery(String statMonth, Long employerEnterpriseId)
+    {
+        YgbEmploymentRatio query = new YgbEmploymentRatio();
+        query.setStatMonth(statMonth);
+        query.setEmployerEnterpriseId(employerEnterpriseId);
+        applyRatioScope(query);
+        return query;
+    }
+
+    private void applyContractScope(YgbContract query)
+    {
+        if (enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            enterpriseScopeHelper.applyEnterpriseDataScope(query, EnterpriseScopeMode.DUAL_OR,
+                "c.dispatch_enterprise_id", "c.employer_enterprise_id");
+            return;
+        }
+        regionScopeHelper.applyRegionDataScope(query, "c.region_code");
+    }
+
+    private void applyPersonScope(YgbPerson query)
+    {
+        if (enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            enterpriseScopeHelper.applyEnterpriseDataScope(query, EnterpriseScopeMode.SINGLE, "p.enterprise_id");
+            return;
+        }
+        regionScopeHelper.applyRegionDataScope(query, "p.region_code");
+    }
+
+    private void applyRatioScope(YgbEmploymentRatio query)
+    {
+        if (enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            enterpriseScopeHelper.applyEnterpriseDataScope(query, EnterpriseScopeMode.SINGLE, "employer_enterprise_id");
+            return;
+        }
+        regionScopeHelper.applyRegionDataScope(query, "region_code");
+    }
+
+    private boolean isContractInScope(YgbContract contract, Long requestedEmployerEnterpriseId)
+    {
+        if (requestedEmployerEnterpriseId != null
+            && !requestedEmployerEnterpriseId.equals(contract.getEmployerEnterpriseId()))
+        {
+            return false;
+        }
+        try
+        {
+            regionScopeHelper.assertRegionAuthorized(contract.getRegionCode());
+            enterpriseScopeHelper.assertDualEnterpriseAuthorized(contract.getDispatchEnterpriseId(),
+                contract.getEmployerEnterpriseId());
+            return true;
+        }
+        catch (ServiceException e)
+        {
+            return false;
+        }
     }
 
     private boolean isActiveInMonth(YgbContract contract, LocalDate monthStart, LocalDate monthEnd)

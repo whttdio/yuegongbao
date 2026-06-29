@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -16,6 +16,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="regionCode" column="region_code" />
         <result property="templateFileUrl" column="template_file_url" />
         <result property="contentText" column="content_text" />
+        <result property="reviewBy" column="review_by" />
+        <result property="reviewTime" column="review_time" />
+        <result property="reviewRemark" column="review_remark" />
         <result property="createBy" column="create_by" />
         <result property="createTime" column="create_time" />
         <result property="updateBy" column="update_by" />
@@ -25,8 +28,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectContractTemplateVo">
         select template_id, template_code, template_name, template_version, template_type, applicable_scope,
-               review_status, status, region_code, template_file_url, content_text, create_by, create_time,
-               update_by, update_time, remark
+               review_status, status, region_code, template_file_url, content_text, review_by, review_time,
+               review_remark, create_by, create_time, update_by, update_time, remark
         from t_contract_template
     </sql>
 
@@ -53,6 +56,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and region_code like concat(#{regionCode}, '%')
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
         </where>
         order by update_time desc, template_id desc
     </select>
@@ -108,6 +112,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="regionCode != null and regionCode != ''">region_code = #{regionCode},</if>
             <if test="templateFileUrl != null">template_file_url = #{templateFileUrl},</if>
             <if test="contentText != null">content_text = #{contentText},</if>
+            <if test="reviewBy != null and reviewBy != ''">review_by = #{reviewBy},</if>
+            <if test="reviewBy != null and reviewBy == ''">review_by = null,</if>
+            <if test="reviewTime != null">review_time = #{reviewTime},</if>
+            <if test="reviewStatus == 'pending'">review_time = null,</if>
+            <if test="reviewRemark != null and reviewRemark != ''">review_remark = #{reviewRemark},</if>
+            <if test="reviewRemark != null and reviewRemark == ''">review_remark = null,</if>
             <if test="remark != null">remark = #{remark},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate()
@@ -120,6 +130,32 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update t_contract_template
         set status = #{status},
             update_by = #{updateBy},
+            update_time = sysdate()
+        where template_id = #{templateId}
+          and del_flag = '0'
+    </update>
+
+    <update id="submitTemplateReview">
+        update t_contract_template
+        set review_status = 'pending',
+            status = '0',
+            review_by = null,
+            review_time = null,
+            review_remark = null,
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where template_id = #{templateId}
+          and del_flag = '0'
+    </update>
+
+    <update id="reviewTemplate">
+        update t_contract_template
+        set review_status = #{reviewStatus},
+            status = case when #{reviewStatus} = 'approved' then '1' else '0' end,
+            review_by = #{reviewBy},
+            review_time = sysdate(),
+            review_remark = #{reviewRemark},
+            update_by = #{reviewBy},
             update_time = sysdate()
         where template_id = #{templateId}
           and del_flag = '0'

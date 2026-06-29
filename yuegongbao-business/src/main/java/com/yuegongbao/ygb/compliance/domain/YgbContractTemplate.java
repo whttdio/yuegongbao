@@ -1,7 +1,9 @@
 package com.yuegongbao.ygb.compliance.domain;
 
+import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.yuegongbao.common.annotation.Excel;
 import com.yuegongbao.common.core.domain.BaseEntity;
 
@@ -40,6 +42,13 @@ public class YgbContractTemplate extends BaseEntity
     private String templateFileUrl;
 
     private String contentText;
+
+    private String reviewBy;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date reviewTime;
+
+    private String reviewRemark;
 
     public Long getTemplateId()
     {
@@ -151,6 +160,36 @@ public class YgbContractTemplate extends BaseEntity
         this.contentText = contentText;
     }
 
+    public String getReviewBy()
+    {
+        return reviewBy;
+    }
+
+    public void setReviewBy(String reviewBy)
+    {
+        this.reviewBy = reviewBy;
+    }
+
+    public Date getReviewTime()
+    {
+        return reviewTime;
+    }
+
+    public void setReviewTime(Date reviewTime)
+    {
+        this.reviewTime = reviewTime;
+    }
+
+    public String getReviewRemark()
+    {
+        return reviewRemark;
+    }
+
+    public void setReviewRemark(String reviewRemark)
+    {
+        this.reviewRemark = reviewRemark;
+    }
+
     @Override
     public String toString()
     {
@@ -166,6 +205,9 @@ public class YgbContractTemplate extends BaseEntity
             .append("regionCode", getRegionCode())
             .append("templateFileUrl", getTemplateFileUrl())
             .append("contentText", getContentText())
+            .append("reviewBy", getReviewBy())
+            .append("reviewTime", getReviewTime())
+            .append("reviewRemark", getReviewRemark())
             .append("remark", getRemark())
             .toString();
     }

@@ -42,7 +42,7 @@
               @mouseleave="activeIndex = -1"
             >
               <div class="left">
-                <svg-icon class="menu-icon" :icon-class="item.icon" />
+                <svg-icon class="menu-icon" :icon-class="resolveMenuIcon(item)" />
               </div>
               <div class="search-info" @click="change(item)">
                 <div class="menu-title" v-html="highlightText(item.title.join(' / '))"></div>
@@ -78,9 +78,10 @@
 
 <script setup>
 import Fuse from 'fuse.js'
-import { getNormalPath } from '@/utils/yuegongbao'
+import { getNormalPath, parseMenuQuery } from '@/utils/yuegongbao'
 import { isHttp } from '@/utils/validate'
 import { isOfficialPortalPath, openOfficialPortal } from '@/utils/portal'
+import { resolveMenuIcon } from '@/utils/menuIcon'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
 
@@ -127,7 +128,7 @@ function change(val) {
     openOfficialPortal(router)
   } else {
     if (query) {
-      router.push({ path: p, query: JSON.parse(query) })
+      router.push({ path: p, query: parseMenuQuery(query) })
     } else {
       router.push(p)
     }
@@ -398,4 +399,3 @@ watch(searchPool, (list) => {
   }
 }
 </style>
-

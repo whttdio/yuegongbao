@@ -68,6 +68,6 @@ public class YgbSocialPaymentController extends BaseController
     {
         int rows = socialPaymentService.syncSocialPayment(request.getStatMonth(), request.getEnterpriseId(),
             getUsername());
-        return success("模拟同步完成，本次写入 " + rows + " 条社保缴费记录。");
+        return success("社保缴费数据同步完成，本次写入 " + rows + " 条记录。");
     }
 }

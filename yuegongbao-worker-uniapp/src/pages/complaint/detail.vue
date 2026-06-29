@@ -1,13 +1,40 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">{{ detail.title || '-' }}</view>
+    <view class="worker-card worker-hero">
+      <view class="section-head">
+        <view class="worker-title">{{ detail.title || '-' }}</view>
+        <view class="worker-tag">{{ detail.statusText || '-' }}</view>
+      </view>
       <view class="worker-subtitle">{{ detail.complaintType || '-' }}</view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">投诉内容</view>
+      </view>
       <view class="detail-block">{{ detail.content || '-' }}</view>
-      <view class="worker-subtitle">状态：{{ detail.statusText || '-' }}</view>
-      <view class="worker-subtitle">提交方式：{{ detail.anonymousText || '-' }}</view>
-      <view class="worker-subtitle">工会同步：{{ detail.syncUnionText || '-' }}</view>
-      <view class="worker-subtitle">处理反馈：{{ detail.replyContent || '暂无反馈' }}</view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">处理进度</view>
+      </view>
+      <view class="detail-row">
+        <view class="detail-row__label">处理状态</view>
+        <view class="detail-row__value">{{ detail.statusText || '-' }}</view>
+      </view>
+      <view class="detail-row">
+        <view class="detail-row__label">提交方式</view>
+        <view class="detail-row__value">{{ detail.anonymousText || '-' }}</view>
+      </view>
+      <view class="detail-row">
+        <view class="detail-row__label">工会同步</view>
+        <view class="detail-row__value">{{ detail.syncUnionText || '-' }}</view>
+      </view>
+      <view class="detail-row">
+        <view class="detail-row__label">处理反馈</view>
+        <view class="detail-row__value">{{ detail.replyContent || '暂无反馈' }}</view>
+      </view>
     </view>
 
     <view class="worker-card">
@@ -138,106 +165,3 @@ onLoad((options) => {
   loadData(options?.complaintId)
 })
 </script>
-
-<style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.detail-block {
-  margin: 24rpx 0;
-  padding: 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  font-size: 28rpx;
-  color: #16324f;
-  line-height: 1.7;
-}
-
-.attachment-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.attachment-row:last-child {
-  border-bottom: none;
-}
-
-.attachment-row__text {
-  flex: 1;
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: #7890aa;
-  word-break: break-all;
-}
-
-.attachment-row__action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-  white-space: nowrap;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 20rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 24rpx;
-  color: #5f7893;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.8;
-  color: #36506b;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-</style>

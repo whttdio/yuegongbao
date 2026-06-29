@@ -15,6 +15,8 @@ import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
 import com.yuegongbao.ygb.integration.TaxClient;
 import com.yuegongbao.ygb.compliance.mapper.YgbSalaryDetailMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbTaxCompareMapper;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -40,6 +42,12 @@ class YgbTaxCompareServiceImplTest
     @Mock
     private IYgbWarningService warningService;
 
+    @Mock
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Mock
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
     @InjectMocks
     private YgbTaxCompareServiceImpl service;
 
@@ -55,7 +63,10 @@ class YgbTaxCompareServiceImplTest
         int rows = service.syncTaxCompare("2026-05", 10L, "tester");
 
         assertEquals(1, rows);
-        verify(taxCompareMapper).deleteByScope("2026-05", 10L);
+        ArgumentCaptor<YgbTaxCompare> deleteScopeCaptor = ArgumentCaptor.forClass(YgbTaxCompare.class);
+        verify(taxCompareMapper).deleteByScope(deleteScopeCaptor.capture());
+        assertEquals("2026-05", deleteScopeCaptor.getValue().getStatMonth());
+        assertEquals(Long.valueOf(10L), deleteScopeCaptor.getValue().getEnterpriseId());
         verify(salaryDetailMapper, never()).selectLatestNetAmountByPerson(2L, "2026-05");
 
         ArgumentCaptor<YgbTaxCompare> compareCaptor = ArgumentCaptor.forClass(YgbTaxCompare.class);

@@ -316,7 +316,7 @@ public class YgbDeviceController extends BaseController
     public AjaxResult heartbeat(@RequestBody YgbDeviceHeartbeatRequest request)
     {
         Map<String, Object> result = deviceService.heartbeat(request, getUsername());
-        return AjaxResult.success("模拟心跳完成。", result);
+        return AjaxResult.success("设备心跳上报完成。", result);
     }
 
     @Log(title = "设备AI事件", businessType = BusinessType.OTHER)
@@ -325,7 +325,7 @@ public class YgbDeviceController extends BaseController
     public AjaxResult aiEvent(@RequestBody YgbDeviceAiEventRequest request)
     {
         Map<String, Object> result = deviceService.aiEvent(request, getUsername());
-        return AjaxResult.success("模拟 AI 事件完成。", result);
+        return AjaxResult.success("设备 AI 事件上报完成。", result);
     }
     @Log(title = "Device Batch Lock", businessType = BusinessType.OTHER)
     @PreAuthorize("@ss.hasPermi('ygb:device:lock')")

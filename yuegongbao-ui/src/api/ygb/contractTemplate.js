@@ -53,3 +53,19 @@ export function delContractTemplate(templateIds) {
     method: 'delete'
   })
 }
+
+export function submitContractTemplate(templateId, data = {}) {
+  return request({
+    url: '/ygb/contract/template/' + templateId + '/submit',
+    method: 'post',
+    data
+  })
+}
+
+export function reviewContractTemplate(templateId, data) {
+  return request({
+    url: '/ygb/contract/template/' + templateId + '/review',
+    method: 'post',
+    data
+  })
+}

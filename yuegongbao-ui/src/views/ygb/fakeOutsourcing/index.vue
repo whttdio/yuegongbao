@@ -10,7 +10,7 @@
         </p>
       </div>
       <div class="ygb-table-tip">
-        当前版本使用 Stub 评分录入完成分析闭环；后续可直接替换为 OCR、文档和设备数据自动采分，不改变当前台账结构。
+        当前版本使用人工评分录入完成分析闭环；后续可直接替换为 OCR、文档和设备数据自动采分，不改变当前台账结构。
       </div>
     </section>
 
@@ -352,7 +352,7 @@ const visibleRecordList = computed(() => prioritizeFocusRows(fakeOutsourcingList
 const workbenchContext = computed(() => buildWorkbenchContext(route.query, {
   fields: fakeOutsourcingWorkbenchFields,
   title: "当前假外包页面沿用了工作台来源条件",
-  description: "当前页面继续复用上游工作台筛选条件，便于直接承接当前门户的治理语境。",
+  description: "当前页面已带入工作台筛选条件，便于直接承接当前门户的治理语境。",
   fieldLabels: {
     statMonth: "Month",
     enterpriseId: "Enterprise",
@@ -491,20 +491,19 @@ function syncCurrentRecord() {
 function handleQuery() {
   queryParams.value.pageNum = 1
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '???????' || '???????',
-    description: '?????????????????????????????????' || '?????????????????????????????????',
+    title: '假外包识别',
+    description: '结合合同、人员管理和作业控制线索识别疑似假外包，支撑合规复核和整改。',
     portalExplanation: portalExplanationItems.value,
     focus: focusQueues.value,
-    selection: [...selectedRecordOverview.value, { label: '??????', value: currentRecordActionSummary.value }],
+    selection: [...selectedRecordOverview.value, { label: '当前处置建议', value: currentRecordActionSummary.value }],
     workflow: workflowSteps.value,
     hints: [...currentRecordActionTags.value].slice(0, 6)
   })
 })
-
-}
 
 function resetQuery() {
   proxy.resetForm("queryRef")

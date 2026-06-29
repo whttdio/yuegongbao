@@ -1,18 +1,29 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">今日打卡</view>
-      <view class="worker-subtitle">
-        定位和考勤记录会按当前劳动者身份写入平台。断网时先缓存，恢复网络后自动补传。
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">今日打卡</view>
+      <view class="worker-subtitle">{{ trainingLocked ? trainingLockReason : (trainingProgressText || '定位和考勤记录将写入平台') }}</view>
+      <view v-if="!trainingLocked" class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ todayCheckInText }}</view>
+          <view class="hero-stat__label">上班</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ todayCheckOutText }}</view>
+          <view class="hero-stat__label">下班</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ monthAttendanceDays }}</view>
+          <view class="hero-stat__label">本月出勤</view>
+        </view>
       </view>
+    </view>
 
+    <view class="worker-card">
       <view v-if="trainingLocked" class="worker-lock-panel">
         <view class="worker-lock-panel__title">本月培训未完成，暂不可打卡</view>
         <view class="worker-lock-panel__desc">{{ trainingLockReason }}</view>
         <button class="worker-button worker-button--secondary" @click="goTraining">去完成培训</button>
-      </view>
-      <view v-else-if="trainingProgressText" class="worker-subtitle worker-subtitle--progress">
-        当前培训进度：{{ trainingProgressText }}
       </view>
 
       <view class="face-block">
@@ -205,6 +216,23 @@ const trainingLockReason = computed(() => {
   const total = Number(trainingProgress.value?.total || 10)
   const completed = Number(trainingProgress.value?.completed || 0)
   return trainingProgress.value?.lockReason || `当前仅完成 ${completed}/${total} 题，请先完成本月安全培训后再打卡。`
+})
+
+const todayDateText = computed(() => {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+})
+
+const todayRecord = computed(() => {
+  return days.value.find((item) => item.date === todayDateText.value) || null
+})
+
+const todayCheckInText = computed(() => todayRecord.value?.clockInTime || '-')
+const todayCheckOutText = computed(() => todayRecord.value?.clockOutTime || '-')
+const monthAttendanceDays = computed(() => {
+  return days.value.filter((item) => item.clockInTime || item.clockOutTime).length
 })
 
 const networkStatusText = computed(() => (networkConnected.value ? '在线' : '离线'))
@@ -843,224 +871,3 @@ onUnmounted(() => {
   }
 })
 </script>
-
-<style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.section-head__actions {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-}
-
-.attendance-actions {
-  display: flex;
-  gap: 20rpx;
-  margin-top: 24rpx;
-}
-
-.attendance-actions button {
-  flex: 1;
-}
-
-.worker-lock-panel {
-  margin-top: 20rpx;
-  padding: 20rpx 22rpx;
-  border-radius: 20rpx;
-  background: #fff6f4;
-}
-
-.worker-lock-panel__title {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #b54708;
-}
-
-.worker-lock-panel__desc {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #7a5230;
-}
-
-.attendance-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.attendance-row:last-child {
-  border-bottom: none;
-}
-
-.attendance-row--top {
-  align-items: flex-start;
-}
-
-.attendance-row__main {
-  flex: 1;
-}
-
-.attendance-row__date {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.attendance-row__time {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7b8ea5;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  line-height: 1.6;
-  color: #16324f;
-  word-break: break-all;
-}
-
-.face-block {
-  margin-top: 20rpx;
-  padding: 20rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.face-block__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.face-block__actions {
-  margin-top: 16rpx;
-}
-
-.face-block__preview {
-  width: 100%;
-  height: 320rpx;
-  margin-top: 18rpx;
-  border-radius: 20rpx;
-  background: #e9eef5;
-}
-
-.face-block__clear {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.history-row {
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.history-row:last-child {
-  border-bottom: none;
-}
-
-.history-row__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.history-row__title {
-  flex: 1;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.history-row__meta {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.history-row__detail {
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: #58738f;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-tag--success {
-  background: #e9f8ef;
-  color: #1f8b4d;
-}
-
-.worker-tag--warning {
-  background: #fff3e6;
-  color: #c77418;
-}
-
-.worker-tag--info {
-  background: #eef6ff;
-  color: #1f6fd6;
-}
-
-.worker-subtitle--progress {
-  margin-top: 18rpx;
-}
-</style>

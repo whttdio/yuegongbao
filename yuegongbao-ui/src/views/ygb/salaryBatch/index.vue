@@ -5,12 +5,12 @@
         <p class="ygb-page__eyebrow">工资监管链路</p>
         <h1 class="ygb-page__title">工资批次办理台账</h1>
         <p class="ygb-page__desc">
-          面向企业管理员、财务经办和监管协同角色，统一承接工资月度批次创建、监管账户到账确认、工资明细生成、银行代发提交和 Stub 回调闭环。
+          面向企业管理员、财务经办和监管协同角色，统一承接工资月度批次创建、监管账户到账确认、工资明细生成、银行代发提交和代发结果回写闭环。
           页面不再停留在批量增删改查，而是按“先补到账、再生成明细、后推进代发”的真实办理顺序组织任务。
         </p>
       </div>
       <div class="ygb-table-tip">
-        当前版本已打通人工建批、到账确认、明细生成、代发提交和 Stub 回调链路，后续替换真实银行接口时不改办理台账结构。
+        当前版本已打通人工建批、到账确认、明细生成、代发提交和代发结果回写链路。
       </div>
     </section>
 
@@ -88,7 +88,7 @@
           <el-button type="success" plain icon="Promotion" :disabled="single" @click="handleSubmitBatch()" v-hasPermi="['ygb:salaryBatch:submit']">提交代发</el-button>
         </el-col>
         <el-col v-if="!isReadOnlyRole" :span="1.5">
-          <el-button type="primary" plain icon="RefreshRight" :disabled="single" @click="handleMockCallback()" v-hasPermi="['ygb:salaryBatch:submit']">模拟回调</el-button>
+          <el-button type="primary" plain icon="RefreshRight" :disabled="single" @click="handleBankCallback()" v-hasPermi="['ygb:salaryBatch:submit']">回写结果</el-button>
         </el-col>
         <el-col :span="1.5">
           <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:salaryBatch:export']">导出</el-button>
@@ -138,9 +138,9 @@
             <el-button link type="info" icon="View" @click.stop="openDetail(scope.row)">详情</el-button>
             <template v-if="!isReadOnlyRole">
               <el-button link type="primary" icon="Edit" @click.stop="handleUpdate(scope.row)" v-hasPermi="['ygb:salaryBatch:edit']">修改</el-button>
-              <el-button link type="primary" icon="DocumentAdd" @click.stop="handleGenerate(scope.row)" v-hasPermi="['ygb:salaryBatch:generate']">生成明细</el-button>
-              <el-button link type="primary" icon="Promotion" @click.stop="handleSubmitBatch(scope.row)" v-hasPermi="['ygb:salaryBatch:submit']">代发</el-button>
-              <el-button link type="primary" icon="RefreshRight" @click.stop="handleMockCallback(scope.row)" v-hasPermi="['ygb:salaryBatch:submit']">回调</el-button>
+              <el-button link type="primary" icon="DocumentAdd" :disabled="!canGenerateBatch(scope.row)" @click.stop="handleGenerate(scope.row)" v-hasPermi="['ygb:salaryBatch:generate']">生成明细</el-button>
+              <el-button link type="primary" icon="Promotion" :disabled="!canSubmitBatch(scope.row)" @click.stop="handleSubmitBatch(scope.row)" v-hasPermi="['ygb:salaryBatch:submit']">代发</el-button>
+              <el-button link type="primary" icon="RefreshRight" :disabled="!canCallbackBatch(scope.row)" @click.stop="handleBankCallback(scope.row)" v-hasPermi="['ygb:salaryBatch:submit']">回写</el-button>
             </template>
           </template>
         </el-table-column>
@@ -257,13 +257,14 @@ import {
   generateSalaryDetail,
   confirmSalaryAccount,
   submitSalaryBatch,
-  simulateSalaryBatchCallback,
+  handleSalaryBatchCallback,
   getSalaryBatchSummary
 } from "@/api/ygb/salaryBatch"
 import { optionselectEnterprise } from "@/api/ygb/enterprise"
 import { decoratePortalExplanationItems, openPortalExplanationAction } from '@/utils/portalExplanation'
 import { useRoleViewMode } from "@/utils/roleView"
 import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQuery } from '@/utils/workbenchLink'
+import { resolveRouteAliasPath } from '@/utils/routeAlias'
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -274,12 +275,12 @@ const salaryBatchWorkbenchFields = ['dispatchEnterpriseId']
 
 const batchStatusOptions = [
   { label: "草稿", value: "0" },
-  { label: "待确认", value: "1" },
+  { label: "待到账确认", value: "1" },
   { label: "待入账", value: "2" },
-  { label: "待生成明细", value: "3" },
-  { label: "待代发", value: "4" },
-  { label: "代发中", value: "5" },
-  { label: "已发放", value: "6" },
+  { label: "已到账待生成明细", value: "3" },
+  { label: "明细已生成待代发", value: "4" },
+  { label: "已提交银行", value: "5" },
+  { label: "发放成功", value: "6" },
   { label: "发放失败", value: "7" }
 ]
 
@@ -517,7 +518,7 @@ const primaryBatchAction = computed(() => {
     return { label: "提交代发", action: "submit" }
   }
   if (currentBatch.value.batchStatus === "5" || currentBatch.value.batchStatus === "7") {
-    return { label: "模拟回调", action: "callback" }
+    return { label: "回写代发结果", action: "callback" }
   }
   return { label: "查看详情", action: "detail" }
 })
@@ -563,7 +564,7 @@ const workflowSteps = computed(() => ([
   },
   {
     label: "提交银行代发",
-    desc: "批次达到待代发状态后提交银行接口或 Stub 通道，进入统一回写链路。"
+    desc: "批次达到待代发状态后提交银行代发通道，进入统一回写链路。"
   },
   {
     label: "回调闭环归档",
@@ -655,19 +656,6 @@ function resetQuery() {
   })
   applyWorkbenchRouteQuery(route.query, queryParams.value, salaryBatchWorkbenchFields)
   getList()
-
-watchEffect(() => {
-  setPageGuide({
-    title: '????????' || '????????',
-    description: '?????????????????????????????????' || '?????????????????????????????????',
-    portalExplanation: portalExplanationItems.value,
-    focus: focusQueues.value,
-    selection: [...selectedBatchOverview.value, { label: '??????', value: currentBatchActionSummary.value }],
-    workflow: workflowSteps.value,
-    hints: [...currentBatchActionTags.value].slice(0, 6)
-  })
-})
-
 }
 
 function clearWorkbenchContext() {
@@ -774,11 +762,16 @@ function handleGenerate(row) {
   if (blockReadOnlyAction("生成工资明细")) {
     return
   }
-  const batchId = row?.batchId || ids.value[0]
+  const batch = resolveActionBatch(row)
+  if (!canGenerateBatch(batch)) {
+    proxy.$modal.msgWarning("只有已到账且处于“已到账待生成明细”的批次才能生成工资明细")
+    return
+  }
+  const batchId = batch.batchId
   if (!batchId) {
     return
   }
-  currentBatch.value = row || currentBatch.value
+  currentBatch.value = batch
   proxy.$modal.confirm("是否确认根据考勤归集生成工资明细？").then(function() {
     return generateSalaryDetail(batchId)
   }).then(response => {
@@ -792,14 +785,19 @@ function handleAccount(row) {
   if (blockReadOnlyAction("确认监管到账")) {
     return
   }
-  currentBatchId.value = row?.batchId || ids.value[0]
+  const batch = resolveActionBatch(row)
+  if (!canConfirmAccount(batch)) {
+    proxy.$modal.msgWarning("已发放或代发中的批次不能再次确认到账")
+    return
+  }
+  currentBatchId.value = batch?.batchId
   if (!currentBatchId.value) {
     return
   }
-  currentBatch.value = row || currentBatch.value
+  currentBatch.value = batch
   accountForm.value = {
-    accountReceivedAmount: undefined,
-    bankSerialNo: undefined
+    accountReceivedAmount: batch.accountReceivedAmount || undefined,
+    bankSerialNo: batch.bankSerialNo || undefined
   }
   accountOpen.value = true
   nextTick(() => proxy.resetForm("accountRef"))
@@ -823,11 +821,16 @@ function handleSubmitBatch(row) {
   if (blockReadOnlyAction("提交银行代发")) {
     return
   }
-  const batchId = row?.batchId || ids.value[0]
+  const batch = resolveActionBatch(row)
+  if (!canSubmitBatch(batch)) {
+    proxy.$modal.msgWarning("只有“明细已生成待代发”的批次才能提交银行代发")
+    return
+  }
+  const batchId = batch.batchId
   if (!batchId) {
     return
   }
-  currentBatch.value = row || currentBatch.value
+  currentBatch.value = batch
   proxy.$modal.confirm("是否确认提交银行代发？").then(function() {
     return submitSalaryBatch(batchId)
   }).then(response => {
@@ -837,18 +840,23 @@ function handleSubmitBatch(row) {
   }).catch(() => {})
 }
 
-function handleMockCallback(row) {
-  if (blockReadOnlyAction("触发模拟回调")) {
+function handleBankCallback(row) {
+  if (blockReadOnlyAction("回写代发结果")) {
     return
   }
-  const batchId = row?.batchId || currentBatch.value?.batchId
-  const batchNo = row?.batchNo || batchNos.value[0] || currentBatch.value?.batchNo
+  const batch = resolveActionBatch(row)
+  if (!canCallbackBatch(batch)) {
+    proxy.$modal.msgWarning("只有“已提交银行”或“发放失败”的批次才能回写银行结果")
+    return
+  }
+  const batchId = batch?.batchId
+  const batchNo = batch?.batchNo
   if (!batchNo) {
     return
   }
-  currentBatch.value = row || currentBatch.value
-  proxy.$modal.confirm("是否按当前批次生成 Stub 银行回调？").then(function() {
-    return simulateSalaryBatchCallback({ batchNo })
+  currentBatch.value = batch
+  proxy.$modal.confirm("是否按当前批次回写银行代发结果？").then(function() {
+    return handleSalaryBatchCallback({ batchNo })
   }).then(response => {
     proxy.$modal.msgSuccess(response.msg || "银行回调处理成功")
     getList()
@@ -875,7 +883,7 @@ function handlePrimaryBatchAction() {
     return
   }
   if (primaryBatchAction.value.action === "callback") {
-    handleMockCallback(currentBatch.value)
+    handleBankCallback(currentBatch.value)
     return
   }
   openDetail(currentBatch.value)
@@ -892,7 +900,7 @@ function openSalaryArrears(batch) {
     query.handleStatus = "processing"
   }
   router.push({
-    path: "/ygb/salaryArrears",
+    path: resolveRouteAliasPath("/salary-supervision/arrears"),
     query
   })
 }
@@ -909,6 +917,33 @@ function handleExport() {
   proxy.download("ygb/salary/batch/export", {
     ...queryParams.value
   }, `salary_batch_${new Date().getTime()}.xlsx`)
+}
+
+function resolveActionBatch(row) {
+  if (row?.batchId) {
+    return row
+  }
+  const selectedId = ids.value[0]
+  if (selectedId) {
+    return salaryBatchList.value.find(item => item.batchId === selectedId) || currentBatch.value
+  }
+  return currentBatch.value
+}
+
+function canConfirmAccount(batch) {
+  return !!batch && batch.batchStatus !== "5" && batch.batchStatus !== "6"
+}
+
+function canGenerateBatch(batch) {
+  return !!batch && batch.accountStatus === "1" && batch.batchStatus === "3"
+}
+
+function canSubmitBatch(batch) {
+  return !!batch && batch.accountStatus === "1" && batch.batchStatus === "4"
+}
+
+function canCallbackBatch(batch) {
+  return !!batch && (batch.batchStatus === "5" || batch.batchStatus === "7")
 }
 
 function buildHintTags(batch) {
@@ -1017,6 +1052,18 @@ watch(focusQueues, queues => {
     activeFocusKey.value = queues[0].key
   }
 }, { immediate: true })
+
+watchEffect(() => {
+  setPageGuide({
+    title: '工资批次',
+    description: '管理工资发放批次、代发状态和异常结果，支撑工资监管闭环。',
+    portalExplanation: portalExplanationItems.value,
+    focus: focusQueues.value,
+    selection: [...selectedBatchOverview.value, { label: '当前处置建议', value: currentBatchActionSummary.value }],
+    workflow: workflowSteps.value,
+    hints: [...currentBatchActionTags.value].slice(0, 6)
+  })
+})
 
 applyWorkbenchRouteQuery(route.query, queryParams.value, salaryBatchWorkbenchFields)
 loadEnterpriseOptions()

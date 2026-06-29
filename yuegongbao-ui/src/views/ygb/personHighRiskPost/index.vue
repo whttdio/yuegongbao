@@ -1,36 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  addPersonSubmodule,
-  delPersonSubmodule,
-  getPersonSubmodule,
-  getPersonSubmoduleSummary,
-  listPersonSubmodule,
-  updatePersonSubmodule
-} from '@/api/ygb/person'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const submodule = 'highRiskPost'
-const config = {
+const config = createBusinessRecordPageConfig({
+  module: 'personHighRiskPost',
   title: '高危岗位库',
-  description: '沉淀高危岗位对象、岗位画像、风险来源和审查状态。',
-  permPrefix: 'ygb:personHighRiskPost',
-  filePrefix: 'person_high_risk_post',
-  defaultCategoryCode: 'high_risk_post',
-  defaultSourceLabel: '人员管理',
-  recordNameLabel: '高危岗位名称',
-  recordNamePlaceholder: '请输入高危岗位名称',
-  filters: ['statMonth', 'regionCode', 'enterpriseId', 'personName', 'recordName', 'workflowStatus', 'status'],
-  routeQueryFields: ['regionCode', 'enterpriseId', 'personName'],
-  listApi: query => listPersonSubmodule(submodule, query),
-  summaryApi: query => getPersonSubmoduleSummary(submodule, query),
-  detailApi: id => getPersonSubmodule(submodule, id),
-  addApi: data => addPersonSubmodule(submodule, data),
-  updateApi: data => updatePersonSubmodule(submodule, data),
-  deleteApi: ids => delPersonSubmodule(submodule, ids),
-  exportUrl: `ygb/person/${submodule}/export`
-}
+  description: '围绕高危岗位台账、风险等级和人员配置维护开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '高危岗位',
+  businessNamePlaceholder: '请输入高危岗位',
+  defaultSourceLabel: '高危岗位库',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

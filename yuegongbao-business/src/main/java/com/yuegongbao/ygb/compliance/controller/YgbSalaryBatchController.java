@@ -1,6 +1,7 @@
 package com.yuegongbao.ygb.compliance.controller;
 
 import java.util.List;
+import java.util.Map;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +22,7 @@ import com.yuegongbao.common.enums.BusinessType;
 import com.yuegongbao.common.utils.poi.ExcelUtil;
 import com.yuegongbao.ygb.compliance.service.IYgbSalaryBatchService;
 import com.yuegongbao.ygb.compliance.domain.YgbSalaryBatch;
+import com.yuegongbao.ygb.domain.vo.YgbBankCallbackRequest;
 
 @RestController
 @RequestMapping("/ygb/salary/batch")
@@ -127,5 +129,14 @@ public class YgbSalaryBatchController extends BaseController
     {
         int rows = salaryBatchService.submitBatch(batchId, getUsername());
         return success("已提交银行代发，本次推送 " + rows + " 条工资明细，待银行回调确认。");
+    }
+
+    @PreAuthorize("@ss.hasPermi('ygb:salaryBatch:submit')")
+    @Log(title = "工资代发结果回写", businessType = BusinessType.OTHER)
+    @PostMapping("/bank/callback")
+    public AjaxResult bankCallback(@Validated @RequestBody YgbBankCallbackRequest request)
+    {
+        Map<String, Object> result = salaryBatchService.handleBankCallback(request, getUsername());
+        return AjaxResult.success("银行代发结果回写完成。", result);
     }
 }

@@ -5,6 +5,8 @@
 -- 3. ygb_phase1_contract.sql
 -- 4. ygb_phase1_attendance.sql
 -- 5. 本脚本
+set names utf8mb4;
+
 create table if not exists t_salary_batch (
   batch_id                  bigint(20)      not null auto_increment,
   batch_no                  varchar(64)     not null,

@@ -13,7 +13,10 @@ export const STAT_REPORT_TYPE_KEYS = Object.freeze({
   newform: 'NEWFORM',
   occupation: 'OCCUPATION',
   union: 'UNION_SUPERVISION',
-  custom: 'CUSTOM'
+  custom: 'CUSTOM',
+  device: 'DEVICE_STATS',
+  expansion: 'EXPANSION_REDUCTION',
+  rectification: 'SPECIAL_RECTIFICATION'
 })
 
 export const statReportSourceModuleOptions = [
@@ -98,7 +101,7 @@ const reportTypeMeta = Object.freeze({
     summaryMetrics: [
       { key: 'metricCount', label: '工伤事件', unit: '起' },
       { key: 'metricAmount', label: '参保样本', unit: '人' },
-      { key: 'metricRate', label: '平均发生率', unit: '‰', isRate: true }
+      { key: 'metricRate', label: '平均发生率', unit: '%', isRate: true }
     ],
     tableColumns: [
       { key: 'statMonth', label: '统计月份', prop: 'statMonth', width: 110 },
@@ -302,6 +305,55 @@ const reportTypeMeta = Object.freeze({
       { key: 'metricRate', label: '统计比率', unit: '%', isRate: true }
     ],
     tableColumns: createTableColumns('统计数量', '统计值', '统计比率')
+  },
+  device: {
+    reportCode: STAT_REPORT_TYPE_KEYS.device,
+    title: '设备月报',
+    description: '聚焦设备在线率、离线时长与报警排行。',
+    printTitle: '设备月报',
+    queryFields: [
+      { kind: 'text', key: 'keyword', label: '企业关键字', placeholder: '企业名称' },
+      { kind: 'range', label: '在线率', minKey: 'minMetricRate', maxKey: 'maxMetricRate', suffix: '%' }
+    ],
+    summaryMetrics: [
+      { key: 'metricCount', label: '设备总数', unit: '台' },
+      { key: 'metricAmount', label: '在线设备', unit: '台' },
+      { key: 'metricRate', label: '平均在线率', unit: '%', isRate: true }
+    ],
+    tableColumns: createTableColumns('设备总数', '在线设备', '在线率')
+  },
+  expansion: {
+    reportCode: STAT_REPORT_TYPE_KEYS.expansion,
+    title: '扩面减损月报',
+    description: '聚焦扩面人数、补缴金额与催缴完成率。',
+    printTitle: '扩面减损月报',
+    queryFields: [
+      { kind: 'text', key: 'keyword', label: '区域关键字', placeholder: '区域编码或名称' },
+      { kind: 'range', label: '扩面人数', minKey: 'minMetricCount', maxKey: 'maxMetricCount' }
+    ],
+    summaryMetrics: [
+      { key: 'metricCount', label: '扩面人数', unit: '人' },
+      { key: 'metricAmount', label: '补缴金额', unit: '元' },
+      { key: 'metricRate', label: '完成率', unit: '%', isRate: true }
+    ],
+    tableColumns: createTableColumns('扩面人数', '补缴金额', '完成率')
+  },
+  rectification: {
+    reportCode: STAT_REPORT_TYPE_KEYS.rectification,
+    title: '专项整治月报',
+    description: '汇总专项整治问题、整改进度和闭环结果。',
+    printTitle: '专项整治月报',
+    queryFields: [
+      { kind: 'text', key: 'keyword', label: '整治主题', placeholder: '企业、人员或问题关键字' },
+      { kind: 'range', label: '问题数量', minKey: 'minMetricCount', maxKey: 'maxMetricCount' },
+      { kind: 'range', label: '整改率', minKey: 'minMetricRate', maxKey: 'maxMetricRate', suffix: '%' }
+    ],
+    summaryMetrics: [
+      { key: 'metricCount', label: '问题数量', unit: '个' },
+      { key: 'metricAmount', label: '已闭环', unit: '个' },
+      { key: 'metricRate', label: '整改率', unit: '%', isRate: true }
+    ],
+    tableColumns: createTableColumns('问题数量', '已闭环', '整改率')
   }
 })
 

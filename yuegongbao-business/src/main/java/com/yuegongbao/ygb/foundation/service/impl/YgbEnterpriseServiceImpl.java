@@ -14,6 +14,11 @@ import com.yuegongbao.ygb.foundation.domain.YgbEnterpriseSummary;
 import com.yuegongbao.ygb.foundation.service.IYgbEnterpriseService;
 import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
 import com.yuegongbao.ygb.foundation.mapper.YgbPersonMapper;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionHelper;
+import com.yuegongbao.ygb.util.EnterpriseScopeMode;
 
 @Service
 public class YgbEnterpriseServiceImpl implements IYgbEnterpriseService
@@ -24,9 +29,19 @@ public class YgbEnterpriseServiceImpl implements IYgbEnterpriseService
     @Autowired
     private YgbPersonMapper personMapper;
 
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
+
     @Override
     public List<YgbEnterprise> selectEnterpriseList(YgbEnterprise enterprise)
     {
+        normalizeRegionQuery(enterprise);
         return enterpriseMapper.selectEnterpriseList(enterprise);
     }
 
@@ -85,13 +100,30 @@ public class YgbEnterpriseServiceImpl implements IYgbEnterpriseService
     @Override
     public List<YgbEnterprise> selectEnterpriseOptions()
     {
-        return enterpriseMapper.selectEnterpriseOptions();
+        YgbEnterprise query = new YgbEnterprise();
+        applyEnterpriseOptionScope(query);
+        return enterpriseMapper.selectEnterpriseOptions(query);
+    }
+
+    private void applyEnterpriseOptionScope(YgbEnterprise query)
+    {
+        if (enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            enterpriseScopeHelper.applyEnterpriseDataScope(query, EnterpriseScopeMode.SINGLE, "enterprise_id");
+            return;
+        }
+        regionScopeHelper.applyRegionDataScope(query, "region_code");
     }
 
     @Override
     public YgbEnterprise selectEnterpriseById(Long enterpriseId)
     {
-        return enterpriseMapper.selectEnterpriseById(enterpriseId);
+        YgbEnterprise enterprise = enterpriseMapper.selectEnterpriseById(enterpriseId);
+        if (enterprise != null)
+        {
+            dataScopeGuard.assertEntityAllowed(enterprise);
+        }
+        return enterprise;
     }
 
     @Override
@@ -127,6 +159,12 @@ public class YgbEnterpriseServiceImpl implements IYgbEnterpriseService
     @Override
     public int updateEnterprise(YgbEnterprise enterprise)
     {
+        YgbEnterprise existing = selectEnterpriseById(enterprise.getEnterpriseId());
+        if (StringUtils.isNull(existing))
+        {
+            throw new ServiceException("Enterprise does not exist.");
+        }
+        dataScopeGuard.assertEntityAllowed(enterprise);
         return enterpriseMapper.updateEnterprise(enterprise);
     }
 
@@ -236,5 +274,14 @@ public class YgbEnterpriseServiceImpl implements IYgbEnterpriseService
         item.put("sourceLabel", sourceLabel);
         item.put("sourceDescription", summary);
         return item;
+    }
+
+    private void normalizeRegionQuery(YgbEnterprise enterprise)
+    {
+        if (enterprise == null || StringUtils.isEmpty(enterprise.getRegionCode()))
+        {
+            return;
+        }
+        enterprise.setRegionCode(YgbRegionHelper.toRegionPrefix(enterprise.getRegionCode()));
     }
 }

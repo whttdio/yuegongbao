@@ -6,6 +6,8 @@
 -- 4. ygb_phase1_attendance.sql
 -- 5. ygb_phase1_salary.sql
 -- 6. 本脚本
+set names utf8mb4;
+
 create table if not exists t_social_payment (
   payment_id           bigint(20)      not null auto_increment,
   stat_month           varchar(7)      not null,

@@ -9,7 +9,7 @@ import { getDeviceIotCard, getDeviceIotCardSummary, listDeviceIotCard } from '@/
 const config = {
   title: '物联卡',
   eyebrow: '设备子台账',
-  description: '直接从统一设备底表查看设备物联卡号、在线状态和归属企业。',
+  description: '查看设备物联卡号、在线状态、归属企业和通信状态。',
   permPrefix: 'ygb:device',
   filePrefix: 'device_iot_card',
   routeQueryFields: ['regionCode', 'enterpriseId', 'deviceCode', 'deviceName', 'deviceStatus', 'authStatus'],

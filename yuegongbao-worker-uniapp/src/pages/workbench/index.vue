@@ -1,6 +1,6 @@
 <template>
-  <view class="worker-page">
-    <view class="workbench-hero worker-card">
+  <view class="worker-page worker-page--tab">
+    <view class="workbench-hero worker-card worker-hero">
       <view class="section-head">
         <view>
           <view class="worker-title">工作台</view>
@@ -38,8 +38,13 @@
           class="quick-item"
           @click="openQuickAction(item)"
         >
-          <view class="quick-item__title">{{ item.label }}</view>
-          <view class="quick-item__summary">{{ item.summary }}</view>
+          <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone">
+            <text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text>
+          </view>
+          <view class="quick-item__main">
+            <view class="quick-item__title">{{ item.label }}</view>
+            <view class="quick-item__summary">{{ item.summary }}</view>
+          </view>
         </view>
       </view>
     </view>
@@ -56,6 +61,9 @@
           :class="{ 'entry-item--locked': item.locked }"
           @click="openEntry(item)"
         >
+          <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone">
+            <text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text>
+          </view>
           <view class="entry-item__label">{{ item.label }}</view>
           <view v-if="item.locked" class="entry-item__tip">需先完成培训</view>
         </view>
@@ -73,6 +81,9 @@
           class="entry-item entry-item--wide"
           @click="openEntry(item)"
         >
+          <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone">
+            <text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text>
+          </view>
           <view class="entry-item__label">{{ item.label }}</view>
         </view>
       </view>
@@ -89,6 +100,9 @@
           class="entry-item entry-item--wide"
           @click="openEntry(item)"
         >
+          <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone">
+            <text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text>
+          </view>
           <view class="entry-item__label">{{ item.label }}</view>
         </view>
       </view>
@@ -105,6 +119,9 @@
           class="entry-item"
           @click="openEntry(item)"
         >
+          <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone">
+            <text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text>
+          </view>
           <view class="entry-item__label">{{ item.label }}</view>
         </view>
       </view>
@@ -132,6 +149,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { getWorkerWorkbench } from '../../api/worker'
 import { openPage } from '../../utils/navigation'
 import { normalizeWorkerJumpTarget, openWorkerJumpTarget } from '../../utils/worker-jump'
+import { resolveEntryIcon } from '../../utils/entry-icon'
 
 const defaultClockRuleTip = '完成每月 10 道安全培训题后，才能解锁打卡和工资查询。'
 const defaultHeroSummary = '集中进入培训、维权、内容和个人服务能力。'
@@ -141,6 +159,10 @@ const workbench = reactive({})
 const workbenchLastLoadedAt = ref('')
 const workbenchLastActionAt = ref('')
 const workbenchLastMessage = ref('')
+
+function getEntryIcon(item) {
+  return resolveEntryIcon(item)
+}
 
 const trainingProgressText = computed(() => {
   const progress = workbench.trainingProgress || {}
@@ -336,222 +358,8 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.workbench-hero {
-  background: linear-gradient(145deg, #0f4078 0%, #1d6ecf 72%, #48a3f0 100%);
-  color: #fff;
-}
-
-.hero-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18rpx;
-  margin-top: 24rpx;
-}
-
-.hero-stat {
-  padding: 22rpx 18rpx;
-  border-radius: 18rpx;
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.hero-stat__value {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #fff;
-}
-
-.hero-stat__label {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.82);
-}
-
 .workbench-lock-tip {
   margin-top: 20rpx;
   color: rgba(255, 255, 255, 0.88);
-}
-
-.quick-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-}
-
-.quick-item {
-  padding: 22rpx;
-  border-radius: 22rpx;
-  background: #f4f8fd;
-}
-
-.quick-item__title {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.quick-item__summary {
-  margin-top: 10rpx;
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: #7890aa;
-}
-
-.entry-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18rpx;
-}
-
-.entry-grid--two {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.entry-item {
-  min-height: 120rpx;
-  padding: 20rpx;
-  border-radius: 22rpx;
-  background: #f4f8fd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  position: relative;
-}
-
-.entry-item--wide {
-  min-height: 108rpx;
-}
-
-.entry-item--locked {
-  background: #eef2f6;
-}
-
-.entry-item__label {
-  font-size: 26rpx;
-  color: #16324f;
-  font-weight: 600;
-}
-
-.entry-item__tip {
-  position: absolute;
-  bottom: 10rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 18rpx;
-  color: #9a6a00;
-  background: #fff3cd;
-  border-radius: 999rpx;
-  padding: 4rpx 10rpx;
-  white-space: nowrap;
-}
-
-.service-panel {
-  margin-top: 18rpx;
-  padding: 24rpx;
-  border-radius: 20rpx;
-  background: linear-gradient(135deg, #eef5ff 0%, #f8fbff 100%);
-}
-
-.service-panel__title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.service-panel__subtitle {
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.service-panel__desc {
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #58738f;
-}
-
-.service-actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 22rpx;
-}
-
-.service-actions button {
-  flex: 1;
-}
-
-.worker-tag--notice {
-  color: #1f6fd6;
-  background: #eaf3ff;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 </style>

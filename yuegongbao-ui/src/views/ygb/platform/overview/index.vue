@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>平台治理总览</span>
-          <span class="card-header__tip">业务治理对象聚合到 YGB 视角，底层系统监控继续复用现有 system / monitor 模块。</span>
+          <span class="card-header__tip">业务治理对象聚合到 YGB 视角，兼顾组织、账号、接口、运行和安全审计。</span>
         </div>
       </template>
 
@@ -61,10 +61,10 @@ const summaryCards = computed(() => {
 })
 
 const entries = [
-  { path: '/platform/document', title: '文档管理', desc: '维护上线文档、接口说明、验收交付附件。', action: '进入文档台账' },
-  { path: '/platform/exchange', title: '接口与数据交换监控', desc: '跟踪数据交换异常、回写和人工补偿处理。', action: '进入交换监控' },
-  { path: '/platform/securityAudit', title: '安全审计', desc: '集中处理安全审计事项和整改闭环。', action: '进入安全审计' },
-  { path: '/platform/backup', title: '备份恢复记录', desc: '沉淀备份、恢复和演练记录。', action: '进入备份恢复' }
+  { path: '/system-management/document', title: '文档管理', desc: '维护上线文档、接口说明、验收交付附件。', action: '进入文档台账' },
+  { path: '/system-management/exchange', title: '接口与数据交换监控', desc: '跟踪数据交换异常、回写和人工补偿处理。', action: '进入交换监控' },
+  { path: '/system-management/securityAudit', title: '安全审计', desc: '集中处理安全审计事项和整改闭环。', action: '进入安全审计' },
+  { path: '/system-management/backup', title: '备份恢复记录', desc: '沉淀备份、恢复和演练记录。', action: '进入备份恢复' }
 ]
 
 onMounted(() => {

@@ -17,6 +17,8 @@ import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
 import com.yuegongbao.ygb.compliance.mapper.YgbContractMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbEmploymentRatioMapper;
 import com.yuegongbao.ygb.foundation.mapper.YgbPersonMapper;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,6 +40,12 @@ class YgbEmploymentRatioServiceImplTest
 
     @Mock
     private IYgbWarningService warningService;
+
+    @Mock
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Mock
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
 
     @InjectMocks
     private YgbEmploymentRatioServiceImpl service;
@@ -67,7 +75,10 @@ class YgbEmploymentRatioServiceImplTest
         int rows = service.calculate("2026-05", 10L, "tester");
 
         assertEquals(1, rows);
-        verify(employmentRatioMapper).deleteByScope("2026-05", 10L);
+        ArgumentCaptor<YgbEmploymentRatio> deleteScopeCaptor = ArgumentCaptor.forClass(YgbEmploymentRatio.class);
+        verify(employmentRatioMapper).deleteByScope(deleteScopeCaptor.capture());
+        assertEquals("2026-05", deleteScopeCaptor.getValue().getStatMonth());
+        assertEquals(Long.valueOf(10L), deleteScopeCaptor.getValue().getEmployerEnterpriseId());
 
         ArgumentCaptor<YgbEmploymentRatio> ratioCaptor = ArgumentCaptor.forClass(YgbEmploymentRatio.class);
         verify(employmentRatioMapper).insertEmploymentRatio(ratioCaptor.capture());

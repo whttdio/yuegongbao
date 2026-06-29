@@ -1,13 +1,20 @@
 <template>
   <view class="worker-page">
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">找工作</view>
+      <view class="worker-subtitle">按工种、薪资和距离筛选附近岗位</view>
+    </view>
+
     <view class="worker-card">
-      <view class="worker-title">岗位搜索</view>
-      <input
-        v-model="keyword"
-        class="form-input"
-        placeholder="请输入岗位、企业或工种"
-        @confirm="loadData"
-      />
+      <view class="form-field">
+        <view class="form-field__label">关键词</view>
+        <input
+          v-model="keyword"
+          class="form-input"
+          placeholder="请输入岗位、企业或工种"
+          @confirm="loadData"
+        />
+      </view>
       <view class="search-actions">
         <button class="worker-button" @click="loadData">搜索岗位</button>
         <button class="worker-button worker-button--secondary" @click="openMap">附近岗位</button>
@@ -375,128 +382,6 @@ onShow(async () => {
 </script>
 
 <style lang="scss">
-.form-input {
-  width: 100%;
-  margin-top: 18rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
-  font-size: 28rpx;
-  color: #16324f;
-}
-
-.search-actions {
-  display: flex;
-  gap: 20rpx;
-  margin-top: 18rpx;
-}
-
-.search-actions button {
-  flex: 1;
-}
-
-.filter-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 18rpx;
-}
-
-.filter-scroll {
-  width: 100%;
-  white-space: nowrap;
-  margin-top: 14rpx;
-}
-
-.filter-row {
-  display: inline-flex;
-  gap: 12rpx;
-}
-
-.filter-chip {
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: #eef4fb;
-  color: #57748f;
-  font-size: 22rpx;
-}
-
-.filter-chip--active {
-  background: #1f6fd6;
-  color: #ffffff;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.more-link {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.job-row {
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.job-row:last-child {
-  border-bottom: none;
-}
-
-.job-row__title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.job-row__meta {
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  color: #7890aa;
-}
-
-.job-row__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 18rpx;
-}
-
-.job-row__salary {
-  font-size: 28rpx;
-  color: #d66b1f;
-  font-weight: 700;
-}
-
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
 .job-empty-actions {
   display: flex;
   gap: 20rpx;
@@ -505,66 +390,5 @@ onShow(async () => {
 
 .job-empty-actions button {
   flex: 1;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
 }
 </style>

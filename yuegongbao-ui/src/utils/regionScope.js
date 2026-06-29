@@ -1,5 +1,6 @@
 import { computed, unref } from 'vue'
 import useUserStore from '@/store/modules/user'
+import { gdRegionOptions, normalizeRegionCode } from '@/utils/regionName'
 
 function toRegionPrefix(code) {
   if (!code) {
@@ -29,11 +30,11 @@ export function isRegionAllowed(code, allowedCodes) {
 }
 
 export function filterAuthorizedRegionOptions(options, allowedCodes) {
-  const source = Array.isArray(options) ? options : []
+  const source = Array.isArray(options) ? options : gdRegionOptions
   return source.filter(item => isRegionAllowed(item.value, allowedCodes))
 }
 
-export function useAuthorizedRegionOptions(options) {
+export function useAuthorizedRegionOptions(options = gdRegionOptions) {
   const userStore = useUserStore()
   return computed(() => filterAuthorizedRegionOptions(unref(options), userStore.allowedRegionCodes))
 }
@@ -42,7 +43,7 @@ export function authorizedDefaultRegionCode(fallback = '440000') {
   const userStore = useUserStore()
   const allowedCodes = userStore.allowedRegionCodes
   if (!Array.isArray(allowedCodes) || allowedCodes.length === 0 || allowedCodes.includes('440000')) {
-    return fallback
+    return normalizeRegionCode(fallback) || '440000'
   }
-  return allowedCodes[0] || fallback
+  return normalizeRegionCode(allowedCodes[0]) || normalizeRegionCode(fallback) || '440000'
 }

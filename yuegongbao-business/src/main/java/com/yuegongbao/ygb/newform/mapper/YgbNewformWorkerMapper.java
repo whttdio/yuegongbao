@@ -1,7 +1,6 @@
 package com.yuegongbao.ygb.newform.mapper;
 
 import java.util.List;
-import org.apache.ibatis.annotations.Param;
 import com.yuegongbao.ygb.newform.domain.YgbNewformWorker;
 import com.yuegongbao.ygb.newform.domain.YgbNewformPlatformStat;
 
@@ -15,5 +14,5 @@ public interface YgbNewformWorkerMapper
 
     int insertNewformWorker(YgbNewformWorker worker);
 
-    int deleteByScope(@Param("statMonth") String statMonth, @Param("enterpriseId") Long enterpriseId);
+    int deleteByScope(YgbNewformWorker query);
 }

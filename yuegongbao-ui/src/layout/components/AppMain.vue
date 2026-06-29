@@ -47,7 +47,7 @@ function addIframe(currentRoute) {
 
 <style lang="scss" scoped>
 .app-main {
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - var(--layout-header-height, 60px));
   width: 100%;
   position: relative;
   overflow-x: hidden;
@@ -66,14 +66,14 @@ function addIframe(currentRoute) {
   overflow-y: auto;
   scrollbar-gutter: stable;
   min-height: 0;
-  height: calc(100vh - 56px);
-  margin-top: 56px;
+  height: calc(100vh - var(--layout-header-height, 60px));
+  margin-top: var(--layout-header-height, 60px);
 }
 
 .main-container:has(.fixed-header).hasTagsView > .app-main {
-  min-height: calc(100vh - 96px);
-  height: calc(100vh - 96px);
-  margin-top: 96px;
+  min-height: calc(100vh - (var(--layout-header-height, 60px) + var(--layout-tags-height, 40px)));
+  height: calc(100vh - (var(--layout-header-height, 60px) + var(--layout-tags-height, 40px)));
+  margin-top: calc(var(--layout-header-height, 60px) + var(--layout-tags-height, 40px));
 }
 
 @media screen and (max-width: 991px) {
@@ -89,13 +89,13 @@ function addIframe(currentRoute) {
     .main-container:has(.fixed-header) > .app-main {
       padding-bottom: max(17px, calc(constant(safe-area-inset-bottom) + 10px));
       padding-bottom: max(17px, calc(env(safe-area-inset-bottom) + 10px));
-      height: calc(100svh - 56px);
-      height: calc(100dvh - 56px);
+      height: calc(100svh - var(--layout-header-height, 60px));
+      height: calc(100dvh - var(--layout-header-height, 60px));
     }
 
     .main-container:has(.fixed-header).hasTagsView > .app-main {
-      height: calc(100svh - 96px);
-      height: calc(100dvh - 96px);
+      height: calc(100svh - (var(--layout-header-height, 60px) + var(--layout-tags-height, 40px)));
+      height: calc(100dvh - (var(--layout-header-height, 60px) + var(--layout-tags-height, 40px)));
     }
   }
 }
@@ -112,5 +112,19 @@ function addIframe(currentRoute) {
 ::-webkit-scrollbar-thumb {
   background-color: var(--panel-border-strong);
   border-radius: 3px;
+}
+
+.app-main:has(.cockpit-screen) {
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #020913 !important;
+}
+
+.app-main:has(.cockpit-screen) .page-workbench-assist {
+  display: none !important;
+}
+
+.app-main:has(.cockpit-screen) .copyright {
+  display: none !important;
 }
 </style>

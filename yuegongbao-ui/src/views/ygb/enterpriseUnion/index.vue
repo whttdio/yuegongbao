@@ -1,36 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  addEnterpriseSubmodule,
-  delEnterpriseSubmodule,
-  getEnterpriseSubmodule,
-  getEnterpriseSubmoduleSummary,
-  listEnterpriseSubmodule,
-  updateEnterpriseSubmodule
-} from '@/api/ygb/enterprise'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const submodule = 'union'
-const config = {
+const config = createBusinessRecordPageConfig({
+  module: 'enterpriseUnion',
   title: '工会管理',
-  description: '复用 typed-record 维护企业工会组织、协同状态、来源和导出能力。',
-  permPrefix: 'ygb:enterpriseUnion',
-  filePrefix: 'enterprise_union',
-  defaultCategoryCode: 'union',
-  defaultSourceLabel: '单位管理',
-  recordNameLabel: '工会组织名称',
-  recordNamePlaceholder: '请输入工会组织名称',
-  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'recordName', 'workflowStatus', 'status'],
-  routeQueryFields: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'workflowStatus', 'status'],
-  listApi: query => listEnterpriseSubmodule(submodule, query),
-  summaryApi: query => getEnterpriseSubmoduleSummary(submodule, query),
-  detailApi: id => getEnterpriseSubmodule(submodule, id),
-  addApi: data => addEnterpriseSubmodule(submodule, data),
-  updateApi: data => updateEnterpriseSubmodule(submodule, data),
-  deleteApi: ids => delEnterpriseSubmodule(submodule, ids),
-  exportUrl: `ygb/enterprise/${submodule}/export`
-}
+  description: '围绕工会维权、监督事项和服务记录管理开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '工会事项',
+  businessNamePlaceholder: '请输入工会事项',
+  defaultSourceLabel: '工会管理',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

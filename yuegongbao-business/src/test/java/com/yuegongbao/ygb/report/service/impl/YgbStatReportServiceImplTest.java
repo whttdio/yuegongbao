@@ -14,6 +14,7 @@ import com.yuegongbao.ygb.report.domain.YgbStatReportGenerateRequest;
 import com.yuegongbao.ygb.report.domain.YgbStatReportItem;
 import com.yuegongbao.ygb.report.domain.YgbStatReportSummary;
 import com.yuegongbao.ygb.report.mapper.YgbStatReportMapper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,6 +32,27 @@ class YgbStatReportServiceImplTest
 
     @InjectMocks
     private YgbStatReportServiceImpl service;
+
+    @Test
+    void selectStatReportListAppliesRegionScopeBeforeQuery()
+        throws Exception
+    {
+        YgbRegionScopeHelper regionScopeHelper = org.mockito.Mockito.mock(YgbRegionScopeHelper.class);
+        injectField(service, "regionScopeHelper", regionScopeHelper);
+        doAnswer(invocation -> {
+            YgbStatReport query = invocation.getArgument(0);
+            query.getParams().put("regionDataScope", " AND r.region_code LIKE '4401%' ");
+            return null;
+        }).when(regionScopeHelper).applyRegionDataScope(any(YgbStatReport.class), eq("r.region_code"));
+        when(statReportMapper.selectStatReportList(any(YgbStatReport.class))).thenReturn(List.of());
+
+        YgbStatReport query = new YgbStatReport();
+        service.selectStatReportList(query);
+
+        ArgumentCaptor<YgbStatReport> queryCaptor = ArgumentCaptor.forClass(YgbStatReport.class);
+        verify(statReportMapper).selectStatReportList(queryCaptor.capture());
+        assertEquals(" AND r.region_code LIKE '4401%' ", queryCaptor.getValue().getParams().get("regionDataScope"));
+    }
 
     @Test
     void generateReportCreatesWarningOverviewWithSummaryAndItems()
@@ -148,5 +170,13 @@ class YgbStatReportServiceImplTest
     private static Map<String, Object> castMap(Object value)
     {
         return (Map<String, Object>) value;
+    }
+
+    private static void injectField(Object target, String fieldName, Object value)
+        throws Exception
+    {
+        java.lang.reflect.Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(target, value);
     }
 }

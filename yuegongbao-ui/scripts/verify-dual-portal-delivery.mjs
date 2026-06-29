@@ -39,19 +39,23 @@ const fileChecks = [
   {
     file: 'src/views/ygb/cockpit/index.vue',
     checks: [
-      { type: 'includes', token: '<portal-explanation-panel', label: 'ygb cockpit renders explanation panel' },
-      { type: 'includes', token: "dashboardData.value.ygbExplanation || []", label: 'ygb cockpit consumes ygb explanation payload' },
-      { type: 'includes', token: 'handlePortalExplanationAction', label: 'ygb cockpit exposes explanation drilldown handler' },
-      { type: 'excludes', token: '6.1 ', label: 'ygb cockpit avoids azb explanation wording' }
+      { type: 'includes', token: '<cyber-cockpit-screen mode="ygb" />', label: 'ygb cockpit mounts cyber screen wrapper' }
     ]
   },
   {
     file: 'src/views/azb/cockpit/index.vue',
     checks: [
-      { type: 'includes', token: '<portal-explanation-panel', label: 'azb cockpit renders explanation panel' },
-      { type: 'includes', token: "dashboardData.value.azbExplanation || []", label: 'azb cockpit consumes azb explanation payload' },
-      { type: 'includes', token: 'handlePortalExplanationAction', label: 'azb cockpit exposes explanation drilldown handler' },
-      { type: 'excludes', token: '530.1 ', label: 'azb cockpit avoids ygb explanation wording' }
+      { type: 'includes', token: '<cyber-cockpit-screen mode="azb" />', label: 'azb cockpit mounts cyber screen wrapper' }
+    ]
+  },
+  {
+    file: 'src/views/cockpit/CyberCockpitScreen.vue',
+    checks: [
+      { type: 'includes', token: 'class="cockpit-screen"', label: 'cyber cockpit renders dark screen root' },
+      { type: 'includes', token: 'cockpit-enterprise-table', label: 'cyber cockpit renders enterprise detail table' },
+      { type: 'includes', token: 'cockpit-config-dialog', label: 'cyber cockpit renders config dialog' },
+      { type: 'includes', token: 'cockpit-warning-stream', label: 'cyber cockpit renders warning stream' },
+      { type: 'includes', token: 'cockpit-risk-ranking-panel', label: 'cyber cockpit renders risk ranking panel' }
     ]
   },
   {
@@ -119,11 +123,11 @@ const fileChecks = [
     ]
   },
   {
-    file: 'src/views/azb/cockpit/index.vue',
+    file: 'src/views/cockpit/CyberCockpitScreen.vue',
     checks: [
-      { type: 'includes', token: "focusKeys: ['creditScore', 'statReport', 'aqInsurance', 'warning', 'device', 'heightWorkReport']", label: 'azb cockpit bank profile exposes collaboration and evidence focus keys' },
-      { type: 'includes', token: "quickActionKeys: ['aqInsurance', 'preventionFund', 'creditScore', 'statReport', 'warning', 'device', 'heightWorkReport']", label: 'azb cockpit insurer profile exposes full quick action keys' },
-      { type: 'includes', token: "moduleKeys: ['aqInsurance', 'preventionFund', 'creditScore', 'statReport', 'warning', 'device', 'heightWorkReport']", label: 'azb cockpit insurer profile exposes full module keys' }
+      { type: 'includes', token: 'warningPath: "/azb/warning"', label: 'azb cyber cockpit uses azb warning path' },
+      { type: 'includes', token: 'warningPath: "/warning-center/workOrder"', label: 'ygb cyber cockpit uses ygb warning path' },
+      { type: 'includes', token: 'cockpit-risk-ranking-panel', label: 'cyber cockpit renders risk ranking for azb profiles' }
     ]
   }
 ]

@@ -16,6 +16,7 @@ import com.yuegongbao.ygb.safety.domain.YgbPreventionProjectSummary;
 import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
 import com.yuegongbao.ygb.safety.mapper.YgbPreventionProjectMapper;
 import com.yuegongbao.ygb.safety.service.IYgbPreventionProjectService;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 
 @Service
 public class YgbPreventionProjectServiceImpl implements IYgbPreventionProjectService
@@ -25,6 +26,9 @@ public class YgbPreventionProjectServiceImpl implements IYgbPreventionProjectSer
 
     @Autowired
     private YgbEnterpriseMapper enterpriseMapper;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbPreventionProject> selectPreventionProjectList(YgbPreventionProject preventionProject)
@@ -84,27 +88,69 @@ public class YgbPreventionProjectServiceImpl implements IYgbPreventionProjectSer
     @Override
     public YgbPreventionProject selectPreventionProjectById(Long projectId)
     {
-        return preventionProjectMapper.selectPreventionProjectById(projectId);
+        YgbPreventionProject preventionProject = preventionProjectMapper.selectPreventionProjectById(projectId);
+        if (preventionProject != null)
+        {
+            dataScopeGuard.assertEntityAllowed(preventionProject);
+        }
+        return preventionProject;
     }
 
     @Override
     public int insertPreventionProject(YgbPreventionProject preventionProject)
     {
         fillSnapshot(preventionProject);
+        normalizeProjectForSave(preventionProject);
+        if (!"0".equals(preventionProject.getProjectStatus()))
+        {
+            throw new ServiceException("新增预防项目只能从申报状态开始。");
+        }
+        dataScopeGuard.assertEntityAllowed(preventionProject);
         return preventionProjectMapper.insertPreventionProject(preventionProject);
     }
 
     @Override
     public int updatePreventionProject(YgbPreventionProject preventionProject)
     {
+        YgbPreventionProject previous = requirePreventionProjectAllowed(preventionProject.getProjectId());
         fillSnapshot(preventionProject);
+        normalizeProjectForSave(preventionProject);
+        if (StringUtils.isEmpty(preventionProject.getProjectStatus()))
+        {
+            preventionProject.setProjectStatus(previous.getProjectStatus());
+        }
+        validateProjectStatusTransition(previous, preventionProject);
+        dataScopeGuard.assertEntityAllowed(preventionProject);
         return preventionProjectMapper.updatePreventionProject(preventionProject);
     }
 
     @Override
     public int deletePreventionProjectByIds(Long[] projectIds, String updateBy)
     {
+        for (Long projectId : projectIds)
+        {
+            YgbPreventionProject preventionProject = requirePreventionProjectAllowed(projectId);
+            if (!"0".equals(preventionProject.getProjectStatus()))
+            {
+                throw new ServiceException("已立项、实施、验收或结项的预防项目不允许删除。");
+            }
+        }
         return preventionProjectMapper.deletePreventionProjectByIds(projectIds, updateBy);
+    }
+
+    private YgbPreventionProject requirePreventionProjectAllowed(Long projectId)
+    {
+        if (projectId == null)
+        {
+            throw new ServiceException("预防项目ID不能为空。");
+        }
+        YgbPreventionProject preventionProject = preventionProjectMapper.selectPreventionProjectById(projectId);
+        if (preventionProject == null)
+        {
+            throw new ServiceException("预防项目不存在。");
+        }
+        dataScopeGuard.assertEntityAllowed(preventionProject);
+        return preventionProject;
     }
 
     private void fillSnapshot(YgbPreventionProject preventionProject)
@@ -120,6 +166,85 @@ public class YgbPreventionProjectServiceImpl implements IYgbPreventionProjectSer
         }
         preventionProject.setEnterpriseName(enterprise.getEnterpriseName());
         preventionProject.setRegionCode(enterprise.getRegionCode());
+    }
+
+    private void normalizeProjectForSave(YgbPreventionProject preventionProject)
+    {
+        if (StringUtils.isEmpty(preventionProject.getProjectStatus()))
+        {
+            preventionProject.setProjectStatus("0");
+        }
+        validateProjectStatusValue(preventionProject.getProjectStatus());
+        if (preventionProject.getBudgetAmount() == null)
+        {
+            preventionProject.setBudgetAmount(BigDecimal.ZERO);
+        }
+        if (preventionProject.getActualAmount() == null)
+        {
+            preventionProject.setActualAmount(BigDecimal.ZERO);
+        }
+        if (preventionProject.getBudgetAmount().compareTo(BigDecimal.ZERO) < 0
+            || preventionProject.getActualAmount().compareTo(BigDecimal.ZERO) < 0)
+        {
+            throw new ServiceException("预防项目预算金额和实际金额不能小于 0。");
+        }
+        if (preventionProject.getStartDate() != null && preventionProject.getEndDate() != null
+            && preventionProject.getEndDate().before(preventionProject.getStartDate()))
+        {
+            throw new ServiceException("预防项目结束日期不能早于开始日期。");
+        }
+        Integer score = preventionProject.getEvaluationScore();
+        if (score != null && (score < 0 || score > 100))
+        {
+            throw new ServiceException("预防项目评价分必须在 0 到 100 之间。");
+        }
+    }
+
+    private void validateProjectStatusTransition(YgbPreventionProject previous, YgbPreventionProject target)
+    {
+        String currentStatus = StringUtils.defaultIfEmpty(previous.getProjectStatus(), "0");
+        String targetStatus = StringUtils.defaultIfEmpty(target.getProjectStatus(), currentStatus);
+        int current = projectStatusOrder(currentStatus);
+        int next = projectStatusOrder(targetStatus);
+        if (next < current)
+        {
+            throw new ServiceException("预防项目状态不允许回退。");
+        }
+        if (next - current > 1)
+        {
+            throw new ServiceException("预防项目状态只能按申报、立项、实施、验收、结项逐步推进。");
+        }
+        if (next >= 1 && target.getBudgetAmount().compareTo(BigDecimal.ZERO) <= 0)
+        {
+            throw new ServiceException("预防项目立项后预算金额必须大于 0。");
+        }
+        if (next >= 2 && (target.getStartDate() == null || target.getEndDate() == null))
+        {
+            throw new ServiceException("预防项目进入实施阶段前必须填写计划起止日期。");
+        }
+        if (next >= 3 && (target.getActualAmount() == null || target.getActualAmount().compareTo(BigDecimal.ZERO) <= 0))
+        {
+            throw new ServiceException("预防项目进入验收阶段前必须填写实际金额。");
+        }
+        if (next >= 4 && (target.getEvaluationScore() == null || StringUtils.isEmpty(target.getEvaluationReport())))
+        {
+            throw new ServiceException("预防项目结项前必须填写评价分和评价报告。");
+        }
+    }
+
+    private void validateProjectStatusValue(String projectStatus)
+    {
+        projectStatusOrder(projectStatus);
+    }
+
+    private int projectStatusOrder(String projectStatus)
+    {
+        if ("0".equals(projectStatus) || "1".equals(projectStatus) || "2".equals(projectStatus)
+            || "3".equals(projectStatus) || "4".equals(projectStatus))
+        {
+            return Integer.parseInt(projectStatus);
+        }
+        throw new ServiceException("预防项目状态值不合法。");
     }
 
     private BigDecimal defaultAmount(BigDecimal value)

@@ -367,7 +367,7 @@ function handleScroll() {
 </script>
 
 <style lang="scss" scoped>
-$tags-bar-height: 40px;
+  $tags-bar-height: var(--layout-tags-height, 40px);
 
 .tags-view-container {
   height: $tags-bar-height;
@@ -705,14 +705,14 @@ $tags-bar-height: 40px;
 
 .main-container.fullscreen-mode .app-main {
   position: fixed;
-  top: 34px;
+  top: var(--layout-tags-height, 40px);
   left: 0;
   right: 0;
   bottom: 0;
   margin: 0 !important;
   padding: 0 !important;
-  height: calc(100vh - 34px) !important;
-  min-height: calc(100vh - 34px) !important;
+  height: calc(100vh - var(--layout-tags-height, 40px)) !important;
+  min-height: calc(100vh - var(--layout-tags-height, 40px)) !important;
   overflow: auto;
 }
 </style>

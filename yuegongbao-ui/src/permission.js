@@ -8,14 +8,16 @@ import useSettingsStore from '@/store/modules/settings'
 import useUserStore from '@/store/modules/user'
 import { getToken } from '@/utils/auth'
 import { isRelogin } from '@/utils/request'
+import { resolveYgbDocumentRouteAlias } from '@/utils/routeAlias'
 import { isHttp, isPathMatch } from '@/utils/validate'
 import {
   getActivePortalCode,
   isOfficialPortalPath,
   isOfficialPortalStandalone,
   isPortalLoginPath,
-  openOfficialPortal,
+  OFFICIAL_PORTAL_QUERY,
   resolvePortalRedirect,
+  resolveOfficialPortalRoute,
   resolvePortalLoginPath,
   setActivePortalCode,
   syncPortalBranding
@@ -45,9 +47,12 @@ router.beforeEach(async (to, from) => {
   useSettingsStore().syncPortalSettings()
 
   if (from.path && isOfficialPortalPath(to.path) && !isOfficialPortalStandalone(to.query)) {
-    openOfficialPortal(router)
     NProgress.done()
-    return false
+    return {
+      path: resolveOfficialPortalRoute(getActivePortalCode(to)).route,
+      query: OFFICIAL_PORTAL_QUERY,
+      replace: true
+    }
   }
 
   if (getToken()) {
@@ -75,6 +80,12 @@ router.beforeEach(async (to, from) => {
     if (!isLock && to.path === '/lock') {
       NProgress.done()
       return { path: '/' }
+    }
+
+    const ygbDocumentRouteAlias = resolveYgbDocumentRouteAlias(to)
+    if (ygbDocumentRouteAlias) {
+      NProgress.done()
+      return ygbDocumentRouteAlias
     }
 
     if (userStore.roles.length === 0) {

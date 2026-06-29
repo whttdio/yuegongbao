@@ -1,24 +1,44 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">保险保障</view>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">保险保障</view>
       <view class="worker-subtitle">{{ detail.enterpriseName || '未绑定企业' }}</view>
-      <view class="security-grid">
-        <view class="security-item">
-          <view class="security-item__label">工伤保险状态</view>
-          <view class="security-item__value">{{ detail.injuryInsuranceStatus || '-' }}</view>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ detail.injuryInsuranceStatus || '-' }}</view>
+          <view class="hero-stat__label">工伤保险</view>
         </view>
-        <view class="security-item">
-          <view class="security-item__label">安责险状态</view>
-          <view class="security-item__value">{{ detail.aqInsuranceStatus || '-' }}</view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ detail.aqInsuranceStatus || '-' }}</view>
+          <view class="hero-stat__label">安责险</view>
         </view>
-        <view class="security-item">
-          <view class="security-item__label">安责险保费</view>
-          <view class="security-item__value">{{ detail.aqInsurancePremium || '-' }}</view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ detail.coveredCount || '-' }}</view>
+          <view class="hero-stat__label">覆盖人数</view>
         </view>
-        <view class="security-item">
-          <view class="security-item__label">覆盖人数</view>
-          <view class="security-item__value">{{ detail.aqInsuranceProtectedCount ?? '-' }}</view>
+      </view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">保障详情</view>
+      </view>
+      <view class="profile-grid">
+        <view class="profile-item">
+          <view class="profile-item__label">工伤保险状态</view>
+          <view class="profile-item__value">{{ detail.injuryInsuranceStatus || '-' }}</view>
+        </view>
+        <view class="profile-item">
+          <view class="profile-item__label">安责险状态</view>
+          <view class="profile-item__value">{{ detail.aqInsuranceStatus || '-' }}</view>
+        </view>
+        <view class="profile-item">
+          <view class="profile-item__label">安责险保费</view>
+          <view class="profile-item__value">{{ detail.aqInsurancePremium || '-' }}</view>
+        </view>
+        <view class="profile-item">
+          <view class="profile-item__label">覆盖人数</view>
+          <view class="profile-item__value">{{ detail.aqInsuranceProtectedCount ?? '-' }}</view>
         </view>
       </view>
     </view>
@@ -161,68 +181,12 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
 .worker-card + .worker-card {
   margin-top: 24rpx;
 }
 
-.security-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-  margin-top: 20rpx;
-}
-
-.security-item {
-  padding: 20rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.security-item__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.security-item__value {
-  margin-top: 10rpx;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
 .detail-row:last-of-type {
   border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
 }
 
 .security-hint {
@@ -231,39 +195,5 @@ onShow(loadData)
 
 .coverage-detail-list {
   margin-top: 20rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 </style>

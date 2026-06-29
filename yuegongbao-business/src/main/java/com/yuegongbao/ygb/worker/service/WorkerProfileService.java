@@ -6,6 +6,7 @@ import com.yuegongbao.ygb.foundation.domain.YgbPerson;
 import com.yuegongbao.ygb.worker.domain.WorkerFeedback;
 import com.yuegongbao.ygb.worker.domain.WorkerUploadRecord;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerFeedbackCreateRequest;
+import com.yuegongbao.ygb.worker.domain.vo.WorkerMessageHandleRequest;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerPointExchangeRequest;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerPushRegisterRequest;
 import com.yuegongbao.ygb.worker.domain.vo.WorkerPushTestRequest;
@@ -37,6 +38,8 @@ public interface WorkerProfileService
     java.util.List<WorkerFeedback> listFeedbackManageRecords(WorkerFeedback query);
 
     WorkerFeedback getFeedbackManageDetail(Long feedbackId);
+
+    Map<String, Object> updateFeedbackHandle(Long feedbackId, WorkerMessageHandleRequest request, String operator);
 
     Map<String, Object> getSettings(YgbPerson worker, Long userId);
 

@@ -15,6 +15,9 @@ import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
 import com.yuegongbao.ygb.regulation.mapper.YgbSocialPaymentMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbTaxCompareMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbUninsuredListMapper;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,6 +41,15 @@ class YgbUninsuredListServiceImplTest
     @Mock
     private IYgbWarningService warningService;
 
+    @Mock
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Mock
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
+    @Mock
+    private YgbDataScopeGuard dataScopeGuard;
+
     @InjectMocks
     private YgbUninsuredListServiceImpl service;
 
@@ -53,7 +65,10 @@ class YgbUninsuredListServiceImplTest
         int rows = service.generate("2026-05", 10L, "tester");
 
         assertEquals(1, rows);
-        verify(uninsuredListMapper).deleteByScope("2026-05", 10L);
+        ArgumentCaptor<YgbUninsuredList> deleteScopeCaptor = ArgumentCaptor.forClass(YgbUninsuredList.class);
+        verify(uninsuredListMapper).deleteByScope(deleteScopeCaptor.capture());
+        assertEquals("2026-05", deleteScopeCaptor.getValue().getStatMonth());
+        assertEquals(Long.valueOf(10L), deleteScopeCaptor.getValue().getEnterpriseId());
 
         ArgumentCaptor<YgbUninsuredList> uninsuredCaptor = ArgumentCaptor.forClass(YgbUninsuredList.class);
         verify(uninsuredListMapper).insertUninsured(uninsuredCaptor.capture());
@@ -78,6 +93,8 @@ class YgbUninsuredListServiceImplTest
         record.setListId(8L);
         when(uninsuredListMapper.selectUninsuredById(8L)).thenReturn(record);
         when(uninsuredListMapper.updateUninsuredHandle(any(YgbUninsuredList.class))).thenReturn(1);
+
+        record.setDisposalStatus("2");
 
         int rows = service.handle(8L, "3", "DONE", "tester");
 

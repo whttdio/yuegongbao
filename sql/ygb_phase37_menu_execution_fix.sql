@@ -163,7 +163,7 @@ INSERT INTO sys_menu (
 VALUES
   (4303, '岗位审核', 4300, 3, 'jobReview', 'ygb/operation/jobReview/index', '', 'YgbOperationJobReview', 1, 0, 'C', '0', '0', 'ygb', 'ygb:operationJobReview:list', 'tickets', 'admin', SYSDATE(), 'admin', SYSDATE(), '岗位审核台账'),
   (4304, '简历管理', 4300, 4, 'resume', 'ygb/operation/resume/index', '', 'YgbOperationResume', 1, 0, 'C', '0', '0', 'ygb', 'ygb:operationResume:list', 'user', 'admin', SYSDATE(), 'admin', SYSDATE(), '简历管理台账'),
-  (4305, '广告轮播', 4300, 5, 'banner', 'ygb/portalContent/index', 'portalCode=ygb&sectionCode=banner', 'YgbOperationBanner', 1, 0, 'C', '0', '0', 'ygb', 'ygb:portalContent:list', 'picture', 'admin', SYSDATE(), 'admin', SYSDATE(), '广告轮播内容管理'),
+  (4305, '广告轮播', 4300, 5, 'banner', 'ygb/portalContent/index', '{"portalCode":"ygb","sectionCode":"banner"}', 'YgbOperationBanner', 1, 0, 'C', '0', '0', 'ygb', 'ygb:portalContent:list', 'picture', 'admin', SYSDATE(), 'admin', SYSDATE(), '广告轮播内容管理'),
   (4306, '消息推送', 4300, 6, 'message', 'ygb/operation/message/index', '', 'YgbOperationMessage', 1, 0, 'C', '0', '0', 'ygb', 'ygb:operationMessage:list', 'message', 'admin', SYSDATE(), 'admin', SYSDATE(), '运营消息台账'),
   (4311, '查询', 4302, 1, '', '', '', '', 1, 0, 'F', '0', '0', 'ygb', 'ygb:operationEnterpriseReview:query', '#', 'admin', SYSDATE(), 'admin', SYSDATE(), ''),
   (4312, '新增', 4302, 2, '', '', '', '', 1, 0, 'F', '0', '0', 'ygb', 'ygb:operationEnterpriseReview:add', '#', 'admin', SYSDATE(), 'admin', SYSDATE(), ''),

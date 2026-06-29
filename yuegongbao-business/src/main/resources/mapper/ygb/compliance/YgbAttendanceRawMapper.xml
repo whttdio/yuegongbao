@@ -68,6 +68,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="personName != null and personName != ''">
                 and a.person_name like concat('%', #{personName}, '%')
             </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and a.attendance_date &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and a.attendance_date &lt; #{params.endTime}
+            </if>
             <if test="attendanceStatus != null and attendanceStatus != ''">
                 and a.attendance_status = #{attendanceStatus}
             </if>
@@ -84,6 +90,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and a.region_code like concat(#{regionCode}, '%')
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
         </where>
         order by a.attendance_date desc, a.attendance_id desc
     </select>

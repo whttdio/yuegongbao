@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.springframework.format.annotation.DateTimeFormat;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.yuegongbao.common.annotation.Excel;
 import com.yuegongbao.common.core.domain.BaseEntity;
@@ -89,6 +90,43 @@ public class YgbContract extends BaseEntity
     private String blockchainHash;
 
     private String contractFileUrl;
+
+    private String enterpriseKeyword;
+
+    private String personKeyword;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date endDateBegin;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date endDateEnd;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date signDateBegin;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date signDateEnd;
+
+    private String hasBlockchain;
+
+    private String filingStatusGroup;
+
+    private Boolean expiryOnly;
+
+    private Integer daysToExpire;
+
+    private String expiryLevel;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date lastRemindTime;
+
+    private String remindStatus;
+
+    private String riskReason;
+
+    private Long warningId;
+
+    private String warningStatus;
 
     public Long getContractId()
     {
@@ -316,6 +354,166 @@ public class YgbContract extends BaseEntity
     public void setContractFileUrl(String contractFileUrl)
     {
         this.contractFileUrl = contractFileUrl;
+    }
+
+    public String getEnterpriseKeyword()
+    {
+        return enterpriseKeyword;
+    }
+
+    public void setEnterpriseKeyword(String enterpriseKeyword)
+    {
+        this.enterpriseKeyword = enterpriseKeyword;
+    }
+
+    public String getPersonKeyword()
+    {
+        return personKeyword;
+    }
+
+    public void setPersonKeyword(String personKeyword)
+    {
+        this.personKeyword = personKeyword;
+    }
+
+    public Date getEndDateBegin()
+    {
+        return endDateBegin;
+    }
+
+    public void setEndDateBegin(Date endDateBegin)
+    {
+        this.endDateBegin = endDateBegin;
+    }
+
+    public Date getEndDateEnd()
+    {
+        return endDateEnd;
+    }
+
+    public void setEndDateEnd(Date endDateEnd)
+    {
+        this.endDateEnd = endDateEnd;
+    }
+
+    public Date getSignDateBegin()
+    {
+        return signDateBegin;
+    }
+
+    public void setSignDateBegin(Date signDateBegin)
+    {
+        this.signDateBegin = signDateBegin;
+    }
+
+    public Date getSignDateEnd()
+    {
+        return signDateEnd;
+    }
+
+    public void setSignDateEnd(Date signDateEnd)
+    {
+        this.signDateEnd = signDateEnd;
+    }
+
+    public String getHasBlockchain()
+    {
+        return hasBlockchain;
+    }
+
+    public void setHasBlockchain(String hasBlockchain)
+    {
+        this.hasBlockchain = hasBlockchain;
+    }
+
+    public String getFilingStatusGroup()
+    {
+        return filingStatusGroup;
+    }
+
+    public void setFilingStatusGroup(String filingStatusGroup)
+    {
+        this.filingStatusGroup = filingStatusGroup;
+    }
+
+    public Boolean getExpiryOnly()
+    {
+        return expiryOnly;
+    }
+
+    public void setExpiryOnly(Boolean expiryOnly)
+    {
+        this.expiryOnly = expiryOnly;
+    }
+
+    public Integer getDaysToExpire()
+    {
+        return daysToExpire;
+    }
+
+    public void setDaysToExpire(Integer daysToExpire)
+    {
+        this.daysToExpire = daysToExpire;
+    }
+
+    public String getExpiryLevel()
+    {
+        return expiryLevel;
+    }
+
+    public void setExpiryLevel(String expiryLevel)
+    {
+        this.expiryLevel = expiryLevel;
+    }
+
+    public Date getLastRemindTime()
+    {
+        return lastRemindTime;
+    }
+
+    public void setLastRemindTime(Date lastRemindTime)
+    {
+        this.lastRemindTime = lastRemindTime;
+    }
+
+    public String getRemindStatus()
+    {
+        return remindStatus;
+    }
+
+    public void setRemindStatus(String remindStatus)
+    {
+        this.remindStatus = remindStatus;
+    }
+
+    public String getRiskReason()
+    {
+        return riskReason;
+    }
+
+    public void setRiskReason(String riskReason)
+    {
+        this.riskReason = riskReason;
+    }
+
+    public Long getWarningId()
+    {
+        return warningId;
+    }
+
+    public void setWarningId(Long warningId)
+    {
+        this.warningId = warningId;
+    }
+
+    public String getWarningStatus()
+    {
+        return warningStatus;
+    }
+
+    public void setWarningStatus(String warningStatus)
+    {
+        this.warningStatus = warningStatus;
     }
 
     @Override

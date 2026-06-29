@@ -1,20 +1,11 @@
 import { getCurrentInstance, reactive, ref, toRefs } from 'vue'
 import { getAqInsurance, getAqInsuranceSummary, listAqInsurance, syncAqInsurance } from '@/api/ygb/aqInsurance'
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
+import { gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
-export const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const regionOptions = gdRegionOptions
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440106': '广州市天河区',
-  '440305': '深圳市南山区',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
 export const policyStatusOptions = [
   { label: '未生效', value: '0' },
@@ -267,7 +258,7 @@ export function useAqInsurancePage(options = {}) {
   }
 
   function syncPolicyContext(policy) {
-    if (!guardMutation('执行模拟同步')) {
+    if (!guardMutation('执行保单同步')) {
       return
     }
     const statMonth = policy?.statMonth || queryParams.value.statMonth
@@ -279,7 +270,7 @@ export function useAqInsurancePage(options = {}) {
       statMonth,
       enterpriseId: policy?.enterpriseId || queryParams.value.enterpriseId
     }).then(response => {
-      proxy.$modal.msgSuccess(response.msg || '模拟同步完成')
+      proxy.$modal.msgSuccess(response.msg || '保单同步完成')
       getList()
     })
   }

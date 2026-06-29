@@ -22,6 +22,10 @@ import com.yuegongbao.ygb.regulation.mapper.YgbSocialPaymentMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbTaxCompareMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbUninsuredListMapper;
 import com.yuegongbao.ygb.regulation.service.IYgbUninsuredListService;
+import com.yuegongbao.ygb.util.EnterpriseScopeMode;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
 @Service
@@ -40,6 +44,15 @@ public class YgbUninsuredListServiceImpl implements IYgbUninsuredListService
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbUninsuredList> selectUninsuredList(YgbUninsuredList uninsuredList)
@@ -116,11 +129,13 @@ public class YgbUninsuredListServiceImpl implements IYgbUninsuredListService
         YgbTaxCompare taxQuery = new YgbTaxCompare();
         taxQuery.setStatMonth(statMonth);
         taxQuery.setEnterpriseId(enterpriseId);
+        applyUninsuredScope(taxQuery);
         List<YgbTaxCompare> taxList = taxCompareMapper.selectTaxCompareList(taxQuery);
 
         YgbSocialPayment socialQuery = new YgbSocialPayment();
         socialQuery.setStatMonth(statMonth);
         socialQuery.setEnterpriseId(enterpriseId);
+        applyUninsuredScope(socialQuery);
         List<YgbSocialPayment> socialList = socialPaymentMapper.selectSocialPaymentList(socialQuery);
 
         Set<Long> insuredPersonIds = new HashSet<>();
@@ -129,7 +144,11 @@ public class YgbUninsuredListServiceImpl implements IYgbUninsuredListService
             insuredPersonIds.add(payment.getPersonId());
         }
 
-        uninsuredListMapper.deleteByScope(statMonth, enterpriseId);
+        YgbUninsuredList deleteScope = new YgbUninsuredList();
+        deleteScope.setStatMonth(statMonth);
+        deleteScope.setEnterpriseId(enterpriseId);
+        applyUninsuredScope(deleteScope);
+        uninsuredListMapper.deleteByScope(deleteScope);
         int rows = 0;
         String batchNo = "UNINS-" + statMonth.replace("-", "");
         for (YgbTaxCompare item : taxList)
@@ -182,10 +201,82 @@ public class YgbUninsuredListServiceImpl implements IYgbUninsuredListService
         {
             throw new ServiceException("漏保清单记录不存在。");
         }
-        record.setDisposalStatus(disposalStatus);
-        record.setRemark(remark);
+        dataScopeGuard.assertEntityAllowed(record);
+        String targetStatus = normalizeStatus(disposalStatus);
+        validateDisposalTransition(record.getDisposalStatus(), targetStatus, remark);
+        record.setDisposalStatus(targetStatus);
+        record.setRemark(StringUtils.isEmpty(remark) ? record.getRemark() : remark.trim());
         record.setUpdateBy(operator);
         return uninsuredListMapper.updateUninsuredHandle(record);
+    }
+
+    private void applyUninsuredScope(com.yuegongbao.common.core.domain.BaseEntity query)
+    {
+        if (enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            enterpriseScopeHelper.applyEnterpriseDataScope(query, EnterpriseScopeMode.SINGLE, "enterprise_id");
+            return;
+        }
+        regionScopeHelper.applyRegionDataScope(query, "region_code");
+    }
+
+    private String normalizeStatus(String disposalStatus)
+    {
+        if (StringUtils.isEmpty(disposalStatus))
+        {
+            throw new ServiceException("漏保处置状态不能为空。");
+        }
+        String normalized = disposalStatus.trim();
+        if (!"0".equals(normalized) && !"1".equals(normalized) && !"2".equals(normalized)
+            && !"3".equals(normalized) && !"4".equals(normalized) && !"5".equals(normalized))
+        {
+            throw new ServiceException("漏保处置状态值不合法。");
+        }
+        return normalized;
+    }
+
+    private void validateDisposalTransition(String currentStatus, String targetStatus, String remark)
+    {
+        String current = StringUtils.defaultIfEmpty(currentStatus, "0");
+        if (current.equals(targetStatus))
+        {
+            throw new ServiceException("漏保处置状态未发生变更。");
+        }
+        if ("3".equals(current) || "4".equals(current) || "5".equals(current))
+        {
+            throw new ServiceException("已补缴、强制执行或误报对象不允许再次处置。");
+        }
+        if (!isAllowedDisposalTransition(current, targetStatus))
+        {
+            throw new ServiceException("漏保处置状态只能按核查、催缴、结果回写链路流转。");
+        }
+        if (requiresRemark(targetStatus) && StringUtils.isEmpty(remark))
+        {
+            throw new ServiceException("进入催缴、补缴、强制执行或误报状态时，处置说明不能为空。");
+        }
+    }
+
+    private boolean isAllowedDisposalTransition(String currentStatus, String targetStatus)
+    {
+        if ("0".equals(currentStatus))
+        {
+            return "1".equals(targetStatus) || "5".equals(targetStatus);
+        }
+        if ("1".equals(currentStatus))
+        {
+            return "2".equals(targetStatus) || "5".equals(targetStatus);
+        }
+        if ("2".equals(currentStatus))
+        {
+            return "3".equals(targetStatus) || "4".equals(targetStatus) || "5".equals(targetStatus);
+        }
+        return false;
+    }
+
+    private boolean requiresRemark(String targetStatus)
+    {
+        return "2".equals(targetStatus) || "3".equals(targetStatus) || "4".equals(targetStatus)
+            || "5".equals(targetStatus);
     }
 
     private void validateMonth(String statMonth)

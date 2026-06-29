@@ -1,40 +1,62 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">{{ detail.title || '-' }}</view>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">{{ detail.title || '视频详情' }}</view>
       <view class="worker-subtitle">{{ detail.desc || '-' }}</view>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ detail.durationText || '00:00' }}</view>
+          <view class="hero-stat__label">时长</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ watchedSeconds }}</view>
+          <view class="hero-stat__label">已看秒数</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ detail.completed ? '已完成' : '学习中' }}</view>
+          <view class="hero-stat__label">学习状态</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">视频播放</view>
+      </view>
       <view class="detail-meta">
         <view class="worker-tag">时长 {{ detail.durationText || '00:00' }}</view>
         <view class="worker-tag">已看 {{ watchedSeconds }} 秒</view>
       </view>
       <view class="worker-subtitle source-text">{{ detail.sourceText || '' }}</view>
-      <video
-        v-if="detail.videoUrl"
-        class="video-player"
-        :src="detail.videoUrl"
-        :poster="detail.posterUrl || ''"
-        controls
-        show-center-play-btn
-        enable-progress-gesture
-        object-fit="contain"
-        @loadedmetadata="handleLoadedMetadata"
-        @timeupdate="handleTimeUpdate"
-        @pause="handlePause"
-        @ended="handleEnded"
-        @error="handleVideoError"
-      />
-      <view v-else class="video-empty">
-        当前视频暂不可播放，已切换为文字摘要学习模式。
+      <view v-if="detail.videoUrl" class="video-player">
+        <video
+          :src="detail.videoUrl"
+          :poster="detail.posterUrl || ''"
+          controls
+          show-center-play-btn
+          enable-progress-gesture
+          object-fit="contain"
+          @loadedmetadata="handleLoadedMetadata"
+          @timeupdate="handleTimeUpdate"
+          @pause="handlePause"
+          @ended="handleEnded"
+          @error="handleVideoError"
+        />
+      </view>
+      <view v-else class="video-player">
+        <view class="video-player__cover video-player__empty">
+          当前视频暂不可播放，已切换为文字摘要学习模式。
+        </view>
       </view>
       <view v-if="keyPoints.length" class="summary-panel">
         <view class="summary-panel__title">关键学习点</view>
-        <view v-for="(item, index) in keyPoints" :key="`${item}-${index}`" class="summary-panel__line">
+        <view v-for="(item, index) in keyPoints" :key="`${item}-${index}`" class="summary-panel__content">
           {{ index + 1 }}. {{ item }}
         </view>
       </view>
-      <view v-if="fallbackTips.length" class="summary-panel summary-panel--soft">
+      <view v-if="fallbackTips.length" class="summary-panel">
         <view class="summary-panel__title">学习提示</view>
-        <view v-for="(item, index) in fallbackTips" :key="`${item}-${index}`" class="summary-panel__line">
+        <view v-for="(item, index) in fallbackTips" :key="`${item}-${index}`" class="summary-panel__content">
           {{ index + 1 }}. {{ item }}
         </view>
       </view>
@@ -228,74 +250,30 @@ onUnload(() => {
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
 .detail-meta {
   display: flex;
   gap: 16rpx;
   margin-top: 18rpx;
 }
 
-.video-player,
-.video-empty {
-  margin-top: 24rpx;
-  border-radius: 24rpx;
-  background: #0d3155;
-}
-
-.video-player {
+.video-player video {
   width: 100%;
-  height: 420rpx;
+  height: 100%;
 }
 
-.video-empty {
+.video-player__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 40rpx 28rpx;
-  background: linear-gradient(160deg, #0d3155 0%, #1e6fcd 100%);
   color: #fff;
   font-size: 24rpx;
   line-height: 1.6;
+  text-align: center;
 }
 
 .source-text {
   margin-top: 14rpx;
-}
-
-.summary-panel {
-  margin-top: 22rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 22rpx;
-  background: #f5f8fc;
-}
-
-.summary-panel--soft {
-  background: #eef5ff;
-}
-
-.summary-panel__title {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.summary-panel__line {
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #58738f;
 }
 
 .progress-actions {
@@ -306,52 +284,5 @@ onUnload(() => {
 
 .progress-actions button {
   flex: 1;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  line-height: 1.7;
-  color: #16324f;
-}
-
-.result-block {
-  margin-top: 20rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 24rpx;
-  color: #5f7893;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.8;
-  color: #36506b;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 </style>

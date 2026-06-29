@@ -11,6 +11,7 @@ import {
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
 import { optionselectPerson } from '@/api/ygb/person'
 import { useAuthorizedRegionOptions } from '@/utils/regionScope'
+import { gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
 export const injuryStatusOptions = [
   { label: '已报告', value: '0' },
@@ -25,19 +26,9 @@ export const warningStatusOptions = [
   { label: '已预警', value: '1' }
 ]
 
-export const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const regionOptions = gdRegionOptions
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440106': '广州市天河区',
-  '440305': '深圳市南山区',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
 function createDefaultQueryParams() {
   return {
@@ -106,6 +97,38 @@ export function injuryStatusLabel(value) {
   return injuryStatusOptions.find(item => item.value === String(value))?.label || '-'
 }
 
+function injuryStatusOrder(value) {
+  const normalized = String(value ?? '0')
+  const index = injuryStatusOptions.findIndex(item => item.value === normalized)
+  return index >= 0 ? index : -1
+}
+
+function validateInjuryStatusTransition(currentStatus, targetStatus, approvalResult) {
+  const current = injuryStatusOrder(currentStatus)
+  const target = injuryStatusOrder(targetStatus)
+  if (target < 0) {
+    return '事件状态不合法'
+  }
+  if (target < current) {
+    return '工伤事件状态不能回退'
+  }
+  if (target - current > 1) {
+    return '工伤事件状态只能按办理链路逐步流转'
+  }
+  if (target >= 2 && !String(approvalResult || '').trim()) {
+    return '进入已认定、待遇申领或已完结状态时，审批结果不能为空'
+  }
+  return ''
+}
+
+function resolveStatusTransitionOptions(currentStatus) {
+  const current = injuryStatusOrder(currentStatus)
+  if (current < 0) {
+    return injuryStatusOptions.slice(0, 1)
+  }
+  return injuryStatusOptions.filter((_, index) => index === current || index === current + 1)
+}
+
 export function warningStatusLabel(value) {
   return warningStatusOptions.find(item => item.value === String(value))?.label || '-'
 }
@@ -171,6 +194,7 @@ export function useInjuryEventPage(options = {}) {
   const currentEvent = ref(undefined)
   const detailEvent = ref(undefined)
   const summaryData = ref({})
+  const statusTransitionOptions = ref(resolveStatusTransitionOptions('0'))
 
   const data = reactive({
     queryParams: {
@@ -324,6 +348,7 @@ export function useInjuryEventPage(options = {}) {
     if (!eventId) {
       return
     }
+    currentEvent.value = row || resolveCurrentList().find(item => item.eventId === eventId) || currentEvent.value
     reset()
     getInjuryEvent(eventId).then(response => {
       form.value = normalizeEventForm(response.data || {})
@@ -372,6 +397,14 @@ export function useInjuryEventPage(options = {}) {
         form.value.personName = selectedPerson.personName
         form.value.enterpriseName = form.value.enterpriseName || selectedPerson.enterpriseName
       }
+      const currentStatus = form.value.eventId ? (currentEvent.value?.injuryStatus ?? '0') : '0'
+      const transitionError = form.value.eventId
+        ? validateInjuryStatusTransition(currentStatus, form.value.injuryStatus, form.value.approvalResult)
+        : form.value.injuryStatus === '0' ? '' : '新增工伤事件只能从已报告状态开始'
+      if (transitionError) {
+        proxy.$modal.msgWarning(transitionError)
+        return
+      }
       const request = form.value.eventId ? updateInjuryEvent(form.value) : addInjuryEvent(form.value)
       request.then(() => {
         proxy.$modal.msgSuccess(form.value.eventId ? '修改成功' : '新增成功')
@@ -390,6 +423,7 @@ export function useInjuryEventPage(options = {}) {
       return
     }
     currentEvent.value = target
+    statusTransitionOptions.value = resolveStatusTransitionOptions(target.injuryStatus)
     statusForm.value = {
       injuryStatus: String(target.injuryStatus ?? '0'),
       approvalResult: target.approvalResult
@@ -400,6 +434,15 @@ export function useInjuryEventPage(options = {}) {
   function submitStatus() {
     proxy.$refs.statusRef.validate(valid => {
       if (!valid || !currentEvent.value?.eventId) {
+        return
+      }
+      const transitionError = validateInjuryStatusTransition(
+        currentEvent.value.injuryStatus,
+        statusForm.value.injuryStatus,
+        statusForm.value.approvalResult
+      )
+      if (transitionError) {
+        proxy.$modal.msgWarning(transitionError)
         return
       }
       updateInjuryStatus(currentEvent.value.eventId, statusForm.value).then(() => {
@@ -455,6 +498,7 @@ export function useInjuryEventPage(options = {}) {
     queryParams,
     form,
     statusForm,
+    statusTransitionOptions,
     rules,
     statusRules,
     regionOptions: authorizedRegionOptions,

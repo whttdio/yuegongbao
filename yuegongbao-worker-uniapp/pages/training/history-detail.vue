@@ -75,6 +75,7 @@
 </template>
 
 <script setup>
+// 培训历史详情接口联调快照：/app/worker/training/history/detail
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getTrainingHistoryDetail } from '../../api/worker'

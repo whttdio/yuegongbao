@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,12 +19,15 @@ import com.yuegongbao.ygb.domain.vo.YgbWarningCreateRequest;
 import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbFakeOutsourcingRecordMapper;
 import com.yuegongbao.ygb.regulation.service.IYgbFakeOutsourcingService;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 import com.yuegongbao.ygb.util.YgbRiskCalculator;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
 @Service
 public class YgbFakeOutsourcingServiceImpl implements IYgbFakeOutsourcingService
 {
+    private static final Pattern MONTH_PATTERN = Pattern.compile("^\\d{4}-\\d{2}$");
+
     @Autowired
     private YgbFakeOutsourcingRecordMapper fakeOutsourcingRecordMapper;
 
@@ -32,6 +36,9 @@ public class YgbFakeOutsourcingServiceImpl implements IYgbFakeOutsourcingService
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbFakeOutsourcingRecord> selectFakeOutsourcingList(YgbFakeOutsourcingRecord fakeOutsourcingRecord)
@@ -82,14 +89,17 @@ public class YgbFakeOutsourcingServiceImpl implements IYgbFakeOutsourcingService
     @Transactional(rollbackFor = Exception.class)
     public Long analyze(YgbFakeOutsourcingAnalyzeRequest request, String operator)
     {
+        String statMonth = resolveStatMonth(request.getStatMonth());
         YgbEnterprise enterprise = enterpriseMapper.selectEnterpriseById(request.getEnterpriseId());
         if (enterprise == null)
         {
             throw new ServiceException("企业不存在。");
         }
 
+        dataScopeGuard.assertEntityAllowed(enterprise);
+
         YgbFakeOutsourcingRecord record = new YgbFakeOutsourcingRecord();
-        record.setStatMonth(StringUtils.isEmpty(request.getStatMonth()) ? YearMonth.now().toString() : request.getStatMonth());
+        record.setStatMonth(statMonth);
         record.setEnterpriseId(enterprise.getEnterpriseId());
         record.setEnterpriseName(enterprise.getEnterpriseName());
         record.setRegionCode(enterprise.getRegionCode());
@@ -131,6 +141,20 @@ public class YgbFakeOutsourcingServiceImpl implements IYgbFakeOutsourcingService
     private Integer defaultScore(Integer value, int defaultValue)
     {
         return value == null ? defaultValue : value;
+    }
+
+    private String resolveStatMonth(String statMonth)
+    {
+        if (StringUtils.isEmpty(statMonth))
+        {
+            return YearMonth.now().toString();
+        }
+        if (!MONTH_PATTERN.matcher(statMonth).matches())
+        {
+            throw new ServiceException("stat month must be yyyy-MM.");
+        }
+        YearMonth.parse(statMonth);
+        return statMonth;
     }
 
     private List<Map<String, Object>> buildYgbExplanation(YgbFakeOutsourcingRecord query,

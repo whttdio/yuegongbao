@@ -17,6 +17,9 @@ import com.yuegongbao.ygb.foundation.domain.YgbPersonSummary;
 import com.yuegongbao.ygb.foundation.service.IYgbPersonService;
 import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
 import com.yuegongbao.ygb.foundation.mapper.YgbPersonMapper;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionHelper;
 
 @Service
 public class YgbPersonServiceImpl implements IYgbPersonService
@@ -27,16 +30,24 @@ public class YgbPersonServiceImpl implements IYgbPersonService
     @Autowired
     private YgbEnterpriseMapper enterpriseMapper;
 
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
     @Override
     public List<YgbPerson> selectPersonList(YgbPerson person)
     {
+        normalizeRegionQuery(person);
         return personMapper.selectPersonList(person);
     }
 
     @Override
     public YgbPersonSummary selectPersonSummary(YgbPerson person)
     {
-        List<YgbPerson> list = selectPersonList(person);
+        normalizeRegionQuery(person);
+        List<YgbPerson> list = personMapper.selectPersonList(person);
         YgbPersonSummary summary = new YgbPersonSummary();
         summary.setTotalCount(list.size());
 
@@ -91,7 +102,12 @@ public class YgbPersonServiceImpl implements IYgbPersonService
     @Override
     public YgbPerson selectPersonById(Long personId)
     {
-        return personMapper.selectPersonById(personId);
+        YgbPerson person = personMapper.selectPersonById(personId);
+        if (person != null)
+        {
+            dataScopeGuard.assertEntityAllowed(person);
+        }
+        return person;
     }
 
     @Override
@@ -109,21 +125,59 @@ public class YgbPersonServiceImpl implements IYgbPersonService
     @Override
     public int insertPerson(YgbPerson person)
     {
+        applyScopedEnterprise(person);
         fillEnterpriseSnapshot(person);
+        dataScopeGuard.assertEntityAllowed(person);
         return personMapper.insertPerson(person);
     }
 
     @Override
     public int updatePerson(YgbPerson person)
     {
+        applyScopedEnterprise(person);
         fillEnterpriseSnapshot(person);
+        dataScopeGuard.assertEntityAllowed(person);
         return personMapper.updatePerson(person);
     }
 
     @Override
     public int deletePersonByIds(Long[] personIds, String updateBy)
     {
+        if (personIds != null)
+        {
+            for (Long personId : personIds)
+            {
+                YgbPerson person = personMapper.selectPersonById(personId);
+                if (person != null)
+                {
+                    dataScopeGuard.assertEntityAllowed(person);
+                }
+            }
+        }
         return personMapper.deletePersonByIds(personIds, updateBy);
+    }
+
+    private void applyScopedEnterprise(YgbPerson person)
+    {
+        if (!enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            return;
+        }
+        Long scopedEnterpriseId = enterpriseScopeHelper.resolveScopedEnterpriseId();
+        if (scopedEnterpriseId == null)
+        {
+            throw new ServiceException("当前用户未配置企业权限");
+        }
+        person.setEnterpriseId(scopedEnterpriseId);
+    }
+
+    private void normalizeRegionQuery(YgbPerson person)
+    {
+        if (person == null || StringUtils.isEmpty(person.getRegionCode()))
+        {
+            return;
+        }
+        person.setRegionCode(YgbRegionHelper.toRegionPrefix(person.getRegionCode()));
     }
 
     private void fillEnterpriseSnapshot(YgbPerson person)

@@ -173,9 +173,17 @@
         <div class="report-detail-table">
           <div class="report-detail-table__title">明细项</div>
           <el-table :data="reportItems" size="small">
-            <el-table-column label="分类" prop="itemCategory" width="150" />
+            <el-table-column label="分类" width="150">
+              <template #default="scope">
+                {{ formatStatReportItemCategory(scope.row.itemCategory) }}
+              </template>
+            </el-table-column>
             <el-table-column label="名称" prop="itemName" min-width="160" />
-            <el-table-column label="维度" prop="itemDimension" width="160" />
+            <el-table-column label="维度" width="160">
+              <template #default="scope">
+                {{ formatStatReportItemDimension(scope.row.itemDimension, scope.row) }}
+              </template>
+            </el-table-column>
             <el-table-column label="数量" prop="metricCount" width="90" />
             <el-table-column label="数值" prop="metricValue" width="120" />
             <el-table-column label="比率" width="100">
@@ -199,6 +207,8 @@ import { printStatReportDetail, printStatReportList } from '@/views/statReport/p
 import { useAuthorizedRegionOptions } from '@/utils/regionScope'
 import {
   formatMetricRate,
+  formatStatReportItemCategory,
+  formatStatReportItemDimension,
   statReportRegionNameMap as regionNameMap,
   statReportRegionOptions as allRegionOptions,
   statReportStatusOptions as statusOptions,

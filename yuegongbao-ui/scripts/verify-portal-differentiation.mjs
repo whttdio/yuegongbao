@@ -29,21 +29,21 @@ const frontendChecks = [
   {
     file: 'src/views/ygb/cockpit/index.vue',
     checks: [
-      { type: 'includes', token: "dashboardData.value.ygbExplanation || []", label: 'ygb cockpit binds ygb explanation source' },
-      { type: 'includes', token: 'buildAggregateWorkflowSteps(portalQueueSections.value, portalExplanationItems.value)', label: 'ygb cockpit builds workflow from portal aggregates' },
-      { type: 'includes', token: 'resolvedSelectedFocusOverview', label: 'ygb cockpit renders aggregate-first overview' },
-      { type: 'excludes', token: "dashboardData.value.azbExplanation || []", label: 'ygb cockpit avoids azb explanation source' }
+      { type: 'includes', token: '<cyber-cockpit-screen mode="ygb" />', label: 'ygb cockpit mounts cyber screen wrapper' }
     ]
   },
   {
     file: 'src/views/azb/cockpit/index.vue',
     checks: [
-      { type: 'includes', token: "dashboardData.value.azbExplanation || []", label: 'azb cockpit binds azb explanation source' },
-      { type: 'includes', token: 'resolvedSelectedFocusOverview', label: 'azb cockpit renders aggregate-first overview' },
-      { type: 'includes', token: 'resolvedRecommendedModules', label: 'azb cockpit renders aggregate-first follow-up modules' },
-      { type: 'includes', token: 'resolvedCurrentFocusActionSummary', label: 'azb cockpit renders aggregate-first action summary' },
-      { type: 'includes', token: 'resolvedCurrentFocusActionTags', label: 'azb cockpit renders aggregate-first action tags' },
-      { type: 'excludes', token: "dashboardData.value.ygbExplanation || []", label: 'azb cockpit avoids ygb explanation source' }
+      { type: 'includes', token: '<cyber-cockpit-screen mode="azb" />', label: 'azb cockpit mounts cyber screen wrapper' }
+    ]
+  },
+  {
+    file: 'src/views/cockpit/CyberCockpitScreen.vue',
+    checks: [
+      { type: 'includes', token: 'props.mode === "azb"', label: 'cyber cockpit differentiates azb mode config' },
+      { type: 'includes', token: 'PAGE_CONFIG.ygb', label: 'cyber cockpit differentiates ygb mode config' },
+      { type: 'includes', token: 'openModule', label: 'cyber cockpit keeps module drilldown handler' }
     ]
   },
   {

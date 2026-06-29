@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.List;
 import com.yuegongbao.ygb.aqins.domain.YgbAqInsuranceSummary;
 import com.yuegongbao.ygb.aqins.domain.YgbPreventionFundSummary;
+import com.yuegongbao.ygb.credit.domain.YgbCreditScore;
 import com.yuegongbao.ygb.credit.domain.YgbCreditScoreSummary;
 import com.yuegongbao.ygb.foundation.domain.YgbEnterpriseSummary;
 import com.yuegongbao.ygb.foundation.domain.YgbPersonSummary;
@@ -60,6 +61,8 @@ public class YgbAzbCockpitDashboard
     private YgbPreventionFundSummary preventionFundSummary;
 
     private YgbCreditScoreSummary creditScoreSummary;
+
+    private List<YgbCreditScore> creditRanking;
 
     private YgbWarningSummary warningSummary;
 
@@ -303,6 +306,16 @@ public class YgbAzbCockpitDashboard
     public void setCreditScoreSummary(YgbCreditScoreSummary creditScoreSummary)
     {
         this.creditScoreSummary = creditScoreSummary;
+    }
+
+    public List<YgbCreditScore> getCreditRanking()
+    {
+        return creditRanking;
+    }
+
+    public void setCreditRanking(List<YgbCreditScore> creditRanking)
+    {
+        this.creditRanking = creditRanking;
     }
 
     public YgbWarningSummary getWarningSummary()

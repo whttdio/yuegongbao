@@ -22,7 +22,7 @@ public final class YgbWarningTransitionHelper
         switch (normalized)
         {
             case "PROCESS":
-                requireState(current, "0", "1", "4");
+                requireState(current, "0");
                 return "1";
             case "CLOSE":
                 requireState(current, "0", "1", "4");

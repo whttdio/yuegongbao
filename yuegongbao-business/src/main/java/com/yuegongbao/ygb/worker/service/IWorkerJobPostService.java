@@ -13,5 +13,7 @@ public interface IWorkerJobPostService
 
     int updateJobPost(WorkerJobPost job);
 
+    int reviewJobPost(Long jobId, String status, String opinion, String operator);
+
     int deleteJobPostByIds(Long[] jobIds, String updateBy);
 }

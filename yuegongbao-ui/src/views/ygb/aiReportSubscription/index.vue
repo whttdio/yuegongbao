@@ -195,6 +195,8 @@ import {
   listAiReportSubscription,
   updateAiReportSubscription
 } from '@/api/ygb/aiReportSubscription'
+import { useAuthorizedRegionOptions } from '@/utils/regionScope'
+import { gdRegionOptions } from '@/utils/regionName'
 
 const { proxy } = getCurrentInstance()
 const loading = ref(false)
@@ -207,12 +209,7 @@ const detail = ref(null)
 const summary = ref({})
 const { setPageGuide } = useWorkbenchAssist()
 
-const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+const regionOptions = useAuthorizedRegionOptions(gdRegionOptions)
 
 const reportTypeOptions = [
   { label: '日报', value: 'DAILY' },
@@ -259,29 +256,29 @@ const { queryParams, form, rules } = toRefs(data)
 const selectedSubscriptionOverview = computed(() => {
   const record = detail.value || {}
   return [
-    { label: '????', value: record.subscriptionName || '-' },
-    { label: '????', value: reportTypeLabel(record.reportType) },
-    { label: '????', value: cycleTypeLabel(record.cycleType) },
-    { label: '????', value: receiveTypeLabel(record.receiveType) }
+    { label: '订阅名称', value: record.subscriptionName || '-' },
+    { label: '报告类型', value: reportTypeLabel(record.reportType) },
+    { label: '订阅周期', value: cycleTypeLabel(record.cycleType) },
+    { label: '接收方式', value: receiveTypeLabel(record.receiveType) }
   ]
 })
 
 const subscriptionWorkflow = computed(() => ([
-  { label: '??????', desc: '???????????????????????' },
-  { label: '??????', desc: '???????????????????????????' },
-  { label: '??????', desc: '???????????????????????????' }
+  { label: '配置订阅', desc: '设置报告类型、区域范围、订阅周期和接收方式' },
+  { label: '定时推送', desc: '按订阅策略向监管专班或联系人推送报告' },
+  { label: '状态维护', desc: '维护启停状态和最近发送记录，便于追踪订阅效果' }
 ]))
 
 const subscriptionHintTags = computed(() => {
   const tags = []
   if (Number(summary.value.activeCount || 0) > 0) {
-    tags.push({ label: `??? ${summary.value.activeCount} ??????????`, type: 'success' })
+    tags.push({ label: `启用 ${summary.value.activeCount} 条报告订阅`, type: 'success' })
   }
   if (Number(summary.value.monthlyCount || 0) > 0) {
-    tags.push({ label: `???? ${summary.value.monthlyCount} ?????????????`, type: 'info' })
+    tags.push({ label: `月度订阅 ${summary.value.monthlyCount} 条需按期发送`, type: 'info' })
   }
   if (Number(summary.value.multiChannelCount || 0) > 0) {
-    tags.push({ label: `????? ${summary.value.multiChannelCount} ??????????????`, type: 'warning' })
+    tags.push({ label: `多通道 ${summary.value.multiChannelCount} 条需确认接收对象`, type: 'warning' })
   }
   return tags
 })
@@ -300,13 +297,13 @@ function receiveTypeLabel(value) {
 
 watchEffect(() => {
   setPageGuide({
-    title: 'AI ??????',
-    description: '????????????????????????????',
+    title: 'AI 报告订阅',
+    description: '维护 AI 监测报告的订阅周期、接收方式、启停状态和发送记录。',
     focus: [
-      { label: '????', value: summary.value.totalCount || 0, tip: '???????????????', type: 'info' },
-      { label: '????', value: summary.value.activeCount || 0, tip: '????????????', type: 'success' },
-      { label: '????', value: summary.value.monthlyCount || 0, tip: '????????????', type: 'primary' },
-      { label: '?????', value: summary.value.multiChannelCount || 0, tip: '??????????????', type: 'warning' }
+      { label: '订阅总量', value: summary.value.totalCount || 0, tip: '当前筛选范围内的订阅数', type: 'info' },
+      { label: '启用订阅', value: summary.value.activeCount || 0, tip: '当前启用中的订阅', type: 'success' },
+      { label: '月度订阅', value: summary.value.monthlyCount || 0, tip: '按月发送的订阅', type: 'primary' },
+      { label: '多通道订阅', value: summary.value.multiChannelCount || 0, tip: '配置多种接收方式的订阅', type: 'warning' }
     ],
     selection: selectedSubscriptionOverview.value,
     workflow: subscriptionWorkflow.value,

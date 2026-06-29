@@ -162,7 +162,8 @@ const workbenchClearLabel = "清空来源条件"
 
 const compareResultOptions = [
   { label: "正常", value: "1" },
-  { label: "异常", value: "2" }
+  { label: "异常", value: "2" },
+  { label: "待复核", value: "3", elTagType: "warning" }
 ]
 
 const warningStatusOptions = [
@@ -263,9 +264,9 @@ const focusQueues = computed(() => {
       key: "abnormal",
       title: "异常差异对象优先回查",
       desc: "优先处理比对异常对象，回查工资实发与社保基数口径差异。",
-      count: rows.filter(item => item.compareResult === "2").length,
+      count: rows.filter(item => ["2", "3"].includes(item.compareResult)).length,
       unit: "条",
-      actionText: rows.some(item => item.compareResult === "2") ? "立即回查" : "暂无异常"
+      actionText: rows.some(item => ["2", "3"].includes(item.compareResult)) ? "立即回查" : "暂无异常"
     },
     {
       key: "warned",
@@ -359,6 +360,9 @@ const primaryCompareAction = computed(() => {
   if (currentCompare.value.compareResult === "2") {
     return { label: "回查异常口径" }
   }
+  if (currentCompare.value.compareResult === "3") {
+    return { label: "复核比对结果" }
+  }
   if (currentCompare.value.warningStatus === "1") {
     return { label: "承接预警闭环" }
   }
@@ -380,6 +384,9 @@ const currentCompareActionSummary = computed(() => {
   }
   if (currentCompare.value.compareResult === "2") {
     return "该对象当前比对异常，建议优先回查工资实发、社保基数和缴费同步口径，确认差异来源。"
+  }
+  if (currentCompare.value.compareResult === "3") {
+    return "该对象当前比对结果待复核，建议重新执行社保基数比对并核对工资、基数来源。"
   }
   if (currentCompare.value.warningStatus === "1") {
     return "该对象已触发预警，建议继续承接到预警中心和漏保整改链路，避免风险停留在比对层。"
@@ -464,20 +471,19 @@ function resetQuery() {
   })
   applyWorkbenchRouteQuery(route.query, queryParams.value, socialBaseWorkbenchFields)
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '????????' || '????????',
-    description: '?????????????????????????????????' || '?????????????????????????????????',
+    title: '社保基数比对',
+    description: '比对工资、个税和社保基数差异，识别少缴漏缴风险并推进复核整改。',
     portalExplanation: portalExplanationItems.value,
     focus: focusQueues.value,
-    selection: [...selectedCompareOverview.value, { label: '??????', value: currentCompareActionSummary.value }],
+    selection: [...selectedCompareOverview.value, { label: '当前处置建议', value: currentCompareActionSummary.value }],
     workflow: workflowSteps.value,
     hints: [...currentCompareActionTags.value].slice(0, 6)
   })
 })
-
-}
 
 function clearWorkbenchContext() {
   Object.assign(queryParams.value, {
@@ -551,6 +557,9 @@ function buildHintTags(item) {
   const tags = []
   if (item.compareResult === "2") {
     tags.push({ label: "当前比对异常，建议优先回查工资实发与社保基数口径", type: "danger" })
+  }
+  if (item.compareResult === "3") {
+    tags.push({ label: "当前比对结果待复核，建议重新执行社保基数比对并核对来源数据", type: "warning" })
   }
   if (item.warningStatus === "1") {
     tags.push({ label: "当前已触发预警，建议继续承接到预警中心闭环处置", type: "warning" })

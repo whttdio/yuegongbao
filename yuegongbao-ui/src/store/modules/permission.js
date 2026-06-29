@@ -10,6 +10,10 @@ import { filterPortalRoutes, getActivePortalCode } from '@/utils/portal'
 const modules = import.meta.glob('./../../views/**/*.vue')
 
 const LEGACY_VIEW_ALIASES = Object.freeze({
+  'ygb/cockpit/overview/index': 'ygb/cockpit/index',
+  'ygb/cockpit/overview': 'ygb/cockpit/index',
+  'azb/cockpit/overview/index': 'azb/cockpit/index',
+  'azb/cockpit/overview': 'azb/cockpit/index',
   'ygb-safety/leakList/index': 'ygb/uninsuredList/index',
   'ygb-safety/leakList': 'ygb/uninsuredList/index',
   'ygb-safety/uninsuredList/index': 'ygb/uninsuredList/index',
@@ -57,7 +61,8 @@ const usePermissionStore = defineStore('permission', {
       return new Promise((resolve, reject) => {
         getRouters().then(res => {
           const portalCode = getActivePortalCode()
-          const rawRoutes = filterPortalRoutes(res.data, portalCode)
+          const rawRoutes = dedupeRoutesByPath(filterPortalRoutes(res.data, portalCode))
+          normalizeRouteNames(rawRoutes)
           const sdata = JSON.parse(JSON.stringify(rawRoutes))
           const rdata = JSON.parse(JSON.stringify(rawRoutes))
           const defaultData = JSON.parse(JSON.stringify(rawRoutes))
@@ -89,6 +94,79 @@ function ensureAbsolutePath(path) {
     return path
   }
   return `/${path}`
+}
+
+function dedupeRoutesByPath(routes = []) {
+  if (!Array.isArray(routes) || !routes.length) {
+    return []
+  }
+
+  const groupedRoutes = new Map()
+  routes.forEach(route => {
+    const pathKey = getNormalPath(route.path || '')
+    const group = groupedRoutes.get(pathKey) || []
+    group.push(route)
+    groupedRoutes.set(pathKey, group)
+  })
+
+  return [...groupedRoutes.entries()].map(([, group]) => {
+    const preferred = group.find(route => String(route.name || '').startsWith('YgbDoc')) ||
+      group.find(route => route.hidden !== true) ||
+      group[0]
+    const nextRoute = { ...preferred }
+
+    if (Array.isArray(preferred.children) && preferred.children.length) {
+      nextRoute.children = dedupeRoutesByPath(preferred.children)
+    }
+
+    return nextRoute
+  })
+}
+
+function normalizeRouteNames(routes, seenNames = new Set(), ancestorNames = [], parentPath = '') {
+  routes.forEach(route => {
+    if (route.name) {
+      const isDuplicate = seenNames.has(route.name) || ancestorNames.includes(route.name)
+      if (isDuplicate) {
+        route.name = buildUniqueRouteName(route, seenNames, parentPath)
+      }
+      seenNames.add(route.name)
+    }
+
+    if (route.children?.length) {
+      const nextAncestorNames = route.name ? ancestorNames.concat(route.name) : ancestorNames
+      const nextParentPath = getNormalPath(`${parentPath}/${route.path || ''}`)
+      normalizeRouteNames(route.children, seenNames, nextAncestorNames, nextParentPath)
+    }
+  })
+}
+
+function buildUniqueRouteName(route, seenNames, parentPath) {
+  const fullPath = getNormalPath(`${parentPath}/${route.path || ''}`)
+  const routeName = pathToRouteName(fullPath) || route.name || 'Route'
+  let uniqueName = routeName
+  let index = 2
+
+  while (seenNames.has(uniqueName)) {
+    uniqueName = `${routeName}${index}`
+    index += 1
+  }
+
+  return uniqueName
+}
+
+function pathToRouteName(path = '') {
+  return String(path)
+    .split('/')
+    .filter(Boolean)
+    .map(segment => segment
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(''))
+    .join('')
 }
 
 function filterAsyncRouter(asyncRouterMap, lastRouter = false, type = false) {

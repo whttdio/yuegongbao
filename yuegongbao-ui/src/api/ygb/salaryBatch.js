@@ -85,10 +85,10 @@ export function submitSalaryBatch(batchId) {
   })
 }
 
-// 模拟银行回调
-export function simulateSalaryBatchCallback(data) {
+// 银行代发结果回写
+export function handleSalaryBatchCallback(data) {
   return request({
-    url: '/ygb/stub/bank/callback',
+    url: '/ygb/salary/batch/bank/callback',
     method: 'post',
     data: data
   })

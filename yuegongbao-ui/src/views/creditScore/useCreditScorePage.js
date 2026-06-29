@@ -2,20 +2,17 @@ import { getCurrentInstance, reactive, ref, toRefs } from 'vue'
 import { generateCreditScore, getCreditScore, getCreditScoreSummary, listCreditScore } from '@/api/ygb/creditScore'
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
 import { authorizedDefaultRegionCode } from '@/utils/regionScope'
+import { formatRegionName, gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
+import {
+  applyLockedEnterpriseQuery,
+  filterAuthorizedEnterpriseOptions,
+  isEnterpriseFilterLocked,
+  lockedEnterpriseId
+} from '@/utils/enterpriseScope'
 
-export const creditScoreRegionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const creditScoreRegionOptions = gdRegionOptions
 
-export const creditScoreRegionNameMap = {
-  '440000': '广东省',
-  '440106': '广州市天河区',
-  '440305': '深圳市南山区',
-  '440606': '佛山市顺德区'
-}
+export const creditScoreRegionNameMap = gdRegionNameMap
 
 export const creditLevelOptions = [
   { label: 'A级', value: 'A' },
@@ -67,15 +64,10 @@ export function colorLabel(colorCode) {
   return '-'
 }
 
-export function formatRegionName(code, fallback = '全部区域') {
-  if (!code) {
-    return fallback
-  }
-  return creditScoreRegionNameMap[code] || code
-}
+export { formatRegionName } from '@/utils/regionName'
 
 function createDefaultQueryParams() {
-  return {
+  return applyLockedEnterpriseQuery({
     pageNum: 1,
     pageSize: 10,
     statMonth: currentMonth(),
@@ -83,15 +75,15 @@ function createDefaultQueryParams() {
     regionCode: undefined,
     creditLevel: undefined,
     colorCode: undefined
-  }
+  })
 }
 
 function createDefaultGenerateForm(defaultRegionCode = '440000') {
-  return {
+  return applyLockedEnterpriseQuery({
     statMonth: currentMonth(),
     regionCode: defaultRegionCode,
     enterpriseId: undefined
-  }
+  })
 }
 
 export function useCreditScorePage(options = {}) {
@@ -153,13 +145,13 @@ export function useCreditScorePage(options = {}) {
   }
 
   function buildSummaryQuery() {
-    return {
+    return applyLockedEnterpriseQuery({
       statMonth: queryParams.value.statMonth,
       enterpriseId: queryParams.value.enterpriseId,
       regionCode: queryParams.value.regionCode,
       creditLevel: queryParams.value.creditLevel,
       colorCode: queryParams.value.colorCode
-    }
+    })
   }
 
   function syncCurrentScore() {
@@ -176,8 +168,9 @@ export function useCreditScorePage(options = {}) {
 
   function getList() {
     loading.value = true
+    const scopedQuery = applyLockedEnterpriseQuery(queryParams.value)
     return Promise.all([
-      listCreditScore(queryParams.value),
+      listCreditScore(scopedQuery),
       getCreditScoreSummary(buildSummaryQuery())
     ]).then(([listResponse, summaryResponse]) => {
       creditScoreList.value = (listResponse.rows || []).map(item => ({
@@ -200,7 +193,12 @@ export function useCreditScorePage(options = {}) {
 
   function loadEnterpriseOptions() {
     return optionselectEnterprise().then(response => {
-      enterpriseOptions.value = response.data || []
+      enterpriseOptions.value = filterAuthorizedEnterpriseOptions(response.data || [])
+      const enterpriseId = lockedEnterpriseId()
+      if (enterpriseId != null) {
+        queryParams.value.enterpriseId = enterpriseId
+        generateForm.value.enterpriseId = enterpriseId
+      }
     })
   }
 
@@ -223,11 +221,11 @@ export function useCreditScorePage(options = {}) {
     if (!guardMutation('执行评分生成')) {
       return
     }
-    generateForm.value = {
+    generateForm.value = applyLockedEnterpriseQuery({
       statMonth: row?.statMonth || queryParams.value.statMonth || currentMonth(),
       regionCode: row?.regionCode || queryParams.value.regionCode || defaultRegionCode,
       enterpriseId: row?.enterpriseId || queryParams.value.enterpriseId
-    }
+    })
     generateOpen.value = true
   }
 
@@ -292,6 +290,7 @@ export function useCreditScorePage(options = {}) {
     submitGenerate,
     handleExport,
     openDetail,
-    syncCurrentScore
+    syncCurrentScore,
+    isEnterpriseFilterLocked
   }
 }

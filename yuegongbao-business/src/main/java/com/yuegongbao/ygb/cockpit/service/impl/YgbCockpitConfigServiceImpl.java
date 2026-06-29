@@ -75,6 +75,7 @@ public class YgbCockpitConfigServiceImpl implements IYgbCockpitConfigService
         YgbCockpitConfig config = cockpitConfigMapper.selectCockpitConfigById(configId);
         if (config != null)
         {
+            regionScopeHelper.assertEntityRegionAllowed(config);
             hydrateRegionNames(config);
         }
         return config;
@@ -121,6 +122,7 @@ public class YgbCockpitConfigServiceImpl implements IYgbCockpitConfigService
     @Override
     public int updateCockpitConfig(YgbCockpitConfig config)
     {
+        requireCockpitConfigAllowed(config.getConfigId());
         fillDefaultFields(config);
         config.setUpdateTime(new Date());
         return cockpitConfigMapper.updateCockpitConfig(config);
@@ -129,7 +131,26 @@ public class YgbCockpitConfigServiceImpl implements IYgbCockpitConfigService
     @Override
     public int deleteCockpitConfigByIds(Long[] configIds, String updateBy)
     {
+        for (Long configId : configIds)
+        {
+            requireCockpitConfigAllowed(configId);
+        }
         return cockpitConfigMapper.deleteCockpitConfigByIds(configIds, updateBy);
+    }
+
+    private YgbCockpitConfig requireCockpitConfigAllowed(Long configId)
+    {
+        if (configId == null)
+        {
+            throw new ServiceException("Config ID cannot be empty");
+        }
+        YgbCockpitConfig config = cockpitConfigMapper.selectCockpitConfigById(configId);
+        if (config == null)
+        {
+            throw new ServiceException("Cockpit config does not exist");
+        }
+        regionScopeHelper.assertEntityRegionAllowed(config);
+        return config;
     }
 
     private void fillDefaultFields(YgbCockpitConfig config)
@@ -211,7 +232,7 @@ public class YgbCockpitConfigServiceImpl implements IYgbCockpitConfigService
         config.setRotateSeconds(0);
         config.setRefreshSeconds(30);
         config.setMapZoom(11);
-        config.setSourceMode("stub");
+        config.setSourceMode("SYSTEM");
         config.setSummaryCardConfig("[]");
         config.setFocusQueueConfig("[]");
         config.setRemark("Built-in fallback cockpit config");

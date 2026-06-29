@@ -64,7 +64,7 @@
           <el-date-picker v-model="queryParams.statMonth" type="month" value-format="YYYY-MM" format="YYYY-MM" style="width: 170px" />
         </el-form-item>
         <el-form-item label="企业">
-          <el-select v-model="queryParams.enterpriseId" clearable filterable style="width: 220px">
+          <el-select v-model="queryParams.enterpriseId" :disabled="isEnterpriseFilterLocked" clearable filterable style="width: 220px">
             <el-option v-for="item in enterpriseOptions" :key="item.enterpriseId" :label="item.enterpriseName" :value="item.enterpriseId" />
           </el-select>
         </el-form-item>
@@ -167,7 +167,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="企业">
-          <el-select v-model="generateForm.enterpriseId" clearable filterable style="width: 100%">
+          <el-select v-model="generateForm.enterpriseId" :disabled="isEnterpriseFilterLocked" clearable filterable style="width: 100%">
             <el-option v-for="item in enterpriseOptions" :key="item.enterpriseId" :label="item.enterpriseName" :value="item.enterpriseId" />
           </el-select>
         </el-form-item>
@@ -236,6 +236,7 @@ import {
   creditLevelOptions as levelOptions,
   creditScoreRegionNameMap as regionNameMap,
   creditScoreRegionOptions as allRegionOptions,
+  currentMonth,
   formatDecimal,
   formatRegionName,
   levelTagType,
@@ -307,7 +308,8 @@ const {
   submitGenerate,
   handleExport,
   openDetail,
-  syncCurrentScore
+  syncCurrentScore,
+  isEnterpriseFilterLocked
 } = useCreditScorePage({
   exportFilePrefix: 'ygb_credit_score',
   canMutate: () => !isReadOnlyRole.value,
@@ -540,7 +542,7 @@ const roleTip = computed(() => {
   if (roleView.value === 'admin') {
     return '优先统筹会阻断企业信用结果改善的关键对象，再决定是否进入重评分和月度归档。'
   }
-  return '当前“生成评分”继续复用统一评分底座，不引入外部评分引擎。'
+  return '当前“生成评分”会依据企业主数据、合同、工资、社保、预警等数据形成月度评分。'
 })
 
 const summaryCards = computed(() => {
@@ -864,7 +866,7 @@ function resetQuery() {
   Object.assign(queryParams.value, {
     pageNum: 1,
     pageSize: 10,
-    statMonth: undefined,
+    statMonth: currentMonth(),
     enterpriseId: undefined,
     regionCode: undefined,
     creditLevel: undefined,
@@ -1179,4 +1181,3 @@ getList()
   }
 }
 </style>
-

@@ -12,7 +12,7 @@ public interface YgbSocialPaymentMapper
 
     public int insertSocialPayment(YgbSocialPayment socialPayment);
 
-    public int deleteByScope(@Param("statMonth") String statMonth, @Param("enterpriseId") Long enterpriseId);
+    public int deleteByScope(YgbSocialPayment socialPayment);
 
     public List<YgbSocialPayment> selectWorkerSocialPaymentList(@Param("personId") Long personId,
         @Param("yearPrefix") String yearPrefix);

@@ -177,6 +177,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         limit 1
     </select>
 
+    <select id="selectWorkerResumeByPersonId" resultMap="WorkerResumeResult">
+        select
+            resume_id, user_id, person_id, person_name, mobile, job_type, expected_job, expected_city,
+            expected_salary, skill_tags, certificate_text, intro, create_by, create_time, update_by, update_time,
+            remark, del_flag
+        from ygb_worker_resume
+        where del_flag = '0'
+          and person_id = #{personId}
+        order by resume_id desc
+        limit 1
+    </select>
+
     <select id="selectAdminWorkerResumeList" resultMap="WorkerResumeResult">
         select
             resume_id, user_id, person_id, person_name, mobile, job_type, expected_job, expected_city,
@@ -236,6 +248,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_by = #{updateBy},
             update_time = sysdate()
         where resume_id = #{resumeId}
+    </update>
+
+    <update id="updateWorkerResumeRemark" parameterType="com.yuegongbao.ygb.worker.domain.WorkerResume">
+        update ygb_worker_resume
+        set remark = #{remark},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where resume_id = #{resumeId}
+          and del_flag = '0'
     </update>
 
     <insert id="insertWorkerFeedback" parameterType="com.yuegongbao.ygb.worker.domain.WorkerFeedback" useGeneratedKeys="true" keyProperty="feedbackId">
@@ -301,6 +322,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           and feedback_id = #{feedbackId}
         limit 1
     </select>
+
+    <update id="updateWorkerFeedbackHandle" parameterType="com.yuegongbao.ygb.worker.domain.WorkerFeedback">
+        update ygb_worker_feedback
+        set status = #{status},
+            remark = #{remark},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where feedback_id = #{feedbackId}
+          and del_flag = '0'
+    </update>
 
     <select id="selectWorkerSetting" resultMap="WorkerSettingResult">
         select

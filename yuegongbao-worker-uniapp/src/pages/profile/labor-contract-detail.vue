@@ -1,8 +1,14 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">{{ detail.title || '-' }}</view>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">{{ detail.title || '合同详情' }}</view>
       <view class="worker-subtitle">{{ detail.contractStatusText || '-' }}</view>
+    </view>
+
+    <view class="worker-card">
+      <view class="section-head">
+        <view class="worker-title">合同信息</view>
+      </view>
       <view class="detail-row">
         <view class="detail-row__label">合同编号</view>
         <view class="detail-row__value">{{ detail.contractNo || '-' }}</view>
@@ -162,46 +168,8 @@ onLoad((options) => {
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
 .detail-row:last-of-type {
   border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
 }
 
 .detail-row__value--break {
@@ -219,26 +187,5 @@ onLoad((options) => {
 
 .contract-actions button {
   flex: 1;
-}
-
-.result-block {
-  margin-top: 20rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 24rpx;
-  color: #5f7893;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.8;
-  color: #36506b;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 </style>

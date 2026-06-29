@@ -93,7 +93,7 @@ public class YgbHeightWorkReportController extends BaseController
     public AjaxResult importData(@RequestBody List<YgbHeightWorkReport> reports)
     {
         int rows = heightWorkReportService.importHeightWorkReports(reports, getUsername());
-        return success("高处作业报备占位导入完成，本次处理 " + rows + " 条记录");
+        return success("高处作业报备导入完成，本次处理 " + rows + " 条记录");
     }
 
     @PreAuthorize("@ss.hasPermi('ygb:heightWorkReport:voucher')")

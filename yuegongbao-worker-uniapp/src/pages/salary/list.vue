@@ -6,8 +6,30 @@
       <button class="worker-button" @click="goTraining">去完成培训</button>
     </view>
 
-    <view v-else class="worker-card">
-      <view class="worker-title">工资列表</view>
+    <template v-else>
+      <view class="worker-card worker-hero">
+        <view class="worker-title worker-title--display">工资查询</view>
+        <view class="worker-subtitle">查看每月应发、实发与发放状态</view>
+        <view class="hero-stat-grid">
+          <view class="hero-stat">
+            <view class="hero-stat__value">{{ months.length }}</view>
+            <view class="hero-stat__label">可查月份</view>
+          </view>
+          <view class="hero-stat">
+            <view class="hero-stat__value">{{ latestMonth || '-' }}</view>
+            <view class="hero-stat__label">最近月份</view>
+          </view>
+          <view class="hero-stat">
+            <view class="hero-stat__value">{{ latestRealAmount }}</view>
+            <view class="hero-stat__label">最近实发</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="worker-card">
+        <view class="section-head">
+          <view class="worker-title">工资列表</view>
+        </view>
       <view v-if="months.length">
         <view v-for="item in months" :key="item.salaryMonth" class="list-row" @click="openDetail(item)">
           <view>
@@ -27,7 +49,8 @@
           <button class="worker-button" @click="goHelp">帮助中心</button>
         </view>
       </view>
-    </view>
+      </view>
+    </template>
   </view>
 </template>
 
@@ -43,6 +66,8 @@ const salaryLastMessage = ref('')
 const locked = computed(() => !!salaryData.value.locked)
 const lockReason = computed(() => salaryData.value.lockReason || '请先完成培训')
 const months = computed(() => salaryData.value.months || [])
+const latestMonth = computed(() => months.value[0]?.salaryMonth || '')
+const latestRealAmount = computed(() => months.value[0]?.realAmount ?? '-')
 const salaryAccessSummaryText = computed(() => (locked.value ? `未解锁 / ${lockReason.value}` : '已解锁'))
 const salarySnapshotText = computed(() => {
   const monthLabels = months.value.map((item) => item.salaryMonth).join('、') || '-'
@@ -103,119 +128,7 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.worker-empty--panel {
-  padding: 24rpx 0;
-}
-
-.worker-empty__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.worker-empty__desc {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #7890aa;
-}
-
-.worker-empty__actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 22rpx;
-}
-
 .worker-empty__actions button {
   flex: 1;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
 }
 </style>

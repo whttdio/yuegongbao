@@ -1,11 +1,23 @@
 <template>
   <view class="worker-page">
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">帮助中心</view>
+      <view class="worker-subtitle">常见问题、服务指引与意见反馈</view>
+    </view>
+
     <view class="worker-card">
-      <view class="worker-title">帮助中心</view>
+      <view class="section-head">
+        <view class="worker-title">快捷入口</view>
+      </view>
       <view v-if="quickActions.length" class="quick-grid">
         <view v-for="item in quickActions" :key="item.key" class="quick-item" @click="openQuickAction(item)">
-          <view class="quick-item__title">{{ item.label }}</view>
-          <view class="quick-item__summary">{{ item.summary }}</view>
+          <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone">
+            <text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text>
+          </view>
+          <view class="quick-item__main">
+            <view class="quick-item__title">{{ item.label }}</view>
+            <view class="quick-item__summary">{{ item.summary }}</view>
+          </view>
         </view>
       </view>
       <view v-if="rows.length">
@@ -53,9 +65,18 @@
 
     <view class="worker-card">
       <view class="worker-title">意见反馈</view>
-      <input v-model="feedback.title" class="form-input" placeholder="反馈标题" />
-      <textarea v-model="feedback.content" class="form-textarea" placeholder="请输入问题或建议" />
-      <input v-model="feedback.contactMobile" class="form-input" placeholder="联系电话（选填）" />
+      <view class="form-field">
+        <view class="form-field__label">反馈标题</view>
+        <input v-model="feedback.title" class="form-input" placeholder="反馈标题" />
+      </view>
+      <view class="form-field">
+        <view class="form-field__label">问题或建议</view>
+        <textarea v-model="feedback.content" class="form-textarea" placeholder="请输入问题或建议" />
+      </view>
+      <view class="form-field">
+        <view class="form-field__label">联系电话（选填）</view>
+        <input v-model="feedback.contactMobile" class="form-input" placeholder="联系电话（选填）" />
+      </view>
       <button class="worker-button" @click="submitFeedback">提交反馈</button>
     </view>
   </view>
@@ -66,6 +87,7 @@ import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { createFeedback, getHelpList, getLegalHotline } from '../../api/worker'
 import { normalizeWorkerJumpTarget, openWorkerJumpTarget } from '../../utils/worker-jump'
+import { resolveEntryIcon } from '../../utils/entry-icon'
 
 const EXPECTED_HELP_CHAIN_PAGES = ['帮助中心', '帮助详情', '热门问题', '服务承接', '意见反馈']
 const rows = ref([])
@@ -83,6 +105,11 @@ const feedback = reactive({
   content: '',
   contactMobile: ''
 })
+
+function getEntryIcon(item) {
+  return resolveEntryIcon(item)
+}
+
 const helpSummaryText = computed(() => {
   return `帮助 ${rows.value.length} 条 / 快捷 ${quickActions.value.length} 个 / FAQ ${faqRows.value.length} 条 / 服务卡 ${serviceCards.value.length} 张`
 })
@@ -243,174 +270,7 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.quick-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-  margin: 18rpx 0 10rpx;
-}
-
-.quick-item {
-  padding: 22rpx;
-  border-radius: 22rpx;
-  background: #f4f8fd;
-}
-
-.quick-item__title {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.quick-item__summary {
-  margin-top: 10rpx;
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: #7890aa;
-}
-
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.service-panel {
-  margin-top: 18rpx;
-  padding: 24rpx;
-  border-radius: 20rpx;
-  background: linear-gradient(135deg, #eef5ff 0%, #f8fbff 100%);
-}
-
-.service-panel__title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.service-panel__subtitle {
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.service-panel__desc {
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #58738f;
-}
-
-.service-actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 22rpx;
-}
-
 .service-actions button {
   flex: 1;
-}
-
-.form-input,
-.form-textarea {
-  width: 100%;
-  margin-top: 18rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
-  font-size: 28rpx;
-  color: #16324f;
-}
-
-.form-textarea {
-  min-height: 180rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 </style>

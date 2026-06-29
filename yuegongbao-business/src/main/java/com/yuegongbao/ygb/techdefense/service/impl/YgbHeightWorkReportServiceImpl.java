@@ -210,7 +210,7 @@ public class YgbHeightWorkReportServiceImpl implements IYgbHeightWorkReportServi
         result.put("endTime", report.getEndTime());
         result.put("reportStatus", report.getReportStatus());
         result.put("qrText", "YGB-HWR|" + report.getReportNo() + "|" + report.getVoucherToken());
-        result.put("voucherUrl", "stub://height-work/voucher/" + report.getReportNo());
+        result.put("voucherUrl", "/ygb/heightWork/report/voucher/" + report.getReportId());
         result.put("generatedTime", new Date());
         return result;
     }

@@ -37,6 +37,7 @@ import com.yuegongbao.ygb.safety.mapper.YgbDeviceMapper;
 import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
 import com.yuegongbao.ygb.foundation.mapper.YgbPersonMapper;
 import com.yuegongbao.ygb.safety.service.IYgbDeviceService;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 import com.yuegongbao.ygb.util.YgbRiskCalculator;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
@@ -69,6 +70,9 @@ public class YgbDeviceServiceImpl implements IYgbDeviceService
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbDevice> selectDeviceList(YgbDevice device)
@@ -171,19 +175,26 @@ public class YgbDeviceServiceImpl implements IYgbDeviceService
         {
             device.setAuthStatus("0");
         }
+        assertEntityAllowed(device);
         return deviceMapper.insertDevice(device);
     }
 
     @Override
     public int updateDevice(YgbDevice device)
     {
+        requireDevice(device.getDeviceId());
         fillEnterpriseSnapshot(device);
+        assertEntityAllowed(device);
         return deviceMapper.updateDevice(device);
     }
 
     @Override
     public int deleteDeviceByIds(Long[] deviceIds, String updateBy)
     {
+        for (Long deviceId : deviceIds)
+        {
+            requireDevice(deviceId);
+        }
         return deviceMapper.deleteDeviceByIds(deviceIds, updateBy);
     }
 
@@ -218,6 +229,7 @@ public class YgbDeviceServiceImpl implements IYgbDeviceService
     public Map<String, Object> authorize(YgbDeviceAuthorizeRequest request, String operator)
     {
         YgbDevice device = requireDevice(request.getDeviceId());
+        ensureDeviceOperational(device, "设备授权");
         YgbPerson person = personMapper.selectPersonById(request.getPersonId());
         if (person == null)
         {
@@ -276,9 +288,10 @@ public class YgbDeviceServiceImpl implements IYgbDeviceService
     {
         YgbDevice device = resolveDevice(request.getDeviceId(), request.getDeviceCode());
         String nextStatus = StringUtils.isEmpty(request.getHeartbeatStatus()) ? "1" : request.getHeartbeatStatus();
+        ensureHeartbeatAllowed(device, nextStatus);
         deviceMapper.updateHeartbeat(device.getDeviceId(), nextStatus, operator);
-        YgbStubResponse stubResponse = buildSyntheticResponse("SUCCESS", "模拟设备心跳");
-        insertDeviceEvent(device, "1", "HEARTBEAT", "模拟心跳上报", "", "1", stubResponse, operator);
+        YgbStubResponse stubResponse = buildSyntheticResponse("SUCCESS", "设备心跳上报");
+        insertDeviceEvent(device, "1", "HEARTBEAT", "设备心跳上报", "", "1", stubResponse, operator);
 
         Map<String, Object> result = new HashMap<>();
         result.put("deviceId", device.getDeviceId());
@@ -293,7 +306,8 @@ public class YgbDeviceServiceImpl implements IYgbDeviceService
     public Map<String, Object> aiEvent(YgbDeviceAiEventRequest request, String operator)
     {
         YgbDevice device = resolveDevice(request.getDeviceId(), request.getDeviceCode());
-        YgbStubResponse stubResponse = buildSyntheticResponse("SUCCESS", "模拟 AI 事件");
+        ensureDeviceOperational(device, "AI事件上报");
+        YgbStubResponse stubResponse = buildSyntheticResponse("SUCCESS", "设备 AI 事件上报");
         String eventCode = StringUtils.isEmpty(request.getEventCode()) ? "AI_ALERT" : request.getEventCode();
         String eventContent = StringUtils.isEmpty(request.getEventContent()) ? "AI 识别到异常施工行为。"
             : request.getEventContent();
@@ -370,6 +384,7 @@ public class YgbDeviceServiceImpl implements IYgbDeviceService
         String message)
     {
         YgbDevice device = requireDevice(deviceId);
+        validateDeviceCommand(device, nextStatus);
         Map<String, Object> payload = new HashMap<>();
         payload.put("deviceId", device.getDeviceId());
         payload.put("deviceCode", device.getDeviceCode());
@@ -404,6 +419,7 @@ public class YgbDeviceServiceImpl implements IYgbDeviceService
         {
             throw new ServiceException("设备不存在。");
         }
+        assertEntityAllowed(device);
         return device;
     }
 
@@ -422,7 +438,40 @@ public class YgbDeviceServiceImpl implements IYgbDeviceService
         {
             throw new ServiceException("设备不存在。");
         }
+        assertEntityAllowed(device);
         return device;
+    }
+
+    private void validateDeviceCommand(YgbDevice device, String nextStatus)
+    {
+        if ("2".equals(nextStatus) && !"1".equals(device.getDeviceStatus()))
+        {
+            throw new ServiceException("只有在线设备才能锁机。");
+        }
+        if ("1".equals(nextStatus) && !"2".equals(device.getDeviceStatus()))
+        {
+            throw new ServiceException("只有锁定设备才能解锁。");
+        }
+    }
+
+    private void ensureDeviceOperational(YgbDevice device, String actionLabel)
+    {
+        if ("2".equals(device.getDeviceStatus()) || "3".equals(device.getDeviceStatus()))
+        {
+            throw new ServiceException(actionLabel + "不能作用于锁定或故障设备。");
+        }
+    }
+
+    private void ensureHeartbeatAllowed(YgbDevice device, String nextStatus)
+    {
+        if (!"1".equals(nextStatus) && !"3".equals(nextStatus))
+        {
+            throw new ServiceException("心跳状态只能为在线或故障。");
+        }
+        if ("2".equals(device.getDeviceStatus()))
+        {
+            throw new ServiceException("锁定设备不能通过心跳直接改为在线，请先解锁。");
+        }
     }
 
     private void insertCommandLog(YgbDevice device, String commandType, String commandResult, String resultMessage,
@@ -689,5 +738,13 @@ public class YgbDeviceServiceImpl implements IYgbDeviceService
             query.put(key, value);
         }
         return query;
+    }
+
+    private void assertEntityAllowed(Object entity)
+    {
+        if (dataScopeGuard != null)
+        {
+            dataScopeGuard.assertEntityAllowed(entity);
+        }
     }
 }

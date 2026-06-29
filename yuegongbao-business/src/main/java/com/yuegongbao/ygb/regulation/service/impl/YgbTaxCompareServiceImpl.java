@@ -16,6 +16,9 @@ import com.yuegongbao.ygb.integration.TaxClient;
 import com.yuegongbao.ygb.compliance.mapper.YgbSalaryDetailMapper;
 import com.yuegongbao.ygb.regulation.mapper.YgbTaxCompareMapper;
 import com.yuegongbao.ygb.regulation.service.IYgbTaxCompareService;
+import com.yuegongbao.ygb.util.EnterpriseScopeMode;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 import com.yuegongbao.ygb.util.YgbRiskCalculator;
 import com.yuegongbao.ygb.warning.service.IYgbWarningService;
 
@@ -35,6 +38,12 @@ public class YgbTaxCompareServiceImpl implements IYgbTaxCompareService
 
     @Autowired
     private IYgbWarningService warningService;
+
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
 
     @Override
     public List<YgbTaxCompare> selectTaxCompareList(YgbTaxCompare taxCompare)
@@ -91,13 +100,14 @@ public class YgbTaxCompareServiceImpl implements IYgbTaxCompareService
     private int rebuildCompareRows(String statMonth, Long enterpriseId, String operator)
     {
         validateMonth(statMonth);
-        taxCompareMapper.deleteByScope(statMonth, enterpriseId);
+        YgbTaxCompare deleteScope = buildScopedTaxQuery(statMonth, enterpriseId);
+        taxCompareMapper.deleteByScope(deleteScope);
         List<YgbTaxRecordStubItem> records = taxClient.pullMonthlyRecords(statMonth);
 
         int rows = 0;
         for (YgbTaxRecordStubItem item : records)
         {
-            if (enterpriseId != null && !enterpriseId.equals(item.getEnterpriseId()))
+            if (!isItemInScope(item.getEnterpriseId(), item.getRegionCode(), enterpriseId))
             {
                 continue;
             }
@@ -150,6 +160,43 @@ public class YgbTaxCompareServiceImpl implements IYgbTaxCompareService
             }
         }
         return rows;
+    }
+
+    private YgbTaxCompare buildScopedTaxQuery(String statMonth, Long enterpriseId)
+    {
+        YgbTaxCompare query = new YgbTaxCompare();
+        query.setStatMonth(statMonth);
+        query.setEnterpriseId(enterpriseId);
+        applyTaxScope(query);
+        return query;
+    }
+
+    private void applyTaxScope(YgbTaxCompare query)
+    {
+        if (enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            enterpriseScopeHelper.applyEnterpriseDataScope(query, EnterpriseScopeMode.SINGLE, "enterprise_id");
+            return;
+        }
+        regionScopeHelper.applyRegionDataScope(query, "region_code");
+    }
+
+    private boolean isItemInScope(Long itemEnterpriseId, String itemRegionCode, Long requestedEnterpriseId)
+    {
+        if (requestedEnterpriseId != null && !requestedEnterpriseId.equals(itemEnterpriseId))
+        {
+            return false;
+        }
+        try
+        {
+            regionScopeHelper.assertRegionAuthorized(itemRegionCode);
+            enterpriseScopeHelper.assertEnterpriseAuthorized(itemEnterpriseId);
+            return true;
+        }
+        catch (ServiceException e)
+        {
+            return false;
+        }
     }
 
     private void validateMonth(String statMonth)

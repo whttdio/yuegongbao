@@ -19,7 +19,9 @@
           <el-date-picker v-model="queryParams.statMonth" type="month" value-format="YYYY-MM" format="YYYY-MM" />
         </el-form-item>
         <el-form-item label="派遣企业">
-          <el-input v-model="queryParams.dispatchEnterpriseId" clearable />
+          <el-select v-model="queryParams.dispatchEnterpriseId" clearable filterable style="width: 220px">
+            <el-option v-for="item in enterpriseOptions" :key="item.enterpriseId" :label="item.enterpriseName" :value="item.enterpriseId" />
+          </el-select>
         </el-form-item>
         <el-form-item label="区域">
           <el-input v-model="queryParams.regionCode" clearable />
@@ -69,17 +71,17 @@
     </el-card>
 
     <el-dialog v-model="open" title="拖欠处置" width="640px">
-      <el-form ref="arrearsRef" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="arrearsRef" :model="form" :rules="rules" label-width="108px">
         <el-form-item label="处置状态" prop="handleStatus">
           <el-select v-model="form.handleStatus">
             <el-option v-for="item in handleStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="下次跟进" prop="nextFollowTime">
+        <el-form-item label="跟进时间" prop="nextFollowTime">
           <el-date-picker v-model="form.nextFollowTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" format="YYYY-MM-DD HH:mm:ss" />
         </el-form-item>
         <el-form-item label="处置结果" prop="handleResult">
-          <el-input v-model="form.handleResult" type="textarea" :rows="4" />
+          <el-input v-model="form.handleResult" type="textarea" :rows="4" placeholder="请输入核查结论、补发计划或闭环结果" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" :rows="3" />
@@ -117,7 +119,9 @@
 <script setup name="YgbSalaryArrears">
 import { computed, getCurrentInstance, reactive, ref, toRefs } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { optionselectEnterprise } from '@/api/ygb/enterprise'
 import { getSalaryArrears, handleSalaryArrears, listSalaryArrears } from '@/api/ygb/salaryArrears'
+import { resolveRouteAliasPath } from '@/utils/routeAlias'
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -125,6 +129,7 @@ const router = useRouter()
 const loading = ref(false)
 const total = ref(0)
 const arrearsList = ref([])
+const enterpriseOptions = ref([])
 const open = ref(false)
 const detailOpen = ref(false)
 const detail = ref(null)
@@ -236,6 +241,14 @@ function handleExport() {
   proxy.download('/ygb/salary/batch/arrears/export', { ...queryParams.value }, `salary_arrears_${Date.now()}.xlsx`)
 }
 
+function loadEnterpriseOptions() {
+  return optionselectEnterprise().then(response => {
+    enterpriseOptions.value = response.data || []
+  }).catch(() => {
+    enterpriseOptions.value = []
+  })
+}
+
 function applyRouteQuery() {
   if (route.query.statMonth) {
     queryParams.value.statMonth = route.query.statMonth
@@ -253,7 +266,7 @@ function applyRouteQuery() {
 
 function handleBackToBatch() {
   router.push({
-    path: "/ygb/salaryBatch",
+    path: resolveRouteAliasPath('/salary-supervision/payment'),
     query: {
       statMonth: queryParams.value.statMonth,
       dispatchEnterpriseId: queryParams.value.dispatchEnterpriseId,
@@ -263,6 +276,7 @@ function handleBackToBatch() {
 }
 
 applyRouteQuery()
+loadEnterpriseOptions()
 getList()
 </script>
 

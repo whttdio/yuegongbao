@@ -1,39 +1,32 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="section-head">
-        <view class="worker-title">{{ summary.year || currentYear }} 年度累计</view>
-        <view class="worker-tag">{{ summary.totalMonths || 0 }} 个月</view>
-      </view>
-      <view class="summary-grid">
-        <view class="summary-item">
-          <view class="summary-item__label">累计申报收入</view>
-          <view class="summary-item__value">{{ summary.cumulativeIncome || 0 }}</view>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">个税查询</view>
+      <view class="worker-subtitle">查看 {{ summary.year || currentYear }} 年度申报与实缴汇总</view>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ summary.totalMonths || 0 }}</view>
+          <view class="hero-stat__label">累计月份</view>
         </view>
-        <view class="summary-item">
-          <view class="summary-item__label">累计工资实发</view>
-          <view class="summary-item__value">{{ summary.cumulativeSalary || 0 }}</view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ summary.cumulativeTax ?? '-' }}</view>
+          <view class="hero-stat__label">累计实缴</view>
         </view>
-        <view class="summary-item">
-          <view class="summary-item__label">累计实缴个税</view>
-          <view class="summary-item__value">{{ summary.cumulativeTax ?? '-' }}</view>
-        </view>
-        <view class="summary-item">
-          <view class="summary-item__label">异常月份</view>
-          <view class="summary-item__value">{{ summary.abnormalMonths || 0 }}</view>
-        </view>
-        <view class="summary-item">
-          <view class="summary-item__label">预警月份</view>
-          <view class="summary-item__value">{{ summary.warningMonths || 0 }}</view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ summary.warningMonths || 0 }}</view>
+          <view class="hero-stat__label">预警月份</view>
         </view>
       </view>
-      <view class="worker-subtitle summary-hint">
-        {{ summary.amountHint || summary.cumulativeTaxText || '' }}
+      <view v-if="summary.amountHint || summary.cumulativeTaxText" class="worker-subtitle">
+        {{ summary.amountHint || summary.cumulativeTaxText }}
       </view>
     </view>
 
     <view class="worker-card">
-      <view class="worker-title">个税列表</view>
+      <view class="section-head">
+        <view class="worker-title">个税列表</view>
+        <view class="worker-tag">{{ records.length }} 条</view>
+      </view>
       <view v-if="records.length">
         <view v-for="item in records" :key="item.taxMonth" class="list-row" @click="openDetail(item)">
           <view>
@@ -174,151 +167,7 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18rpx;
-}
-
-.summary-item {
-  padding: 20rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.summary-item__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.summary-item__value {
-  margin-top: 10rpx;
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #16324f;
-}
-
-.summary-hint {
-  margin-top: 18rpx;
-}
-
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.worker-empty--panel {
-  padding: 24rpx 0;
-}
-
-.worker-empty__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.worker-empty__desc {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #7890aa;
-}
-
-.worker-empty__actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 22rpx;
-}
-
 .worker-empty__actions button {
   flex: 1;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 </style>

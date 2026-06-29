@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
@@ -73,6 +73,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and region_code = #{regionCode}
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
             <if test="riskLevel != null and riskLevel != ''">
                 and risk_level = #{riskLevel}
             </if>
@@ -181,6 +182,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 and region_code = #{regionCode}
             </if>
             ${params.regionDataScope}
+            ${params.enterpriseDataScope}
             <if test="configStatus != null and configStatus != ''">
                 and config_status = #{configStatus}
             </if>

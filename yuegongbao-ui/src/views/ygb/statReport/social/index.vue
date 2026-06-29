@@ -37,6 +37,6 @@ const pageConfig = {
   ],
   permissionPrefix: 'ygb:statReport:social',
   printTitle: '用工保障月报台账 - 社保月报',
-  routePath: '/ygb-report/statReport/social'
+  routePath: '/statistical-report/social'
 }
 </script>

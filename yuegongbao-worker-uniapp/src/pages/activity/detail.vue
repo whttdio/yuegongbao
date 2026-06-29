@@ -1,8 +1,11 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">{{ detail.title || '福利活动' }}</view>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">{{ detail.title || '福利活动' }}</view>
       <view class="worker-subtitle">{{ detail.subtitle || '-' }}</view>
+    </view>
+
+    <view class="worker-card">
       <view class="section-head">
         <view class="worker-title worker-title--small">活动规则</view>
         <view class="more-link" @click="openJoinList">参与记录</view>
@@ -156,87 +159,14 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 28rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.more-link {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
 .rule-row {
   margin-top: 20rpx;
   font-size: 26rpx;
   line-height: 1.7;
-  color: #36506b;
+  color: #183247;
 }
 
 .worker-button {
   margin-top: 28rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
 }
 </style>

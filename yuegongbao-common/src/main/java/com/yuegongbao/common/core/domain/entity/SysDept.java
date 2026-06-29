@@ -43,6 +43,9 @@ public class SysDept extends BaseEntity
     /** 邮箱 */
     private String email;
 
+    /** 行政区划代码 */
+    private String regionCode;
+
     /** 部门状态:0正常,1停用 */
     private String status;
 
@@ -141,6 +144,16 @@ public class SysDept extends BaseEntity
         this.email = email;
     }
 
+    public String getRegionCode()
+    {
+        return regionCode;
+    }
+
+    public void setRegionCode(String regionCode)
+    {
+        this.regionCode = regionCode;
+    }
+
     public String getStatus()
     {
         return status;
@@ -192,6 +205,7 @@ public class SysDept extends BaseEntity
             .append("leader", getLeader())
             .append("phone", getPhone())
             .append("email", getEmail())
+            .append("regionCode", getRegionCode())
             .append("status", getStatus())
             .append("delFlag", getDelFlag())
             .append("createBy", getCreateBy())

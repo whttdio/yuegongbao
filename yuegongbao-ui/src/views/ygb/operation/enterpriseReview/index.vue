@@ -1,33 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  addOperationModule,
-  delOperationModule,
-  getOperationModule,
-  getOperationModuleSummary,
-  listOperationModule,
-  updateOperationModule
-} from '@/api/ygb/operation'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const submodule = 'enterpriseReview'
-const config = {
+const config = createBusinessRecordPageConfig({
+  module: 'operationEnterpriseReview',
   title: '企业入驻审核',
-  description: '复用扩展台账对象，承接企业入驻审核闭环、状态跟踪和导出。',
-  permPrefix: 'ygb:operationEnterpriseReview',
-  filePrefix: 'operation_enterprise_review',
-  defaultCategoryCode: 'enterprise_review',
-  defaultWorkflowStatus: 'pending',
-  defaultSourceLabel: '运营后台',
-  listApi: query => listOperationModule(submodule, query),
-  summaryApi: query => getOperationModuleSummary(submodule, query),
-  detailApi: id => getOperationModule(submodule, id),
-  addApi: data => addOperationModule(submodule, data),
-  updateApi: data => updateOperationModule(submodule, data),
-  deleteApi: ids => delOperationModule(submodule, ids),
-  exportUrl: `ygb/operation/${submodule}/export`
-}
+  description: '围绕企业入驻资料、资质和处理结论审核开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '入驻申请',
+  businessNamePlaceholder: '请输入入驻申请',
+  defaultSourceLabel: '企业入驻审核',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

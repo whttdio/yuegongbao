@@ -77,19 +77,19 @@
     <el-card class="toolbar-card ygb-toolbar-card" shadow="never">
       <el-row :gutter="10">
         <el-col :span="1.5">
-          <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['ygb:injuryEvent:add']">????</el-button>
+          <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['ygb:injuryEvent:add']">新增</el-button>
         </el-col>
         <el-col :span="1.5">
-          <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['ygb:injuryEvent:edit']">????</el-button>
+          <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate()" v-hasPermi="['ygb:injuryEvent:edit']">修改</el-button>
         </el-col>
         <el-col :span="1.5">
-          <el-button type="warning" plain icon="Promotion" :disabled="single" @click="openStatusDialog()" v-hasPermi="['ygb:injuryEvent:flow']">????</el-button>
+          <el-button type="warning" plain icon="Promotion" :disabled="single" @click="openStatusDialog()" v-hasPermi="['ygb:injuryEvent:flow']">状态流转</el-button>
         </el-col>
         <el-col :span="1.5">
-          <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['ygb:injuryEvent:remove']">????</el-button>
+          <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()" v-hasPermi="['ygb:injuryEvent:remove']">删除</el-button>
         </el-col>
         <el-col :span="1.5">
-          <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:injuryEvent:export']">????</el-button>
+          <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:injuryEvent:export']">导出</el-button>
         </el-col>
         <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
       </el-row>
@@ -213,7 +213,7 @@
       <el-form ref="statusRef" :model="statusForm" :rules="statusRules" label-width="100px">
         <el-form-item label="事件状态" prop="injuryStatus">
           <el-select v-model="statusForm.injuryStatus" placeholder="请选择事件状态">
-            <el-option v-for="item in injuryStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in statusTransitionOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="审批结果" prop="approvalResult">
@@ -350,6 +350,7 @@ const {
   queryParams,
   form,
   statusForm,
+  statusTransitionOptions,
   rules,
   statusRules,
   getList,
@@ -377,8 +378,9 @@ const {
   },
   canMutate: () => !isReadOnlyRole.value,
   onBlockedAction: actionLabel => {
-    proxy.$modal.msgWarning(`${readOnlyRoleLabel.value} read-only: ${actionLabel}`)
-    return `${readOnlyRoleLabel.value} read-only: ${actionLabel}`
+    const message = `${readOnlyRoleLabel.value}仅保留查看、详情和导出，不能${actionLabel}`
+    proxy.$modal.msgWarning(message)
+    return message
   },
   getCurrentList: () => visibleEventList.value,
   onAfterLoad: () => loadInjuryAggregateBlocks()
@@ -776,8 +778,8 @@ function matchInjuryEventFocus(row, focusKey) {
 
 watchEffect(() => {
   setPageGuide({
-    title: '??????????',
-    description: '?????????????????????????????????',
+    title: '工伤事件管理',
+    description: '管理工伤登记、材料审核、状态流转和办理结论，支撑工伤监管全过程留痕。',
     portalExplanation: portalExplanationItems.value,
     focus: focusQueues.value,
     selection: selectedEventOverview.value,

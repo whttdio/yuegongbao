@@ -2,7 +2,7 @@
   <div class="app-container ygb-page">
     <section class="gov-page-header ygb-page__header">
       <div>
-        <p class="ygb-page__eyebrow">人员主数据底座</p>
+        <p class="ygb-page__eyebrow">人员主数据</p>
         <h1 class="ygb-page__title">人员主数据办理台账</h1>
         <p class="ygb-page__desc">
           统一维护从业人员归属、身份、工种、持证和参保状态，作为合同备案、实名制考勤、工资核验和漏保比对的人员主表。
@@ -10,7 +10,7 @@
         </p>
       </div>
       <div class="ygb-table-tip">
-        人员归属和区域编码与所属企业同步。当前页面聚焦 PC 办理链路，后续实名、人证比对、证书核验和社保碰撞继续复用同一套人员底座。
+        人员归属和区域编码与所属企业同步。当前页面聚焦 PC 办理链路，实名、人证比对、证书核验和社保碰撞均以当前人员信息为依据。
       </div>
     </section>
 
@@ -55,7 +55,7 @@
         <div class="ygb-card-head">
           <div>
             <div class="ygb-card-head__title">人员子台账</div>
-            <div class="ygb-card-head__desc">从人员主台账直接下钻特证、黑名单、培训监督、高危岗位、风险岗位和专家库，复用当前筛选条件。</div>
+            <div class="ygb-card-head__desc">从人员主台账直接下钻特证、黑名单、培训监督、高危岗位、风险岗位和专家库，并带入当前筛选条件。</div>
           </div>
         </div>
       </template>
@@ -114,7 +114,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="所属企业" prop="enterpriseId">
-          <el-select v-model="queryParams.enterpriseId" placeholder="请选择所属企业" clearable filterable style="width: 220px">
+          <el-select
+            v-model="queryParams.enterpriseId"
+            placeholder="请选择所属企业"
+            :clearable="!enterpriseFilterLocked"
+            :disabled="enterpriseFilterLocked"
+            filterable
+            style="width: 220px"
+          >
             <el-option
               v-for="item in enterpriseOptions"
               :key="item.enterpriseId"
@@ -258,7 +265,15 @@
       <el-form ref="personRef" :model="form" :rules="rules" label-width="110px">
         <div class="ygb-panel-grid">
           <el-form-item label="所属企业" prop="enterpriseId">
-            <el-select v-model="form.enterpriseId" placeholder="请选择所属企业" filterable style="width: 100%" @change="handleEnterpriseChange">
+            <el-select
+              v-model="form.enterpriseId"
+              placeholder="请选择所属企业"
+              :clearable="!enterpriseFilterLocked"
+              :disabled="enterpriseFilterLocked"
+              filterable
+              style="width: 100%"
+              @change="handleEnterpriseChange"
+            >
               <el-option
                 v-for="item in enterpriseOptions"
                 :key="item.enterpriseId"
@@ -370,6 +385,7 @@
   import { useWorkbenchAssist } from '@/composables/useWorkbenchAssist'
 import { useRoleViewMode } from '@/utils/roleView'
 import { decoratePortalExplanationItems, openPortalExplanationAction, resolvePortalExplanationSummary } from '@/utils/portalExplanation'
+import { applyLockedEnterpriseQuery } from '@/utils/enterpriseScope'
 import { applyWorkbenchRouteQuery, buildPersonWorkbenchLinks, buildWorkbenchContext, openWorkbenchLink, stripWorkbenchRouteQuery } from '@/utils/workbenchLink'
 import {
   certStatusOptions,
@@ -400,6 +416,7 @@ const {
   title,
   personList,
   enterpriseOptions,
+  enterpriseFilterLocked,
   currentPerson,
   detailPerson,
   summaryData,
@@ -420,7 +437,8 @@ const {
   submitForm,
   handleDelete,
   handleExport,
-  handleEnterpriseChange
+  handleEnterpriseChange,
+  scopedQueryParams
 } = usePersonPage({
   exportFilePrefix: 'ygb_person',
   initialQueryParams: personInitialQuery,
@@ -429,9 +447,10 @@ const {
 })
 
 function buildPersonExplanationQuery(extraQuery = {}) {
+  const scoped = scopedQueryParams()
   return {
-    enterpriseId: queryParams.value.enterpriseId,
-    regionCode: queryParams.value.regionCode,
+    enterpriseId: scoped.enterpriseId,
+    regionCode: scoped.regionCode,
     ...extraQuery
   }
 }
@@ -442,7 +461,7 @@ const fallbackPortalExplanations = computed(() => ([
     dimensionName: '在岗人员',
     currentValue: summaryData.value.onPostCount != null ? summaryData.value.onPostCount : 0,
     targetValue: '持续完整',
-    summary: '先固定在岗人员底座，再进入合同、考勤和工资办理，避免后续链路人员范围漂移。',
+    summary: '先固定在岗人员范围，再进入合同、考勤和工资办理，避免后续链路人员范围漂移。',
     evidenceModule: 'person',
     recommendModule: 'person',
     defaultQuery: buildPersonExplanationQuery({ employmentStatus: '0' }),
@@ -704,7 +723,7 @@ const submoduleEntries = computed(() => ([
     title: '特证管理',
     desc: '维护证书台账、复审节点和证件闭环。',
     actionText: '进入特证台账',
-    path: '/ygb-foundation/personCertificate',
+    path: '/personnel-management/certificate',
     query: buildPersonSubmoduleQuery()
   },
   {
@@ -712,7 +731,7 @@ const submoduleEntries = computed(() => ([
     title: '黑名单',
     desc: '承接违规对象、限制入场和协同处置记录。',
     actionText: '进入黑名单台账',
-    path: '/ygb-foundation/personBlacklist',
+    path: '/personnel-management/blacklist',
     query: buildPersonSubmoduleQuery()
   },
   {
@@ -720,7 +739,7 @@ const submoduleEntries = computed(() => ([
     title: '培训监督',
     desc: '维护培训主题、学时留痕和抽查整改状态。',
     actionText: '进入培训台账',
-    path: '/ygb-foundation/personTraining',
+    path: '/personnel-management/training',
     query: buildPersonSubmoduleQuery()
   },
   {
@@ -728,7 +747,7 @@ const submoduleEntries = computed(() => ([
     title: '高危岗位库',
     desc: '下钻查看高危岗位对象、风险来源和审查状态。',
     actionText: '进入高危岗位库',
-    path: '/ygb-foundation/personHighRiskPost',
+    path: '/personnel-management/highRiskPost',
     query: buildPersonSubmoduleQuery()
   },
   {
@@ -736,7 +755,7 @@ const submoduleEntries = computed(() => ([
     title: '风险岗位库',
     desc: '维护一般风险岗位、适用企业和风险级别。',
     actionText: '进入风险岗位库',
-    path: '/ygb-foundation/personRiskPost',
+    path: '/personnel-management/riskPost',
     query: buildPersonSubmoduleQuery()
   },
   {
@@ -744,16 +763,17 @@ const submoduleEntries = computed(() => ([
     title: '专家库',
     desc: '沉淀专家信息、专业方向和参与记录。',
     actionText: '进入专家库',
-    path: '/ygb-foundation/personExpert',
+    path: '/personnel-management/expert',
     query: buildPersonSubmoduleQuery()
   }
 ]))
 
 function buildPersonSubmoduleQuery(extraQuery = {}) {
+  const scoped = scopedQueryParams()
   return Object.fromEntries(Object.entries({
-    regionCode: queryParams.value.regionCode,
-    enterpriseId: currentPerson.value?.enterpriseId || queryParams.value.enterpriseId,
-    personName: currentPerson.value?.personName || queryParams.value.personName,
+    regionCode: scoped.regionCode,
+    enterpriseId: currentPerson.value?.enterpriseId || scoped.enterpriseId,
+    personName: currentPerson.value?.personName || scoped.personName,
     ...extraQuery
   }).filter(([, value]) => value !== undefined && value !== null && value !== ''))
 }
@@ -764,7 +784,7 @@ function openSubmodule(entry) {
 
 function resetQuery() {
   proxy.resetForm('queryRef')
-  Object.assign(queryParams.value, {
+  Object.assign(queryParams.value, applyLockedEnterpriseQuery({
     pageNum: 1,
     pageSize: 10,
     regionCode: undefined,
@@ -775,13 +795,13 @@ function resetQuery() {
     certStatus: undefined,
     insuranceStatus: undefined,
     employmentStatus: undefined
-  })
+  }))
   applyWorkbenchRouteQuery(route.query, queryParams.value, personWorkbenchFields)
   getList()
 }
 
 function clearWorkbenchContext() {
-  Object.assign(queryParams.value, {
+  Object.assign(queryParams.value, applyLockedEnterpriseQuery({
     pageNum: 1,
     enterpriseId: undefined,
     regionCode: undefined,
@@ -789,7 +809,7 @@ function clearWorkbenchContext() {
     certStatus: undefined,
     insuranceStatus: undefined,
     employmentStatus: undefined
-  })
+  }))
   router.replace({
     path: route.path,
     query: stripWorkbenchRouteQuery(route.query, personWorkbenchFields)
@@ -867,6 +887,86 @@ function buildHintTags(person) {
   color: #15304b;
 }
 
+.ygb-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ygb-summary-card {
+  padding: 18px 20px;
+  border: 1px solid #dbe5f0;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.ygb-summary-card__label {
+  color: #627486;
+  font-size: 13px;
+}
+
+.ygb-summary-card__value {
+  margin-top: 10px;
+  color: #13243a;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.ygb-summary-card__unit {
+  margin-left: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #7b8da1;
+}
+
+.ygb-summary-card__note {
+  margin-top: 10px;
+  color: #5f6f80;
+  line-height: 1.7;
+  font-size: 13px;
+}
+
+.ygb-summary-card--success {
+  background: linear-gradient(180deg, #ffffff 0%, #f3fbf5 100%);
+}
+
+.ygb-summary-card--warning {
+  background: linear-gradient(180deg, #ffffff 0%, #fff9ef 100%);
+}
+
+.ygb-summary-card--primary {
+  background: linear-gradient(180deg, #ffffff 0%, #f2f7fd 100%);
+}
+
+.ygb-focus-card :deep(.el-card__header) {
+  padding: 18px 20px 0;
+  border-bottom: none;
+}
+
+.ygb-focus-card :deep(.el-card__body) {
+  padding: 18px 20px 20px;
+}
+
+.ygb-card-head__title {
+  color: #13243a;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ygb-card-head__desc {
+  margin-top: 4px;
+  color: #7b8da1;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.ygb-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .ygb-link-card {
   margin-bottom: 16px;
 }
@@ -929,12 +1029,14 @@ function buildHintTags(person) {
 }
 
 @media (max-width: 1200px) {
+  .ygb-summary-grid,
   .ygb-link-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
+  .ygb-summary-grid,
   .ygb-link-grid {
     grid-template-columns: 1fr;
   }

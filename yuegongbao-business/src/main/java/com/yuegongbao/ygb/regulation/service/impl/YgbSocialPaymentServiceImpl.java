@@ -13,6 +13,10 @@ import com.yuegongbao.ygb.domain.vo.YgbSocialPaymentStubItem;
 import com.yuegongbao.ygb.integration.SocialClient;
 import com.yuegongbao.ygb.regulation.mapper.YgbSocialPaymentMapper;
 import com.yuegongbao.ygb.regulation.service.IYgbSocialPaymentService;
+import com.yuegongbao.ygb.util.EnterpriseScopeMode;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
+import com.yuegongbao.ygb.util.YgbEnterpriseScopeHelper;
+import com.yuegongbao.ygb.util.YgbRegionScopeHelper;
 
 @Service
 public class YgbSocialPaymentServiceImpl implements IYgbSocialPaymentService
@@ -24,6 +28,15 @@ public class YgbSocialPaymentServiceImpl implements IYgbSocialPaymentService
 
     @Autowired
     private SocialClient socialClient;
+
+    @Autowired
+    private YgbRegionScopeHelper regionScopeHelper;
+
+    @Autowired
+    private YgbEnterpriseScopeHelper enterpriseScopeHelper;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbSocialPayment> selectSocialPaymentList(YgbSocialPayment socialPayment)
@@ -66,7 +79,12 @@ public class YgbSocialPaymentServiceImpl implements IYgbSocialPaymentService
     @Override
     public YgbSocialPayment selectSocialPaymentById(Long paymentId)
     {
-        return socialPaymentMapper.selectSocialPaymentById(paymentId);
+        YgbSocialPayment socialPayment = socialPaymentMapper.selectSocialPaymentById(paymentId);
+        if (socialPayment != null)
+        {
+            dataScopeGuard.assertEntityAllowed(socialPayment);
+        }
+        return socialPayment;
     }
 
     @Override
@@ -74,12 +92,13 @@ public class YgbSocialPaymentServiceImpl implements IYgbSocialPaymentService
     public int syncSocialPayment(String statMonth, Long enterpriseId, String operator)
     {
         validateMonth(statMonth);
-        socialPaymentMapper.deleteByScope(statMonth, enterpriseId);
+        YgbSocialPayment deleteScope = buildScopedPaymentQuery(statMonth, enterpriseId);
+        socialPaymentMapper.deleteByScope(deleteScope);
         List<YgbSocialPaymentStubItem> items = socialClient.pullMonthlyPayments(statMonth);
         int rows = 0;
         for (YgbSocialPaymentStubItem item : items)
         {
-            if (enterpriseId != null && !enterpriseId.equals(item.getEnterpriseId()))
+            if (!isItemInScope(item.getEnterpriseId(), item.getRegionCode(), enterpriseId))
             {
                 continue;
             }
@@ -105,6 +124,43 @@ public class YgbSocialPaymentServiceImpl implements IYgbSocialPaymentService
             rows++;
         }
         return rows;
+    }
+
+    private YgbSocialPayment buildScopedPaymentQuery(String statMonth, Long enterpriseId)
+    {
+        YgbSocialPayment query = new YgbSocialPayment();
+        query.setStatMonth(statMonth);
+        query.setEnterpriseId(enterpriseId);
+        applyPaymentScope(query);
+        return query;
+    }
+
+    private void applyPaymentScope(YgbSocialPayment query)
+    {
+        if (enterpriseScopeHelper.isEnterpriseScopedUser())
+        {
+            enterpriseScopeHelper.applyEnterpriseDataScope(query, EnterpriseScopeMode.SINGLE, "enterprise_id");
+            return;
+        }
+        regionScopeHelper.applyRegionDataScope(query, "region_code");
+    }
+
+    private boolean isItemInScope(Long itemEnterpriseId, String itemRegionCode, Long requestedEnterpriseId)
+    {
+        if (requestedEnterpriseId != null && !requestedEnterpriseId.equals(itemEnterpriseId))
+        {
+            return false;
+        }
+        try
+        {
+            regionScopeHelper.assertRegionAuthorized(itemRegionCode);
+            enterpriseScopeHelper.assertEnterpriseAuthorized(itemEnterpriseId);
+            return true;
+        }
+        catch (ServiceException e)
+        {
+            return false;
+        }
     }
 
     private void validateMonth(String statMonth)

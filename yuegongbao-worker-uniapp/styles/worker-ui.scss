@@ -1993,3 +1993,147 @@ page {
     animation-duration: 0s !important;
   }
 }
+
+@media (min-width: 960px) {
+  page {
+    font-size: 30rpx;
+  }
+
+  .worker-page {
+    width: min(100%, 1720rpx);
+    margin: 0 auto;
+    padding: 40rpx 36rpx calc(48rpx + env(safe-area-inset-bottom));
+  }
+
+  .worker-page--tab,
+  .worker-page--screen {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24rpx;
+    align-content: start;
+  }
+
+  .worker-page--tab > *,
+  .worker-page--screen > * {
+    margin-top: 0 !important;
+  }
+
+  .worker-page--tab .worker-hero,
+  .worker-page--screen .worker-hero {
+    grid-column: 1 / -1;
+  }
+
+  .login-page--screen {
+    display: grid;
+    grid-template-columns: minmax(420rpx, 1.15fr) minmax(420rpx, 0.85fr);
+    gap: 24rpx;
+    align-items: start;
+  }
+
+  .login-page--screen > * {
+    margin-top: 0 !important;
+  }
+
+  .worker-card {
+    padding: 36rpx;
+    border-radius: 28rpx;
+  }
+
+  .worker-title {
+    font-size: 38rpx;
+  }
+
+  .worker-title--small {
+    font-size: 30rpx;
+  }
+
+  .worker-title--display {
+    font-size: 50rpx;
+  }
+
+  .worker-subtitle {
+    font-size: 28rpx;
+  }
+
+  .worker-caption {
+    font-size: 24rpx;
+  }
+
+  .worker-button {
+    min-height: 96rpx;
+    line-height: 96rpx;
+    font-size: 32rpx;
+    border-radius: 20rpx;
+  }
+
+  .entry-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20rpx;
+  }
+
+  .entry-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20rpx;
+  }
+
+  .hero-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18rpx;
+  }
+
+  .profile-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18rpx;
+  }
+
+  .summary-grid,
+  .detail-grid,
+  .status-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-head {
+    align-items: center;
+  }
+
+  .home-worker-card {
+    align-items: center;
+  }
+
+  .home-worker-card__qr {
+    width: 196rpx;
+  }
+
+  .home-worker-card__qr-image {
+    width: 150rpx;
+    height: 150rpx;
+  }
+
+  .profile-hero__main,
+  .login-hero__top {
+    align-items: center;
+  }
+
+  .settings-row,
+  .list-row,
+  .notice-row,
+  .recommend-row,
+  .job-row,
+  .record-row,
+  .attendance-row {
+    padding-top: 26rpx;
+    padding-bottom: 26rpx;
+  }
+
+  .service-panel {
+    padding: 30rpx;
+  }
+
+  .video-player {
+    height: 520rpx;
+  }
+}

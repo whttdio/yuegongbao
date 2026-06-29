@@ -19,6 +19,7 @@ import com.yuegongbao.common.core.domain.AjaxResult;
 import com.yuegongbao.common.core.page.TableDataInfo;
 import com.yuegongbao.common.enums.BusinessType;
 import com.yuegongbao.common.utils.poi.ExcelUtil;
+import com.yuegongbao.ygb.compliance.domain.ContractTemplateReviewRequest;
 import com.yuegongbao.ygb.compliance.domain.YgbContractTemplate;
 import com.yuegongbao.ygb.compliance.service.IYgbContractTemplateService;
 
@@ -29,7 +30,7 @@ public class YgbContractTemplateController extends BaseController
     @Autowired
     private IYgbContractTemplateService contractTemplateService;
 
-    @PreAuthorize("@ss.hasPermi('ygb:contractTemplate:list')")
+    @PreAuthorize("@ss.hasAnyPermi('ygb:contractTemplate:list,azb:contractTemplate:list')")
     @GetMapping("/list")
     public TableDataInfo list(YgbContractTemplate template)
     {
@@ -38,7 +39,7 @@ public class YgbContractTemplateController extends BaseController
         return getDataTable(list);
     }
 
-    @PreAuthorize("@ss.hasPermi('ygb:contractTemplate:query')")
+    @PreAuthorize("@ss.hasAnyPermi('ygb:contractTemplate:query,azb:contractTemplate:query')")
     @GetMapping("/{templateId}")
     public AjaxResult getInfo(@PathVariable Long templateId)
     {
@@ -53,7 +54,7 @@ public class YgbContractTemplateController extends BaseController
     }
 
     @Log(title = "合同模板库", businessType = BusinessType.EXPORT)
-    @PreAuthorize("@ss.hasPermi('ygb:contractTemplate:export')")
+    @PreAuthorize("@ss.hasAnyPermi('ygb:contractTemplate:export,azb:contractTemplate:export')")
     @PostMapping("/export")
     public void export(HttpServletResponse response, YgbContractTemplate template)
     {
@@ -94,6 +95,23 @@ public class YgbContractTemplateController extends BaseController
     public AjaxResult changeStatus(@PathVariable Long templateId, @RequestBody YgbContractTemplate template)
     {
         return toAjax(contractTemplateService.updateTemplateStatus(templateId, template.getStatus(), getUsername()));
+    }
+
+    @Log(title = "合同模板库", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('ygb:contractTemplate:submit')")
+    @PostMapping("/{templateId}/submit")
+    public AjaxResult submit(@PathVariable Long templateId, @RequestBody(required = false) ContractTemplateReviewRequest request)
+    {
+        String portalScope = request == null ? "ygb" : request.getPortalScope();
+        return toAjax(contractTemplateService.submitTemplateReview(templateId, getUsername(), portalScope));
+    }
+
+    @Log(title = "合同模板库", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasAnyPermi('ygb:contractTemplate:review,azb:contractTemplate:review')")
+    @PostMapping("/{templateId}/review")
+    public AjaxResult review(@PathVariable Long templateId, @RequestBody ContractTemplateReviewRequest request)
+    {
+        return toAjax(contractTemplateService.reviewTemplate(templateId, request, getUsername()));
     }
 
     @Log(title = "合同模板库", businessType = BusinessType.DELETE)

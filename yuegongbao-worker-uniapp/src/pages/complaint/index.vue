@@ -1,66 +1,126 @@
 <template>
-  <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">发起投诉举报</view>
-      <picker class="form-picker" :range="typeOptions" @change="handleTypeChange">
-        <view class="form-picker__text">{{ typeLabel }}</view>
-      </picker>
-      <input v-model="form.title" class="form-input" placeholder="请输入标题" />
-      <textarea v-model="form.content" class="form-textarea" placeholder="请描述问题经过" />
-      <input v-model="form.contactMobile" class="form-input" placeholder="请输入联系电话" />
-
-      <view class="section-head section-head--compact">
-        <view class="worker-title worker-title--small">证据附件</view>
-        <view class="more-link" @click="goCamera">拍照归档</view>
-      </view>
-      <view class="attachment-actions">
-        <button class="worker-button worker-button--secondary" :disabled="uploading" @click="chooseEvidence">
-          {{ uploading ? '上传中...' : '选择图片并上传' }}
-        </button>
-      </view>
-      <view v-if="attachmentUrls.length" class="attachment-list">
-        <view v-for="(item, index) in attachmentUrls" :key="`${item}-${index}`" class="attachment-row">
-          <view class="attachment-row__text">{{ item }}</view>
-          <view class="attachment-row__action" @click="removeAttachment(index)">移除</view>
-        </view>
-      </view>
-      <view v-else class="worker-empty worker-empty--inline">
-        <view class="worker-empty__title">当前暂无证据附件</view>
-        <view class="worker-empty__desc">
-          可先去拍照留存工资、社保、工伤或现场隐患证据，再回到当前投诉单继续补齐材料。
-        </view>
+  <view class="worker-page complaint-page">
+    <view class="worker-card worker-hero complaint-form-card">
+      <view class="complaint-form-head">
+        <view class="worker-title worker-title--display">投诉举报</view>
+        <view class="worker-subtitle">请如实填写问题信息，必要时上传工资、社保或现场证据</view>
       </view>
 
-      <view class="switch-row">
-        <text>匿名提交</text>
-        <switch :checked="form.anonymous" @change="form.anonymous = $event.detail.value" />
+      <view class="form-stack">
+        <view class="form-field">
+          <view class="form-field__label">投诉类型</view>
+          <picker class="form-picker" :range="typeOptions" @change="handleTypeChange">
+            <view class="form-picker__text">{{ typeLabel }}</view>
+          </picker>
+        </view>
+
+        <view class="form-field">
+          <view class="form-field__label">投诉标题</view>
+          <input v-model="form.title" class="form-input" placeholder="请简要概括问题，如：3月工资未发放" />
+        </view>
+
+        <view class="form-field">
+          <view class="form-field__label">问题经过</view>
+          <textarea
+            v-model="form.content"
+            class="form-textarea"
+            placeholder="请描述发生时间、地点、涉及金额或人员等关键信息"
+          />
+        </view>
+
+        <view class="form-field">
+          <view class="form-field__label">联系电话</view>
+          <input
+            v-model="form.contactMobile"
+            class="form-input"
+            type="number"
+            maxlength="11"
+            placeholder="便于工作人员联系核实"
+          />
+        </view>
       </view>
-      <view class="switch-row">
-        <text>同步工会</text>
-        <switch :checked="form.syncUnion" @change="form.syncUnion = $event.detail.value" />
+
+      <view class="form-section">
+        <view class="section-head section-head--compact">
+          <view>
+            <view class="worker-title worker-title--small">证据附件</view>
+            <view class="form-field__hint">支持拍照或相册上传，单张不超过 2MB</view>
+          </view>
+          <view class="more-link" @click="goCamera">拍照归档</view>
+        </view>
+
+        <view class="upload-zone" @click="chooseEvidence">
+          <view class="upload-zone__icon">{{ uploading ? '…' : '+' }}</view>
+          <view class="upload-zone__title">{{ uploading ? '上传中...' : '选择图片并上传' }}</view>
+          <view class="upload-zone__desc">可上传工资条、合同、聊天记录或现场照片</view>
+        </view>
+
+        <view v-if="attachmentUrls.length" class="attachment-list">
+          <view v-for="(item, index) in attachmentUrls" :key="`${item}-${index}`" class="attachment-chip">
+            <view class="attachment-chip__index">证据 {{ index + 1 }}</view>
+            <view class="attachment-chip__text">{{ formatAttachmentName(item) }}</view>
+            <view class="attachment-chip__action" @click.stop="removeAttachment(index)">移除</view>
+          </view>
+        </view>
+        <view v-else class="worker-empty worker-empty--inline complaint-empty">
+          <view class="worker-empty__title">当前暂无证据附件</view>
+          <view class="worker-empty__desc">
+            可先拍照留存工资、社保、工伤或现场隐患证据，再回到当前投诉单继续补齐材料。
+          </view>
+        </view>
       </view>
-      <button class="worker-button" @click="submitComplaint">提交投诉</button>
+
+      <view class="switch-panel">
+        <view class="switch-row">
+          <view>
+            <view class="switch-row__label">匿名提交</view>
+            <view class="switch-row__hint">隐藏个人信息，仅保留必要联系方式</view>
+          </view>
+          <switch color="#0f766e" :checked="form.anonymous" @change="form.anonymous = $event.detail.value" />
+        </view>
+        <view class="switch-row">
+          <view>
+            <view class="switch-row__label">同步工会</view>
+            <view class="switch-row__hint">同步至工会服务，便于协同维权</view>
+          </view>
+          <switch color="#0f766e" :checked="form.syncUnion" @change="form.syncUnion = $event.detail.value" />
+        </view>
+      </view>
+
+      <button class="worker-button complaint-submit" @click="submitComplaint">提交投诉</button>
     </view>
 
-    <view class="worker-card">
-      <view class="worker-title">我的投诉</view>
-      <view v-if="rows.length">
-        <view v-for="item in rows" :key="item.complaintId" class="list-row" @click="openDetail(item)">
-          <view>
-            <view class="list-row__title">{{ item.title }}</view>
-            <view class="list-row__subtitle">
-              {{ item.complaintType || '-' }} / {{ item.syncUnionText || '未同步工会' }}
+    <view class="worker-card complaint-list-card">
+      <view class="section-head">
+        <view class="worker-title">我的投诉</view>
+        <view v-if="rows.length" class="worker-tag worker-tag--info">{{ rows.length }} 条</view>
+      </view>
+
+      <view v-if="rows.length" class="complaint-list">
+        <view
+          v-for="item in rows"
+          :key="item.complaintId"
+          class="complaint-item"
+          @click="openDetail(item)"
+        >
+          <view class="complaint-item__main">
+            <view class="complaint-item__title">{{ item.title }}</view>
+            <view class="complaint-item__meta">
+              {{ item.complaintType || '-' }} · {{ item.syncUnionText || '未同步工会' }}
             </view>
           </view>
-          <view class="worker-tag">{{ item.statusText || '-' }}</view>
+          <view class="worker-tag" :class="getStatusTagClass(item.statusText)">
+            {{ item.statusText || '-' }}
+          </view>
         </view>
       </view>
+
       <view v-else class="worker-empty worker-empty--panel">
         <view class="worker-empty__title">当前暂无投诉记录</view>
         <view class="worker-empty__desc">
           如暂未形成正式投诉，可先进入法律咨询梳理问题；如已有现场证据，也可先去拍照归档后再提交。
         </view>
-        <view class="attachment-actions attachment-actions--empty">
+        <view class="complaint-empty-actions">
           <button class="worker-button worker-button--secondary" @click="goLegal">法律咨询</button>
           <button class="worker-button" @click="goCamera">去拍照归档</button>
         </view>
@@ -179,6 +239,30 @@ const complaintSnapshotText = computed(() => {
   ].join('\n')
 })
 
+function formatAttachmentName(url) {
+  const text = String(url || '')
+  if (!text) {
+    return '-'
+  }
+  const parts = text.split('/')
+  const name = parts[parts.length - 1] || text
+  return name.length > 28 ? `${name.slice(0, 28)}...` : name
+}
+
+function getStatusTagClass(statusText) {
+  const text = String(statusText || '')
+  if (text.includes('待') || text.includes('处理中') || text.includes('受理')) {
+    return 'worker-tag--warning'
+  }
+  if (text.includes('完成') || text.includes('已结') || text.includes('通过')) {
+    return 'worker-tag--success'
+  }
+  if (text.includes('退') || text.includes('拒') || text.includes('驳回')) {
+    return 'worker-tag--danger'
+  }
+  return 'worker-tag--info'
+}
+
 function persistComplaintDiagnostics() {
   uni.setStorageSync(WORKER_COMPLAINT_DIAGNOSTICS_KEY, {
     selectedTypeIndex: selectedTypeIndex.value,
@@ -284,6 +368,9 @@ function chooseImage() {
 }
 
 async function chooseEvidence() {
+  if (uploading.value) {
+    return
+  }
   uploading.value = true
   try {
     const res = await chooseImage()
@@ -389,184 +476,131 @@ function copyText(content, successTitle) {
 </script>
 
 <style lang="scss">
-.form-input,
-.form-textarea,
-.form-picker {
-  width: 100%;
-  margin-top: 18rpx;
-  padding: 20rpx 24rpx;
+.complaint-form-head {
+  margin-bottom: 28rpx;
+}
+
+.complaint-form-head .worker-subtitle {
+  margin-top: 12rpx;
+}
+
+.complaint-empty {
+  margin-top: 16rpx;
+  padding: 28rpx 16rpx;
   border-radius: 18rpx;
-  background: #f5f8fc;
-  box-sizing: border-box;
+  background: $ygb-surface-muted;
+}
+
+.complaint-submit {
+  width: 100%;
+  margin-top: 32rpx;
+}
+
+.switch-row__label {
   font-size: 28rpx;
-  color: #16324f;
+  font-weight: 650;
+  color: $ygb-text-body;
 }
 
-.form-textarea {
-  min-height: 180rpx;
-}
-
-.form-picker__text {
-  color: #16324f;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-}
-
-.section-head--compact {
-  margin-top: 22rpx;
-  margin-bottom: 12rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.more-link {
-  font-size: 24rpx;
-  color: #1f6fd6;
-}
-
-.attachment-actions {
-  margin-top: 8rpx;
-}
-
-.attachment-actions--empty {
-  margin-top: 18rpx;
-  display: flex;
-  gap: 20rpx;
-}
-
-.attachment-actions--empty button {
-  flex: 1;
+.switch-row__hint {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: $ygb-text-tertiary;
+  line-height: 1.5;
 }
 
 .attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
   margin-top: 16rpx;
 }
 
-.attachment-row {
+.attachment-chip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: #ffffff;
+  border: 1rpx solid $ygb-border-light;
+}
+
+.attachment-chip__index {
+  flex-shrink: 0;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  background: $ygb-primary-soft;
+  color: #0b6b64;
+  font-size: 20rpx;
+  font-weight: 650;
+}
+
+.attachment-chip__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 22rpx;
+  color: $ygb-text-secondary;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.attachment-chip__action {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: $ygb-danger;
+}
+
+.complaint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.complaint-item {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16rpx;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
+  padding: 22rpx 20rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fafb 100%);
+  border: 1rpx solid $ygb-border-light;
+  box-shadow: 0 4rpx 12rpx rgba(24, 50, 71, 0.04);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
-.attachment-row:last-child {
-  border-bottom: none;
+.complaint-item:active {
+  transform: scale(0.99);
+  box-shadow: 0 2rpx 8rpx rgba(24, 50, 71, 0.05);
 }
 
-.attachment-row__text {
+.complaint-item__main {
   flex: 1;
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: #7890aa;
-  word-break: break-all;
+  min-width: 0;
 }
 
-.attachment-row__action {
-  font-size: 24rpx;
-  color: #d9480f;
-  white-space: nowrap;
-}
-
-.worker-empty--inline {
-  margin-top: 10rpx;
-}
-
-.switch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 18rpx 0 24rpx;
+.complaint-item__title {
   font-size: 28rpx;
-  color: #16324f;
+  font-weight: 650;
+  color: $ygb-text-body;
+  line-height: 1.45;
 }
 
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
+.complaint-item__meta {
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: #7890aa;
+  color: $ygb-text-tertiary;
+  line-height: 1.5;
 }
 
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.detail-row {
+.complaint-empty-actions {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
+  gap: 16rpx;
+  margin-top: 24rpx;
 }
 
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
+.complaint-empty-actions .worker-button {
   flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
 }
 </style>

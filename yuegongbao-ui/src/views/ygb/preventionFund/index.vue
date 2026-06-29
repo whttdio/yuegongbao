@@ -10,7 +10,7 @@
         </p>
       </div>
       <div class="ygb-table-tip">
-        当资金池余额低于计提金额 10% 时仍会进入预警口径。页面继续复用统一维护接口，不另造第二套资金业务表。
+        当资金池余额低于计提金额 10% 时仍会进入预警口径。请优先核对低余额、缺凭证和未结算记录。
       </div>
     </section>
 
@@ -137,7 +137,7 @@
           <el-input v-model="form.usagePurpose" type="textarea" :rows="3" placeholder="请输入资金用途" />
         </el-form-item>
         <el-form-item label="凭证地址" prop="evidenceUrl">
-          <el-input v-model="form.evidenceUrl" placeholder="例如：stub://aqins/fund/evidence" />
+          <el-input v-model="form.evidenceUrl" placeholder="例如：https://oss.example.com/aqins/fund/evidence.pdf" />
         </el-form-item>
         <el-form-item label="结算时间" prop="lastSettleTime">
           <el-date-picker v-model="form.lastSettleTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
@@ -199,6 +199,7 @@ import {
   formatRegionName,
   fundStatusOptions,
   isLowBalance,
+  isManualSourceMode,
   regionOptions as allRegionOptions,
   sourceModeLabel,
   usePreventionFundPage,
@@ -300,7 +301,7 @@ const summaryCards = computed(() => ([
 const focusItems = computed(() => ([
   { label: '当前月份', value: queryParams.value.statMonth || '全部月份' },
   { label: '当前区域', value: queryParams.value.regionCode ? formatRegionName(queryParams.value.regionCode, '全部区域') : '全部区域' },
-  { label: '非 Stub 来源', value: `${valueOrDefault(summaryData.value.nonStubCount, 0)} 条` },
+  { label: '协同来源', value: `${valueOrDefault(summaryData.value.nonStubCount, 0)} 条` },
   { label: '缺少凭证地址', value: `${valueOrDefault(summaryData.value.missingEvidenceCount, 0)} 条` }
 ]))
 
@@ -324,42 +325,42 @@ const portalExplanations = computed(() => {
     },
     {
       key: 'inUse',
-      dimensionName: 'In-use funds',
+      dimensionName: '使用中资金',
       currentValue: valueOrDefault(summaryData.value.inUseCount, 0),
       targetValue: 'Keep traceable',
-      summary: 'In-use funds should keep usage purpose, settlement time, and evidence aligned before archive close.',
+      summary: '使用中资金在归档前应同步补齐用途说明、结算时间和凭证材料。',
       evidenceModule: 'preventionFund',
       recommendModule: 'preventionFund',
       defaultQuery: buildPreventionFundExplanationQuery({ fundStatus: '2', focusKey: 'inUse' }),
       sourceLabel: '530.1 预防资金办理解释',
       sourceDescription: '在当前工作台范围内继续核查使用中的资金对象。',
-      actionText: 'Review in-use funds'
+      actionText: '核查使用中资金'
     },
     {
       key: 'missingEvidence',
-      dimensionName: 'Missing evidence',
+      dimensionName: '缺少凭证',
       currentValue: valueOrDefault(summaryData.value.missingEvidenceCount, 0),
       targetValue: '0',
-      summary: 'Funds missing evidence should be fixed before settlement and monthly archive review.',
+      summary: '缺少凭证的资金应在结算和月度归档前完成补正。',
       evidenceModule: 'preventionFund',
       recommendModule: 'preventionFund',
       defaultQuery: buildPreventionFundExplanationQuery({ focusKey: 'missingEvidence' }),
       sourceLabel: '530.1 预防资金办理解释',
       sourceDescription: '在当前工作台范围内继续核查凭证缺失资金对象。',
-      actionText: 'Review missing evidence'
+      actionText: '核查缺失凭证'
     },
     {
       key: 'nonStub',
-      dimensionName: 'Formal source records',
+      dimensionName: '协同来源记录',
       currentValue: valueOrDefault(summaryData.value.nonStubCount, 0),
-      targetValue: 'Keep increasing',
-      summary: 'Formal source records improve monthly archive traceability and reduce manual maintenance noise.',
+      targetValue: '持续提升',
+      summary: '协同来源记录有助于提升月度归档可追溯性，减少重复维护。',
       evidenceModule: 'preventionFund',
       recommendModule: 'preventionFund',
       defaultQuery: buildPreventionFundExplanationQuery({ focusKey: 'nonStub' }),
       sourceLabel: '530.1 预防资金办理解释',
       sourceDescription: '在当前工作台范围内继续核查正式来源资金记录。',
-      actionText: 'Review formal sources'
+      actionText: '核查协同来源'
     }
   ]
 })
@@ -428,11 +429,12 @@ function resetQuery() {
   })
   applyWorkbenchRouteQuery(route.query, queryParams.value, preventionFundWorkbenchFields)
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '????????' || '????????',
-    description: '????????????????????????????' || '????????????????????????????',
+    title: '事故预防资金池',
+    description: '管理事故预防资金池预算、使用、余额和预警，支撑资金监管闭环。',
     portalExplanation: portalExplanationItems.value,
     focus: [],
     selection: selectedFundOverview.value,
@@ -440,8 +442,6 @@ watchEffect(() => {
     hints: []
   })
 })
-
-}
 
 function clearWorkbenchContext() {
   Object.assign(queryParams.value, {
@@ -491,10 +491,10 @@ function fundStatusLabel(value) {
 }
 
 function preventionFundFocusLabel(value) {
-  if (value === 'lowBalance') return 'Low balance funds'
-  if (value === 'inUse') return 'In-use funds'
-  if (value === 'missingEvidence') return 'Missing evidence'
-  if (value === 'nonStub') return 'Formal source records'
+  if (value === 'lowBalance') return '低余额资金'
+  if (value === 'inUse') return '使用中资金'
+  if (value === 'missingEvidence') return '缺少凭证'
+  if (value === 'nonStub') return '协同来源记录'
   return value || '-'
 }
 
@@ -518,7 +518,7 @@ function buildYgbFundHintTags(fund) {
   if (!fund.lastSettleTime) {
     tags.push({ label: '缺少最近结算时间，建议补录回写时间留痕。', type: 'info' })
   }
-  if (sourceModeLabel(fund.sourceMode) === '人工维护') {
+  if (isManualSourceMode(fund.sourceMode)) {
     tags.push({ label: '当前为人工维护记录，建议复核金额与用途是否已同步。', type: 'info' })
   }
   if (String(fund.fundStatus) === '3' && fund.evidenceUrl) {

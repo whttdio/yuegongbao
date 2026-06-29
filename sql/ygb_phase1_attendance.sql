@@ -4,6 +4,8 @@
 -- 2. ygb_phase1_enterprise_person.sql
 -- 3. ygb_phase1_contract.sql
 -- 4. 本脚本
+set names utf8mb4;
+
 create table if not exists t_attendance_raw (
   attendance_id              bigint(20)      not null auto_increment,
   attendance_no              varchar(64)     not null,

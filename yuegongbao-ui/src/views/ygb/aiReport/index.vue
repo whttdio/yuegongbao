@@ -6,13 +6,13 @@
         <h1 class="ygb-page__title">{{ roleTitle }}</h1>
         <p class="ygb-page__desc">
           {{ roleDescription }}
-          当前继续复用统一 AI 监测报告底座，按粤工保高频角色重排焦点队列、办理建议、详情提示和跳转动作，减少在列表、详情、预览之间反复切换。
+          当前按粤工保高频角色重排焦点队列、办理建议、详情提示和跳转动作，减少在列表、详情、预览之间反复切换。
         </p>
       </div>
       <div class="ygb-page__tip">
         <div class="ygb-page__tip-item">当前视角：{{ roleBadge }}</div>
         <div class="ygb-page__tip-item">{{ roleTip }}</div>
-        <div class="ygb-page__tip-item">当前模型版本：{{ currentConfig.version || '未配置' }}，继续复用统一评分配置中心与门户解释聚合口径，不拆第二套模型接口。</div>
+        <div class="ygb-page__tip-item">当前模型版本：{{ currentConfig.version || '未配置' }}，请结合评分配置和解释口径完成报告复核。</div>
       </div>
     </section>
 
@@ -129,7 +129,7 @@
               <el-button v-if="canGenerate" type="primary" plain icon="MagicStick" @click="openGenerateDialog()">
                 生成报告
               </el-button>
-              <el-button v-if="canExport" type="warning" plain icon="Download" @click="handleExport">
+          <el-button v-if="canExport" type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:aiReport:export']">
                 导出列表
               </el-button>
             </el-form-item>
@@ -486,7 +486,7 @@
             {{ parseTime(detailDisplayReport.periodStart, '{y}-{m}-{d}') }} 至 {{ parseTime(detailDisplayReport.periodEnd, '{y}-{m}-{d}') }}
           </el-descriptions-item>
           <el-descriptions-item label="摘要" :span="2">{{ detailDisplayReport.reportSummary || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="预留 PDF 地址" :span="2">{{ detailDisplayReport.reportPdfUrl || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="报告下载地址" :span="2">{{ detailDisplayReport.reportPdfUrl || '-' }}</el-descriptions-item>
         </el-descriptions>
 
         <div class="ygb-detail-block">
@@ -840,7 +840,7 @@ const roleDescription = computed(() => {
   if (roleView.value === 'admin') {
     return '企业管理员需要统筹样本生成、风险承接和跨模块联动，因此页面保持全局概览，同时把重点动作集中到工作台顶部。'
   }
-  return '页面以统一 AI 报告数据为底座，按当前角色动态调整关注顺序、办理建议和联动入口。'
+  return '页面按当前角色动态调整关注顺序、办理建议和联动入口。'
 })
 
 const roleTip = computed(() => {
@@ -876,7 +876,7 @@ const summaryCards = computed(() => {
       summaryCard('lowScore', '低分样本', countRows(row => matchWorkbenchFocus(row, 'lowScore')), '份', '低于当前平均分的对象，适合优先排查财务与税务类异常。', 'ygb-summary-card--primary'),
       summaryCard('highRisk', '高风险对象', dashboard.highRiskCount || 0, '份', '已被识别为高风险对象，需要联动风控与后续办理动作。', 'ygb-summary-card--warning'),
       summaryCard('bottom', '尾部样本', bottomRankingList.value.length, '份', '区域或样本排名靠后对象，适合做重点复核。', 'ygb-summary-card--success'),
-      summaryCard('configVersion', '模型版本', currentConfig.value.version || 'DEFAULT-STUB', '', '继续使用统一评分配置中心的当前口径。', 'ygb-summary-card--neutral')
+      summaryCard('configVersion', '模型版本', currentConfig.value.version || 'DEFAULT', '', '继续使用统一评分配置中心的当前口径。', 'ygb-summary-card--neutral')
     ]
   }
   if (roleView.value === 'hrss') {
@@ -884,22 +884,22 @@ const summaryCards = computed(() => {
       summaryCard('sampleCount', '报告样本', dashboard.totalCount || total.value, '份', '当前筛选范围内已归集的 AI 监测报告总量。', 'ygb-summary-card--primary'),
       summaryCard('highRisk', '高风险对象', dashboard.highRiskCount || 0, '份', '优先纳入持续复核与预警闭环的重点对象。', 'ygb-summary-card--warning'),
       summaryCard('bottom', '尾部区域', bottomRankingList.value.length, '份', '得分靠后区域或对象，适合继续穿透核查。', 'ygb-summary-card--success'),
-      summaryCard('configVersion', '模型版本', currentConfig.value.version || 'DEFAULT-STUB', '', '当前业务解释口径与统一模型配置保持一致。', 'ygb-summary-card--neutral')
+      summaryCard('configVersion', '模型版本', currentConfig.value.version || 'DEFAULT', '', '当前业务解释口径与统一模型配置保持一致。', 'ygb-summary-card--neutral')
     ]
   }
   if (roleView.value === 'operator') {
     return [
       summaryCard('sampleCount', '报告样本', dashboard.totalCount || total.value, '份', '当前经办口径下可直接处理的报告样本总量。', 'ygb-summary-card--primary'),
-      summaryCard('preview', '待预览样本', countRows(row => matchWorkbenchFocus(row, 'preview')), '份', '尚未形成 PDF 占位预览的报告，建议优先核对。', 'ygb-summary-card--warning'),
+      summaryCard('preview', '待预览样本', countRows(row => matchWorkbenchFocus(row, 'preview')), '份', '尚未形成 PDF 预览的报告，建议优先核对。', 'ygb-summary-card--warning'),
       summaryCard('highRisk', '高风险对象', dashboard.highRiskCount || 0, '份', '需要尽快复核摘要、维度得分与整改建议。', 'ygb-summary-card--success'),
-      summaryCard('configVersion', '模型版本', currentConfig.value.version || 'DEFAULT-STUB', '', '模型版本变化会直接影响生成与重生成口径。', 'ygb-summary-card--neutral')
+      summaryCard('configVersion', '模型版本', currentConfig.value.version || 'DEFAULT', '', '模型版本变化会直接影响生成与重生成口径。', 'ygb-summary-card--neutral')
     ]
   }
   return [
     summaryCard('sampleCount', '报告样本', dashboard.totalCount || total.value, '份', '当前筛选范围的监测样本总量。', 'ygb-summary-card--primary'),
     summaryCard('avgScore', '平均得分', averageScore.value, '分', '用于识别低于均值的重点复核对象。', 'ygb-summary-card--success'),
     summaryCard('highRisk', '高风险对象', dashboard.highRiskCount || 0, '份', '建议优先进入详情、预览和后续办理链路。', 'ygb-summary-card--warning'),
-    summaryCard('configVersion', '模型版本', currentConfig.value.version || 'DEFAULT-STUB', '', '评分权重与目标值继续由统一模型配置中心提供。', 'ygb-summary-card--neutral')
+    summaryCard('configVersion', '模型版本', currentConfig.value.version || 'DEFAULT', '', '评分权重与目标值继续由统一模型配置中心提供。', 'ygb-summary-card--neutral')
   ]
 })
 
@@ -916,13 +916,13 @@ const focusQueues = computed(() => {
     return [
       focusQueue('highRisk', '高风险对象', dashboard.highRiskCount || 0, '份', '先承接高风险样本，直接衔接异常复核与预警闭环。', '优先处置'),
       focusQueue('bottom', '尾部区域', bottomRankingList.value.length, '份', '聚焦排名靠后的区域或对象，适合继续穿透复核。', '复核尾部'),
-      focusQueue('preview', '待预览样本', countRows(row => matchWorkbenchFocus(row, 'preview')), '份', '尚未形成 PDF 占位预览的样本，适合先核对内容完整性。', '先看预览'),
+      focusQueue('preview', '待预览样本', countRows(row => matchWorkbenchFocus(row, 'preview')), '份', '尚未形成 PDF 预览的样本，适合先核对内容完整性。', '先看预览'),
       focusQueue('all', '全部样本', dashboard.totalCount || total.value, '份', '查看当前经办口径下的全部样本。', '查看全量')
     ]
   }
   if (roleView.value === 'operator') {
     return [
-      focusQueue('preview', '待预览样本', countRows(row => matchWorkbenchFocus(row, 'preview')), '份', '先核对尚未形成 PDF 占位预览的报告，减少交付遗漏。', '优先预览'),
+      focusQueue('preview', '待预览样本', countRows(row => matchWorkbenchFocus(row, 'preview')), '份', '先核对尚未形成 PDF 预览的报告，减少交付遗漏。', '优先预览'),
       focusQueue('highRisk', '高风险对象', dashboard.highRiskCount || 0, '份', '回看高风险对象的摘要、维度得分和整改建议。', '复核风险'),
       focusQueue('all', '全部样本', dashboard.totalCount || total.value, '份', '浏览全部可处理样本，按需要进入详情或重生成。', '查看全量')
     ]
@@ -930,7 +930,7 @@ const focusQueues = computed(() => {
   return [
     focusQueue('highRisk', '高风险对象', dashboard.highRiskCount || 0, '份', '优先查看高风险对象，决定是否需要继续办理或联动预警。', '先看风险'),
     focusQueue('lowScore', '低分样本', countRows(row => matchWorkbenchFocus(row, 'lowScore')), '份', '回看低于平均分的对象，找出薄弱维度和整改方向。', '回看低分'),
-    focusQueue('preview', '待预览样本', countRows(row => matchWorkbenchFocus(row, 'preview')), '份', '查看尚未形成 PDF 占位预览的样本，补齐预览与交付核对。', '核对预览'),
+    focusQueue('preview', '待预览样本', countRows(row => matchWorkbenchFocus(row, 'preview')), '份', '查看尚未形成 PDF 预览的样本，补齐预览与交付核对。', '核对预览'),
     focusQueue('all', '全部样本', dashboard.totalCount || total.value, '份', '浏览全部 AI 监测样本。', '查看全量')
   ]
 })
@@ -950,7 +950,7 @@ const selectedReportOverview = computed(() => {
       { label: '当前焦点', value: activeFocus.value?.title || '未选择' },
       { label: '焦点数量', value: activeFocus.value ? `${activeFocus.value.count}${activeFocus.value.unit}` : '-' },
       { label: '筛选口径', value: `${regionNameMap[queryParams.regionCode] || queryParams.regionCode || '-'} / ${reportTypeLabel(queryParams.reportType)}` },
-      { label: '模型版本', value: currentConfig.value.version || 'DEFAULT-STUB' }
+      { label: '模型版本', value: currentConfig.value.version || 'DEFAULT' }
     ]
   }
   return [
@@ -958,7 +958,7 @@ const selectedReportOverview = computed(() => {
     { label: '统计区间', value: `${formatDate(current.periodStart) || '-'} 至 ${formatDate(current.periodEnd) || '-'}` },
     { label: '综合得分', value: `${current.totalScore ?? '-'} / ${riskLevelLabel(current.riskLevel)}` },
     { label: '当前焦点', value: activeFocus.value?.title || '全部样本' },
-    { label: '模型版本', value: current.configVersion || currentConfig.value.version || 'DEFAULT-STUB' }
+    { label: '模型版本', value: current.configVersion || currentConfig.value.version || 'DEFAULT' }
   ]
 })
 
@@ -1005,7 +1005,7 @@ const currentConfigSummary = computed(() => {
   const weights = parseJson(currentConfig.value.dimensionWeights)
   const targets = parseJson(currentConfig.value.targetValues)
   const weightText = ['A', 'B', 'C', 'D', 'E'].map(code => `${code}:${weights[code] || 0}`).join(' / ')
-  return `当前模型 ${currentConfig.value.version || 'DEFAULT-STUB'}，权重 ${weightText}，目标值 合同${targets.contractRate || '-'}% / 考勤${targets.attendanceRate || '-'}% / 工资${targets.paySuccessRate || '-'}% / 在线${targets.onlineRate || '-'}% / 工伤${targets.injuryRate || '-'}‰ / 闭环${targets.warningCloseRate || '-'}%。`
+  return `当前模型 ${currentConfig.value.version || 'DEFAULT'}，权重 ${weightText}，目标值 合同${targets.contractRate || '-'}% / 考勤${targets.attendanceRate || '-'}% / 工资${targets.paySuccessRate || '-'}% / 在线${targets.onlineRate || '-'}% / 工伤${targets.injuryRate || '-'}‰ / 闭环${targets.warningCloseRate || '-'}%。`
 })
 
 const selectedReportTitle = computed(() => {
@@ -1022,7 +1022,7 @@ const overviewDigestItems = computed(() => {
   return [
     { label: '平均得分', value: averageScore.value, hint: '当前筛选范围综合均值' },
     { label: '排名跨度', value: scoreGap, hint: '优良样本与高风险样本分差' },
-    { label: '最新模型', value: currentConfig.value.version || 'DEFAULT-STUB', hint: '评分权重口径同步生效' }
+    { label: '最新模型', value: currentConfig.value.version || 'DEFAULT', hint: '评分权重口径同步生效' }
   ]
 })
 
@@ -1115,7 +1115,7 @@ const pageHintTags = computed(() => {
   }
   const previewCount = countRows(row => matchWorkbenchFocus(row, 'preview'))
   if (previewCount > 0) {
-    tags.push({ label: `当前仍有 ${previewCount} 份报告未形成 PDF 占位预览，建议优先核对。`, type: 'info' })
+    tags.push({ label: `当前仍有 ${previewCount} 份报告未形成 PDF 预览，建议优先核对。`, type: 'info' })
   }
   if (roleView.value === 'finance' && countRows(row => matchWorkbenchFocus(row, 'lowScore')) > 0) {
     tags.push({ label: '低分样本仍需继续排查工资、社保和税务维度的异常来源。', type: 'primary' })
@@ -1190,26 +1190,26 @@ const primaryAction = computed(() => {
 const secondaryAction = computed(() => {
   if (roleView.value === 'finance') {
     if (activeFocus.value?.key === 'highRisk') {
-      return { label: '查看信用评分', path: '/ygb/creditScore' }
+      return { label: '查看信用评分', path: '/credit-evaluation/overview' }
     }
-    return { label: '查看税务对比', path: '/ygb/taxCompare' }
+    return { label: '查看税务对比', path: '/tax-supervision/personalTax' }
   }
   if (roleView.value === 'hrss') {
     if (activeFocus.value?.key === 'highRisk') {
-      return { label: '进入预警中心', path: '/ygb/warning' }
+      return { label: '进入预警中心', path: '/warning-center/workOrder' }
     }
-    return { label: '查看预警治理月报', path: '/ygb-report/statReport/warning' }
+    return { label: '查看预警治理月报', path: '/statistical-report/custom' }
   }
   if (roleView.value === 'operator') {
-    return { label: '查看模型配置', path: '/ygb/aiReportConfig' }
+    return { label: '查看模型配置', path: '/ai-report/model' }
   }
   if (activeFocus.value?.key === 'preview') {
-    return { label: '查看模型配置', path: '/ygb/aiReportConfig' }
+    return { label: '查看模型配置', path: '/ai-report/model' }
   }
   if (activeFocus.value?.key === 'highRisk') {
-    return { label: '进入预警中心', path: '/ygb/warning' }
+    return { label: '进入预警中心', path: '/warning-center/workOrder' }
   }
-  return { label: '查看信用评分', path: '/ygb/creditScore' }
+  return { label: '查看信用评分', path: '/credit-evaluation/overview' }
 })
 
 
@@ -1279,16 +1279,16 @@ function openModule(path) {
 function goAiTaskPage() {
   if (selectedReport.value?.reportId) {
     router.push({
-      path: '/ygb/aiReportTask',
+      path: '/ai-report/task',
       query: { reportId: String(selectedReport.value.reportId) }
     })
     return
   }
-  router.push('/ygb/aiReportTask')
+  router.push('/ai-report/task')
 }
 
 function goAiSubscriptionPage() {
-  router.push('/ygb/aiReportSubscription')
+  router.push('/ai-report/subscription')
 }
 
 async function handlePrimaryAction() {
@@ -1575,7 +1575,7 @@ function buildPreviewHtml() {
       <div class="header">
         <div>
           <h1>${escapeHtml((current?.regionName || '广东省') + ' AI 监测报告')}</h1>
-          <p>报告类型：${escapeHtml(reportTypeLabel(current?.reportType))} · 统计区间：${escapeHtml(formatDate(current?.periodStart))} 至 ${escapeHtml(formatDate(current?.periodEnd))} · 模型版本：${escapeHtml(current?.configVersion || currentConfig.value.version || 'DEFAULT-STUB')}</p>
+          <p>报告类型：${escapeHtml(reportTypeLabel(current?.reportType))} · 统计区间：${escapeHtml(formatDate(current?.periodStart))} 至 ${escapeHtml(formatDate(current?.periodEnd))} · 模型版本：${escapeHtml(current?.configVersion || currentConfig.value.version || 'DEFAULT')}</p>
         </div>
         <div class="badge">${escapeHtml(riskLevelLabel(current?.riskLevel))}</div>
       </div>

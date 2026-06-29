@@ -92,7 +92,7 @@
             <div class="ygb-aggregation-panel__head">
               <div>
                 <div class="ygb-aggregation-panel__title">{{ config.focusTitle || '聚合说明' }}</div>
-                <div class="ygb-aggregation-panel__desc">{{ config.focusDescription || '当前页面直接复用新业态主台账，不单独建设第二套聚合表。' }}</div>
+                <div class="ygb-aggregation-panel__desc">{{ config.focusDescription || '当前页面按业务维度汇总重点对象、风险数量和办理进度。' }}</div>
               </div>
             </div>
           </template>
@@ -151,6 +151,11 @@
             <span v-else>{{ row[column.prop] ?? '-' }}</span>
           </template>
         </el-table-column>
+        <el-table-column v-if="config.drilldown" label="操作" fixed="right" width="120">
+          <template #default="{ row }">
+            <el-button link type="primary" icon="Search" @click="handleDrilldown(row)">查看明细</el-button>
+          </template>
+        </el-table-column>
       </el-table>
       <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
     </el-card>
@@ -159,7 +164,7 @@
 
 <script setup>
 import { computed, getCurrentInstance, reactive, ref, toRefs } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
 import { authorizedDefaultRegionCode, useAuthorizedRegionOptions } from '@/utils/regionScope'
 import { buildWorkbenchContext } from '@/utils/workbenchLink'
@@ -173,6 +178,7 @@ const props = defineProps({
 })
 
 const route = useRoute()
+const router = useRouter()
 const { proxy } = getCurrentInstance()
 const loading = ref(false)
 const showSearch = ref(true)
@@ -182,7 +188,7 @@ const summaryData = ref({})
 const enterpriseOptions = ref([])
 const regionOptions = useAuthorizedRegionOptions(statReportRegionOptions)
 
-const defaultTip = '当前聚合页面继续复用主台账数据，只做平台维度的展示、汇总与导出。'
+const defaultTip = '当前聚合页面按平台维度展示人员底数、风险分布、办理进度和导出结果。'
 
 const defaultQueryParams = () => ({
   pageNum: 1,
@@ -289,6 +295,20 @@ function handleExport() {
     pageNum: undefined,
     pageSize: undefined
   }), `${props.config.filePrefix || 'grouped_aggregation'}_${Date.now()}.xlsx`)
+}
+
+function handleDrilldown(row) {
+  const drilldown = props.config.drilldown
+  if (!drilldown?.path) {
+    return
+  }
+  const query = {
+    ...normalizeParams(queryParams.value),
+    ...(typeof drilldown.query === 'function' ? drilldown.query(row, queryParams.value) : {})
+  }
+  delete query.pageNum
+  delete query.pageSize
+  router.push({ path: drilldown.path, query })
 }
 
 function formatMoney(value) {

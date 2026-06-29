@@ -1,35 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  addOperationModule,
-  delOperationModule,
-  getOperationModule,
-  getOperationModuleSummary,
-  listOperationModule,
-  updateOperationModule
-} from '@/api/ygb/operation'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const submodule = 'message'
-const config = {
-  title: '消息推送',
-  description: '基于统一消息对象维护运营消息、内部推送记录和闭环状态。',
-  permPrefix: 'ygb:operationMessage',
-  filePrefix: 'operation_message',
-  defaultCategoryCode: 'operation_message',
-  defaultWorkflowStatus: 'draft',
-  defaultSourceLabel: '运营消息中心',
-  recordNameLabel: '消息标题',
-  recordNamePlaceholder: '请输入消息标题',
-  listApi: query => listOperationModule(submodule, query),
-  summaryApi: query => getOperationModuleSummary(submodule, query),
-  detailApi: id => getOperationModule(submodule, id),
-  addApi: data => addOperationModule(submodule, data),
-  updateApi: data => updateOperationModule(submodule, data),
-  deleteApi: ids => delOperationModule(submodule, ids),
-  exportUrl: `ygb/operation/${submodule}/export`
-}
+const config = createBusinessRecordPageConfig({
+  module: 'operationMessage',
+  title: '消息推送管理',
+  description: '围绕消息模板、推送对象和发送结果管理开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '消息主题',
+  businessNamePlaceholder: '请输入消息主题',
+  defaultSourceLabel: '消息推送管理',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

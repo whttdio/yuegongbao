@@ -1,12 +1,33 @@
 <template>
   <view class="worker-page">
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">重要通知</view>
+      <view class="worker-subtitle">查看平台公告与个人消息</view>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ rows.length }}</view>
+          <view class="hero-stat__label">全部通知</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ unreadCount }}</view>
+          <view class="hero-stat__label">未读</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ readCount }}</view>
+          <view class="hero-stat__label">已读</view>
+        </view>
+      </view>
+    </view>
+
     <view class="worker-card">
-      <view class="worker-title">重要通知</view>
+      <view class="section-head">
+        <view class="worker-title">通知列表</view>
+      </view>
       <view v-if="rows.length">
         <view v-for="item in rows" :key="item.noticeId" class="list-row" @click="openDetail(item)">
           <view class="list-row__main">
             <view class="list-row__meta">
-              <view class="worker-tag worker-tag--light">{{ resolveNoticeType(item) }}</view>
+              <view class="worker-tag worker-tag--info">{{ resolveNoticeType(item) }}</view>
               <view v-if="item.sourceLabel" class="list-row__source">{{ item.sourceLabel }}</view>
             </view>
             <view class="list-row__title">{{ item.title }}</view>
@@ -39,11 +60,11 @@ const rows = ref([])
 const noticeLastLoadedAt = ref('')
 const noticeLastActionAt = ref('')
 const noticeLastMessage = ref('')
+const readCount = computed(() => rows.value.filter((item) => item.readFlag || item.isRead).length)
+const unreadCount = computed(() => Math.max(rows.value.length - readCount.value, 0))
 const noticeChainCoverageText = computed(() => EXPECTED_NOTICE_CHAIN_PAGES.join(' / '))
 const noticeReadSummaryText = computed(() => {
-  const readCount = rows.value.filter((item) => item.readFlag || item.isRead).length
-  const unreadCount = Math.max(rows.value.length - readCount, 0)
-  return `已读 ${readCount} 条 / 未读 ${unreadCount} 条`
+  return `已读 ${readCount.value} 条 / 未读 ${unreadCount.value} 条`
 })
 const noticeSourceSummaryText = computed(() => {
   if (!rows.value.length) {
@@ -64,14 +85,13 @@ const latestNoticeSummaryText = computed(() => {
   return `${latest.title || '-'} / ${resolveNoticeType(latest)} / ${latest.readFlag || latest.isRead ? '已读' : '未读'}`
 })
 const noticeConsistencyText = computed(() => {
-  const readCount = rows.value.filter((item) => item.readFlag || item.isRead).length
   if (!rows.value.length) {
     return '当前无通知，需结合真实接口验收来源分布和已读回写'
   }
-  if (!readCount) {
+  if (!readCount.value) {
     return `当前 ${rows.value.length} 条均未读，需下钻详情验证已读回写`
   }
-  return `已读 ${readCount} 条 / 剩余未读 ${Math.max(rows.value.length - readCount, 0)} 条`
+  return `已读 ${readCount.value} 条 / 剩余未读 ${unreadCount.value} 条`
 })
 const noticeLinkageText = computed(() => {
   if (String(noticeLastMessage.value || '').includes('通知详情')) {
@@ -157,27 +177,6 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-  gap: 20rpx;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
 .list-row__main {
   flex: 1;
   min-width: 0;
@@ -190,28 +189,6 @@ onShow(loadData)
   margin-bottom: 10rpx;
 }
 
-.list-row__title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.list-row__source {
-  font-size: 22rpx;
-  color: #1f6fd6;
-}
-
-.worker-tag--light {
-  color: #1f6fd6;
-  background: #eaf3ff;
-}
-
 .notice-empty-actions {
   display: flex;
   gap: 20rpx;
@@ -220,62 +197,5 @@ onShow(loadData)
 
 .notice-empty-actions button {
   flex: 1;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  color: #16324f;
-  line-height: 1.6;
-  word-break: break-all;
-}
-
-.result-block {
-  margin-top: 16rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #16324f;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.clear-action {
-  font-size: 24rpx;
-  color: #1f6fd6;
 }
 </style>

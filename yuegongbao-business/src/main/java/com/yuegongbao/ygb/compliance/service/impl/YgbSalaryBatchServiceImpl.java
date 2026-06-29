@@ -31,6 +31,7 @@ import com.yuegongbao.ygb.foundation.domain.YgbEnterprise;
 import com.yuegongbao.ygb.foundation.mapper.YgbEnterpriseMapper;
 import com.yuegongbao.ygb.integration.BankClient;
 import com.yuegongbao.ygb.worker.service.WorkerMessageService;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 
 @Service
 public class YgbSalaryBatchServiceImpl implements IYgbSalaryBatchService
@@ -61,6 +62,9 @@ public class YgbSalaryBatchServiceImpl implements IYgbSalaryBatchService
 
     @Autowired
     private IYgbSalaryArrearsService salaryArrearsService;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbSalaryBatch> selectSalaryBatchList(YgbSalaryBatch salaryBatch)
@@ -144,7 +148,12 @@ public class YgbSalaryBatchServiceImpl implements IYgbSalaryBatchService
     @Override
     public YgbSalaryBatch selectSalaryBatchById(Long batchId)
     {
-        return salaryBatchMapper.selectSalaryBatchById(batchId);
+        YgbSalaryBatch batch = salaryBatchMapper.selectSalaryBatchById(batchId);
+        if (batch != null)
+        {
+            dataScopeGuard.assertEntityAllowed(batch);
+        }
+        return batch;
     }
 
     @Override
@@ -193,6 +202,7 @@ public class YgbSalaryBatchServiceImpl implements IYgbSalaryBatchService
     @Override
     public int updateSalaryBatch(YgbSalaryBatch salaryBatch)
     {
+        requireBatch(salaryBatch.getBatchId());
         fillBatchSnapshot(salaryBatch);
         return salaryBatchMapper.updateSalaryBatch(salaryBatch);
     }
@@ -203,6 +213,7 @@ public class YgbSalaryBatchServiceImpl implements IYgbSalaryBatchService
     {
         for (Long batchId : batchIds)
         {
+            requireBatch(batchId);
             salaryDetailMapper.deleteByBatchId(batchId);
         }
         return salaryBatchMapper.deleteSalaryBatchByIds(batchIds, updateBy);
@@ -321,6 +332,7 @@ public class YgbSalaryBatchServiceImpl implements IYgbSalaryBatchService
         {
             throw new ServiceException("未找到对应的工资批次。");
         }
+        dataScopeGuard.assertEntityAllowed(batch);
 
         List<YgbSalaryDetail> currentDetails = loadDetailList(batch.getBatchId());
         List<YgbBankCallbackResultItem> callbackResults = resolveCallbackResults(request, currentDetails);
@@ -413,11 +425,16 @@ public class YgbSalaryBatchServiceImpl implements IYgbSalaryBatchService
 
     private YgbSalaryBatch requireBatch(Long batchId)
     {
+        if (batchId == null)
+        {
+            throw new ServiceException("工资批次ID不能为空。");
+        }
         YgbSalaryBatch batch = salaryBatchMapper.selectSalaryBatchById(batchId);
         if (StringUtils.isNull(batch))
         {
             throw new ServiceException("工资批次不存在。");
         }
+        dataScopeGuard.assertEntityAllowed(batch);
         return batch;
     }
 

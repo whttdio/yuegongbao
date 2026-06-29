@@ -24,6 +24,7 @@ import com.yuegongbao.ygb.compliance.service.IYgbAttendanceRawService;
 import com.yuegongbao.ygb.safety.domain.YgbDevice;
 import com.yuegongbao.ygb.safety.domain.YgbDeviceSummary;
 import com.yuegongbao.ygb.safety.service.IYgbDeviceService;
+import com.yuegongbao.ygb.util.YgbDataScopeGuard;
 
 @Service
 public class YgbAttendanceRawServiceImpl implements IYgbAttendanceRawService
@@ -38,6 +39,9 @@ public class YgbAttendanceRawServiceImpl implements IYgbAttendanceRawService
 
     @Autowired
     private IYgbDeviceService deviceService;
+
+    @Autowired
+    private YgbDataScopeGuard dataScopeGuard;
 
     @Override
     public List<YgbAttendanceRaw> selectAttendanceRawList(YgbAttendanceRaw attendanceRaw)
@@ -124,7 +128,12 @@ public class YgbAttendanceRawServiceImpl implements IYgbAttendanceRawService
     @Override
     public YgbAttendanceRaw selectAttendanceRawById(Long attendanceId)
     {
-        return attendanceRawMapper.selectAttendanceRawById(attendanceId);
+        YgbAttendanceRaw attendanceRaw = attendanceRawMapper.selectAttendanceRawById(attendanceId);
+        if (attendanceRaw != null)
+        {
+            dataScopeGuard.assertEntityAllowed(attendanceRaw);
+        }
+        return attendanceRaw;
     }
 
     @Override
@@ -149,6 +158,7 @@ public class YgbAttendanceRawServiceImpl implements IYgbAttendanceRawService
     @Override
     public int updateAttendanceRaw(YgbAttendanceRaw attendanceRaw)
     {
+        requireAttendanceRawAllowed(attendanceRaw.getAttendanceId());
         fillSnapshots(attendanceRaw);
         return attendanceRawMapper.updateAttendanceRaw(attendanceRaw);
     }
@@ -156,7 +166,26 @@ public class YgbAttendanceRawServiceImpl implements IYgbAttendanceRawService
     @Override
     public int deleteAttendanceRawByIds(Long[] attendanceIds, String updateBy)
     {
+        for (Long attendanceId : attendanceIds)
+        {
+            requireAttendanceRawAllowed(attendanceId);
+        }
         return attendanceRawMapper.deleteAttendanceRawByIds(attendanceIds, updateBy);
+    }
+
+    private YgbAttendanceRaw requireAttendanceRawAllowed(Long attendanceId)
+    {
+        if (attendanceId == null)
+        {
+            throw new ServiceException("考勤记录ID不能为空。");
+        }
+        YgbAttendanceRaw attendanceRaw = attendanceRawMapper.selectAttendanceRawById(attendanceId);
+        if (attendanceRaw == null)
+        {
+            throw new ServiceException("考勤记录不存在。");
+        }
+        dataScopeGuard.assertEntityAllowed(attendanceRaw);
+        return attendanceRaw;
     }
 
     private void fillSnapshots(YgbAttendanceRaw attendanceRaw)

@@ -33,7 +33,7 @@ from dual where not exists (select 1 from sys_menu where menu_id = 4303);
 insert into sys_menu select 4304, '简历管理', 4300, 4, 'resume', 'ygb/operation/resume/index', '', 'YgbOperationResume', 1, 0, 'C', '0', '0', 'ygb:operationResume:list', 'user', 'admin', sysdate(), 'admin', sysdate(), '简历管理台账', 'ygb'
 from dual where not exists (select 1 from sys_menu where menu_id = 4304);
 
-insert into sys_menu select 4305, '广告轮播', 4300, 5, 'banner', 'ygb/portalContent/index', 'portalCode=ygb&sectionCode=banner', 'YgbOperationBanner', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'picture', 'admin', sysdate(), 'admin', sysdate(), '广告轮播内容管理', 'ygb'
+insert into sys_menu select 4305, '广告轮播', 4300, 5, 'banner', 'ygb/portalContent/index', '{"portalCode":"ygb","sectionCode":"banner"}', 'YgbOperationBanner', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'picture', 'admin', sysdate(), 'admin', sysdate(), '广告轮播内容管理', 'ygb'
 from dual where not exists (select 1 from sys_menu where menu_id = 4305);
 
 insert into sys_menu select 4306, '消息推送', 4300, 6, 'message', 'ygb/operation/message/index', '', 'YgbOperationMessage', 1, 0, 'C', '0', '0', 'ygb:operationMessage:list', 'message', 'admin', sysdate(), 'admin', sysdate(), '运营消息台账', 'ygb'
@@ -138,15 +138,15 @@ from dual where not exists (select 1 from sys_menu where menu_id = 4444);
 insert into sys_menu select 4445, '导出', 4405, 5, '', '', '', '', 1, 0, 'F', '0', '0', 'ygb:platformBackup:export', '#', 'admin', sysdate(), 'admin', sysdate(), '', 'ygb'
 from dual where not exists (select 1 from sys_menu where menu_id = 4445);
 
-insert into sys_menu select 4110, '暖新地图', 4100, 10, 'warmMap', 'ygb/portalContent/index', 'portalCode=ygb&sectionCode=warm_map', 'YgbWarmMapContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'map-location', 'admin', sysdate(), 'admin', sysdate(), '暖新地图内容管理', 'ygb'
+insert into sys_menu select 4110, '暖新地图', 4100, 10, 'warmMap', 'ygb/portalContent/index', '{"portalCode":"ygb","sectionCode":"warm_map"}', 'YgbWarmMapContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'map-location', 'admin', sysdate(), 'admin', sysdate(), '暖新地图内容管理', 'ygb'
 from dual where not exists (select 1 from sys_menu where menu_id = 4110);
-insert into sys_menu select 4111, '培训课程', 4100, 11, 'trainingCourse', 'ygb/portalContent/index', 'portalCode=ygb&sectionCode=training_course', 'YgbTrainingCourseContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'reading', 'admin', sysdate(), 'admin', sysdate(), '培训课程内容管理', 'ygb'
+insert into sys_menu select 4111, '培训课程', 4100, 11, 'trainingCourse', 'ygb/portalContent/index', '{"portalCode":"ygb","sectionCode":"training_course"}', 'YgbTrainingCourseContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'reading', 'admin', sysdate(), 'admin', sysdate(), '培训课程内容管理', 'ygb'
 from dual where not exists (select 1 from sys_menu where menu_id = 4111);
-insert into sys_menu select 4112, '法规库', 4100, 12, 'lawLibrary', 'ygb/portalContent/index', 'portalCode=ygb&sectionCode=law_library', 'YgbLawLibraryContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'document', 'admin', sysdate(), 'admin', sysdate(), '法规库内容管理', 'ygb'
+insert into sys_menu select 4112, '法规库', 4100, 12, 'lawLibrary', 'ygb/portalContent/index', '{"portalCode":"ygb","sectionCode":"law_library"}', 'YgbLawLibraryContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'document', 'admin', sysdate(), 'admin', sysdate(), '法规库内容管理', 'ygb'
 from dual where not exists (select 1 from sys_menu where menu_id = 4112);
-insert into sys_menu select 4113, '互助区', 4100, 13, 'mutualHelp', 'ygb/portalContent/index', 'portalCode=ygb&sectionCode=mutual_help', 'YgbMutualHelpContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'chat-line-square', 'admin', sysdate(), 'admin', sysdate(), '互助区内容管理', 'ygb'
+insert into sys_menu select 4113, '互助区', 4100, 13, 'mutualHelp', 'ygb/portalContent/index', '{"portalCode":"ygb","sectionCode":"mutual_help"}', 'YgbMutualHelpContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'chat-line-square', 'admin', sysdate(), 'admin', sysdate(), '互助区内容管理', 'ygb'
 from dual where not exists (select 1 from sys_menu where menu_id = 4113);
-insert into sys_menu select 4114, '招聘市场', 4100, 14, 'recruitMarket', 'ygb/portalContent/index', 'portalCode=ygb&sectionCode=recruit_market', 'YgbRecruitMarketContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'briefcase', 'admin', sysdate(), 'admin', sysdate(), '招聘市场内容管理', 'ygb'
+insert into sys_menu select 4114, '招聘市场', 4100, 14, 'recruitMarket', 'ygb/portalContent/index', '{"portalCode":"ygb","sectionCode":"recruit_market"}', 'YgbRecruitMarketContent', 1, 0, 'C', '0', '0', 'ygb:portalContent:list', 'briefcase', 'admin', sysdate(), 'admin', sysdate(), '招聘市场内容管理', 'ygb'
 from dual where not exists (select 1 from sys_menu where menu_id = 4114);
 
 insert into sys_menu select 4460, '赔付率监控', 3961, 4, 'claim', 'ygb/aqInsuranceClaim/index', '', 'YgbAqInsuranceClaim', 1, 0, 'C', '0', '0', 'ygb:aqInsuranceClaim:list', 'data-analysis', 'admin', sysdate(), 'admin', sysdate(), '安责险赔付率监控', 'ygb'

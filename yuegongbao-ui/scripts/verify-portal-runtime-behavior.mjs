@@ -146,16 +146,18 @@ function verifyHomeQuickActionBehavior() {
 }
 
 function verifyCockpitActionBehavior() {
-  verifySingleCockpitActionBehavior(
-    'src/views/ygb/cockpit/index.vue',
-    '/ygb/warning',
-    '驾驶舱队列 / 预警中心'
-  )
-  verifySingleCockpitActionBehavior(
-    'src/views/azb/cockpit/index.vue',
-    '/azb/creditScore',
-    '驾驶舱焦点 / 风险对象'
-  )
+  const ygbWrapper = readSource('src/views/ygb/cockpit/index.vue')
+  assertIncludes(ygbWrapper, ['<cyber-cockpit-screen mode="ygb" />'], 'src/views/ygb/cockpit/index.vue')
+  const azbWrapper = readSource('src/views/azb/cockpit/index.vue')
+  assertIncludes(azbWrapper, ['<cyber-cockpit-screen mode="azb" />'], 'src/views/azb/cockpit/index.vue')
+
+  const screen = readSource('src/views/cockpit/CyberCockpitScreen.vue')
+  assertIncludes(screen, [
+    'openModule',
+    'useCockpitPage',
+    'warningPath: "/warning-center/workOrder"',
+    'warningPath: "/azb/warning"'
+  ], 'src/views/cockpit/CyberCockpitScreen.vue')
 }
 
 function verifySingleCockpitActionBehavior(relativeFile, fallbackPath, expectedSourceLabel) {

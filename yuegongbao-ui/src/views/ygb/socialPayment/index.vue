@@ -5,12 +5,12 @@
         <p class="ygb-page__eyebrow">监管联动线</p>
         <h1 class="ygb-page__title">社保缴费整改台账</h1>
         <p class="ygb-page__desc">
-          统一查看社保 Stub 同步回写的缴费结果，面向企业管理员、财务和监管经办优先识别未缴费、欠费和来源回写异常对象，
+          统一查看社保缴费回写结果，面向企业管理员、财务和监管经办优先识别未缴费、欠费和来源回写异常对象，
           作为后续社保基数比对、漏保识别和月度整改归档的基础台账。
         </p>
       </div>
       <div class="ygb-table-tip">
-        当前版本支持按月份执行模拟同步，后续替换正式接口时不改变页面办理链路；异常对象会继续流向基数比对、漏保和预警中心。
+        当前版本支持按月份同步社保缴费数据，异常对象会继续流向基数比对、漏保和预警中心。
       </div>
     </section>
 
@@ -54,7 +54,7 @@
     <el-card class="toolbar-card ygb-toolbar-card" shadow="never">
       <el-row :gutter="10">
         <el-col v-if="!isReadOnlyRole" :span="1.5">
-          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:socialPayment:sync']">模拟同步</el-button>
+          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:socialPayment:sync']">同步缴费数据</el-button>
         </el-col>
         <el-col :span="1.5">
           <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:socialPayment:export']">导出</el-button>
@@ -315,7 +315,7 @@ const workflowSteps = computed(() => ([
   },
   {
     label: "执行社保同步",
-    desc: "通过模拟同步拉取社保缴费结果，统一生成当月缴费底稿和来源回写信息。"
+    desc: "同步社保缴费结果，统一生成当月缴费底稿和来源回写信息。"
   },
   {
     label: "核对缴费状态与金额",
@@ -379,7 +379,7 @@ const currentPaymentActionTags = computed(() => {
 const paymentHintTags = computed(() => buildHintTags(currentPayment.value))
 const detailHintTags = computed(() => buildHintTags(detail.value))
 const readOnlyAlertTitle = computed(() => `${readOnlyRoleLabel.value}仅保留社保缺费查看、详情和导出`)
-const readOnlyAlertDescription = computed(() => `${readOnlyRoleDescription.value || ''} 当前页面仍会展示缺费摘要、解释和来源条件，但不开放模拟同步动作。`.trim())
+const readOnlyAlertDescription = computed(() => `${readOnlyRoleDescription.value || ''} 当前页面仍会展示缺费摘要、解释和来源条件，但不开放缴费同步动作。`.trim())
 
 function blockReadOnlyAction(actionLabel) {
   proxy?.$modal?.msgWarning?.(`${readOnlyRoleLabel.value}仅保留社保缺费查看、详情和导出，不能${actionLabel}`)
@@ -444,20 +444,19 @@ function resetQuery() {
   })
   applyWorkbenchRouteQuery(route.query, queryParams.value, socialPaymentWorkbenchFields)
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '????????' || '????????',
-    description: '?????????????????????????????????' || '?????????????????????????????????',
+    title: '社保缴费监控',
+    description: '核查企业社保缴费状态、异常缴费和断缴情形，支撑社保监管闭环处置。',
     portalExplanation: portalExplanationItems.value,
     focus: focusQueues.value,
-    selection: [...selectedPaymentOverview.value, { label: '??????', value: currentPaymentActionSummary.value }],
+    selection: [...selectedPaymentOverview.value, { label: '当前处置建议', value: currentPaymentActionSummary.value }],
     workflow: workflowSteps.value,
     hints: [...currentPaymentActionTags.value].slice(0, 6)
   })
 })
-
-}
 
 function clearWorkbenchContext() {
   Object.assign(queryParams.value, {
@@ -506,7 +505,7 @@ function handleSync() {
     statMonth: queryParams.value.statMonth,
     enterpriseId: queryParams.value.enterpriseId
   }).then(response => {
-    proxy.$modal.msgSuccess(response.msg || "模拟同步完成")
+    proxy.$modal.msgSuccess(response.msg || "缴费数据同步完成")
     getList()
   })
 }

@@ -10,7 +10,7 @@
         </p>
       </div>
       <div class="ygb-table-tip">
-        当前税务数据继续走 Stub 同步；差异超过 10% 会自动写入预警中心，页面已按粤工保财务整改链路重组。
+        当前页面按月份同步税务申报数据；差异超过 10% 会自动写入预警中心，页面已按粤工保财务整改链路重组。
       </div>
     </section>
 
@@ -59,7 +59,7 @@
     <el-card class="toolbar-card ygb-toolbar-card" shadow="never">
       <el-row :gutter="10">
         <el-col v-if="!isReadOnlyRole" :span="1.5">
-          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:taxCompare:sync']">模拟同步</el-button>
+          <el-button type="primary" plain icon="RefreshRight" @click="handleSync" v-hasPermi="['ygb:taxCompare:sync']">同步税务数据</el-button>
         </el-col>
         <el-col v-if="!isReadOnlyRole" :span="1.5">
           <el-button type="success" plain icon="Operation" @click="handleCompare" v-hasPermi="['ygb:taxCompare:compare']">执行比对</el-button>
@@ -179,7 +179,8 @@ const workbenchClearLabel = "清空来源条件"
 
 const compareResultOptions = [
   { label: "正常", value: "1" },
-  { label: "异常", value: "2" }
+  { label: "异常", value: "2" },
+  { label: "待复核", value: "3", elTagType: "warning" }
 ]
 
 const warningStatusOptions = [
@@ -341,7 +342,7 @@ const primaryCompareAction = computed(() => {
   if (!currentCompare.value) {
     return { label: "查看详情", action: "detail" }
   }
-  if (currentCompare.value.compareResult === "2" || currentCompare.value.warningStatus === "1" || currentCompare.value.sourceStatus !== "SUCCESS") {
+  if (["2", "3"].includes(currentCompare.value.compareResult) || currentCompare.value.warningStatus === "1" || currentCompare.value.sourceStatus !== "SUCCESS") {
     return { label: "执行比对", action: "compare" }
   }
   return { label: "查看详情", action: "detail" }
@@ -366,7 +367,7 @@ const workflowSteps = computed(() => ([
   },
   {
     label: "执行税务同步",
-    desc: "通过模拟同步回写税务 Stub 记录，统一生成本月申报收入和来源信息。"
+    desc: "同步税务申报记录，统一生成本月申报收入和来源信息。"
   },
   {
     label: "发起个税比对",
@@ -452,20 +453,19 @@ function resetQuery() {
   })
   applyWorkbenchRouteQuery(route.query, queryParams.value, taxCompareWorkbenchFields)
   getList()
+}
 
 watchEffect(() => {
   setPageGuide({
-    title: '??????' || '??????',
-    description: '?????????????????????????????????' || '?????????????????????????????????',
+    title: '个税比对',
+    description: '比对工资发放与个税申报差异，识别异常申报、漏报和追缴线索。',
     portalExplanation: portalExplanationItems.value,
     focus: focusQueues.value,
-    selection: [...selectedCompareOverview.value, { label: '??????', value: currentCompareActionSummary.value }],
+    selection: [...selectedCompareOverview.value, { label: '当前处置建议', value: currentCompareActionSummary.value }],
     workflow: workflowSteps.value,
     hints: [...currentCompareActionTags.value].slice(0, 6)
   })
 })
-
-}
 
 function clearWorkbenchContext() {
   Object.assign(queryParams.value, {
@@ -516,7 +516,7 @@ function handleSync() {
     statMonth: queryParams.value.statMonth,
     enterpriseId: queryParams.value.enterpriseId
   }).then(response => {
-    proxy.$modal.msgSuccess(response.msg || "模拟同步完成")
+    proxy.$modal.msgSuccess(response.msg || "税务数据同步完成")
     getList()
   })
 }
@@ -561,6 +561,9 @@ function buildHintTags(item) {
   if (item.compareResult === "2") {
     tags.push({ label: "当前比对异常，建议优先回查工资实发与个税申报收入口径", type: "danger" })
   }
+  if (item.compareResult === "3") {
+    tags.push({ label: "当前比对结果待复核，建议重新执行个税比对并核对来源报文", type: "warning" })
+  }
   if (item.warningStatus === "1") {
     tags.push({ label: "当前已触发预警，建议继续承接到预警中心闭环处置", type: "warning" })
   }
@@ -568,7 +571,7 @@ function buildHintTags(item) {
     tags.push({ label: "当前比对正常，可继续月度复核和归档", type: "success" })
   }
   if (!item.sourceStatus || item.sourceStatus !== "SUCCESS") {
-    tags.push({ label: "来源回写状态需关注，建议先核对 Stub 同步结果和原始报文", type: "info" })
+    tags.push({ label: "来源回写状态需关注，建议先核对同步结果和原始报文", type: "info" })
   }
   if (Number(item.diffRatio || 0) > 10) {
     tags.push({ label: "差异率超过 10%，建议同步核对工资明细、发放结果和申报时间窗口", type: "warning" })
@@ -587,7 +590,7 @@ function matchCompareFocus(item, focusKey) {
     return true
   }
   if (focusKey === "abnormal") {
-    return item.compareResult === "2" || Number(item.diffRatio || 0) > 10
+    return ["2", "3"].includes(item.compareResult) || Number(item.diffRatio || 0) > 10
   }
   if (focusKey === "warned") {
     return item.warningStatus === "1"

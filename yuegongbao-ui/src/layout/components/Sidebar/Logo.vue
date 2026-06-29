@@ -28,7 +28,7 @@ const portal = computed(() => getActivePortalConfig(route))
 
 <style lang="scss" scoped>
 .sidebar-logo-container {
-  height: 60px;
+  height: var(--layout-sidebar-logo-height, 60px);
   display: flex;
   align-items: center;
   padding: 0 16px;

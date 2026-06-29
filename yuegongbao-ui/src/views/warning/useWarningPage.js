@@ -3,26 +3,11 @@ import { getWarning, getWarningAnalysis, getWarningSummary, handleWarning, listW
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
 import useUserStore from '@/store/modules/user'
 import { filterAuthorizedRegionOptions } from '@/utils/regionScope'
+import { formatRegionName, gdRegionNameMap, gdRegionOptions, normalizeRegionCode } from '@/utils/regionName'
 
-export const baseRegionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市', value: '440100' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市', value: '440300' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市', value: '440600' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const baseRegionOptions = gdRegionOptions
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440100': '广州市',
-  '440106': '广州市天河区',
-  '440300': '深圳市',
-  '440305': '深圳市南山区',
-  '440600': '佛山市',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
 export const warnLevelOptions = [
   { label: '提示', value: '1' },
@@ -47,12 +32,28 @@ export const sourceModuleOptions = [
   { label: '工伤事件', value: 'INJURY' }
 ]
 
+const sourceModuleAliasMap = {
+  social: 'SOCIAL',
+  tax: 'TAX',
+  expansion: 'EXPANSION',
+  special: 'SPECIAL',
+  device: 'DEVICE',
+  injury: 'INJURY'
+}
+
 export const actionOptions = [
   { label: '转处理中', value: 'PROCESS' },
   { label: '办结关闭', value: 'CLOSE' },
   { label: '标记误报', value: 'MISREPORT' },
   { label: '升级处置', value: 'UPGRADE' }
 ]
+
+const warningActionStatusMap = {
+  PROCESS: ['0'],
+  CLOSE: ['0', '1', '4'],
+  MISREPORT: ['0', '1'],
+  UPGRADE: ['0', '1']
+}
 
 function createDefaultQueryParams() {
   return {
@@ -77,7 +78,8 @@ function createDefaultHandleForm() {
 
 function createHandleRules() {
   return {
-    action: [{ required: true, message: '处置动作不能为空', trigger: 'change' }]
+    action: [{ required: true, message: '处置动作不能为空', trigger: 'change' }],
+    opinion: [{ required: true, message: '处置意见不能为空', trigger: 'blur' }]
   }
 }
 
@@ -86,12 +88,25 @@ export function optionLabel(options, value, fallback = '-') {
   return matched ? matched.label : fallback
 }
 
-export function formatRegionName(code, fallback = '全部区域') {
-  if (!code) {
-    return fallback
+export function normalizeSourceModule(value) {
+  if (value === null || typeof value === 'undefined' || value === '') {
+    return undefined
   }
-  return regionNameMap[code] || code
+  const rawValue = String(value)
+  const normalizedValue = sourceModuleAliasMap[rawValue.toLowerCase()] || rawValue.toUpperCase()
+  return sourceModuleOptions.some(item => item.value === normalizedValue) ? normalizedValue : rawValue
 }
+
+export function getWarningActionOptions(warning) {
+  const warnStatus = String(warning?.warnStatus || '')
+  return actionOptions.filter(item => warningActionStatusMap[item.value]?.includes(warnStatus))
+}
+
+export function canHandleWarning(warning) {
+  return getWarningActionOptions(warning).length > 0
+}
+
+export { formatRegionName } from '@/utils/regionName'
 
 export function summaryCard(key, label, value, unit, note, cardClass) {
   return { key, label, value: value ?? 0, unit, note, cardClass }
@@ -177,13 +192,15 @@ export function useWarningPage(options = {}) {
   const regionOptions = computed(() => {
     const optionMap = new Map(baseRegionOptions.map(item => [item.value, item]))
     enterpriseOptions.value.forEach(item => {
-      if (item.regionCode && !optionMap.has(item.regionCode)) {
-        optionMap.set(item.regionCode, { value: item.regionCode, label: formatRegionName(item.regionCode, item.regionCode) })
+      const regionCode = normalizeRegionCode(item.regionCode)
+      if (regionCode && !optionMap.has(regionCode)) {
+        optionMap.set(regionCode, { value: regionCode, label: formatRegionName(regionCode, regionCode) })
       }
     })
     warningList.value.forEach(item => {
-      if (item.regionCode && !optionMap.has(item.regionCode)) {
-        optionMap.set(item.regionCode, { value: item.regionCode, label: formatRegionName(item.regionCode, item.regionCode) })
+      const regionCode = normalizeRegionCode(item.regionCode)
+      if (regionCode && !optionMap.has(regionCode)) {
+        optionMap.set(regionCode, { value: regionCode, label: formatRegionName(regionCode, regionCode) })
       }
     })
     return filterAuthorizedRegionOptions(Array.from(optionMap.values()), userStore.allowedRegionCodes)
@@ -210,6 +227,7 @@ export function useWarningPage(options = {}) {
   }
 
   function buildSummaryQuery() {
+    normalizeQueryParams()
     return {
       regionCode: queryParams.value.regionCode,
       enterpriseId: queryParams.value.enterpriseId,
@@ -218,6 +236,10 @@ export function useWarningPage(options = {}) {
       warnStatus: queryParams.value.warnStatus,
       content: queryParams.value.content
     }
+  }
+
+  function normalizeQueryParams() {
+    queryParams.value.sourceModule = normalizeSourceModule(queryParams.value.sourceModule)
   }
 
   function syncCurrentWarning() {
@@ -233,6 +255,7 @@ export function useWarningPage(options = {}) {
   }
 
   function loadAll() {
+    normalizeQueryParams()
     loading.value = true
     Promise.all([
       listWarning(queryParams.value),
@@ -311,8 +334,13 @@ export function useWarningPage(options = {}) {
       return
     }
     handleRowClick(target)
+    const availableActions = getWarningActionOptions(target)
+    if (!availableActions.length) {
+      proxy.$modal.msgWarning('当前预警状态不允许继续处置')
+      return
+    }
     handleForm.value = {
-      action: String(target.warnStatus || '') === '0' ? 'PROCESS' : 'CLOSE',
+      action: availableActions[0].value,
       opinion: undefined,
       attachmentUrls: undefined
     }
@@ -325,6 +353,15 @@ export function useWarningPage(options = {}) {
     }
     proxy.$refs.handleRef.validate(valid => {
       if (!valid) {
+        return
+      }
+      if (!canHandleWarning(currentWarning.value)) {
+        proxy.$modal.msgWarning('当前预警状态不允许继续处置')
+        return
+      }
+      const availableActions = getWarningActionOptions(currentWarning.value).map(item => item.value)
+      if (!availableActions.includes(handleForm.value.action)) {
+        proxy.$modal.msgWarning('当前预警状态不支持该处置动作')
         return
       }
       handleWarning(currentWarnId.value, handleForm.value).then(response => {
@@ -361,6 +398,8 @@ export function useWarningPage(options = {}) {
     handleForm,
     handleRules,
     regionOptions,
+    getWarningActionOptions,
+    canHandleWarning,
     buildSummaryQuery,
     loadAll,
     loadEnterpriseOptions,

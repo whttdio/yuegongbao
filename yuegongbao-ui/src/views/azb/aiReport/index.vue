@@ -60,196 +60,340 @@
       </div>
     </el-alert>
 
-    <el-card class="search-card azb-search-card" shadow="never">
-      <el-form ref="queryRef" :model="queryParams" :inline="true" v-show="showSearch">
-        <el-form-item label="监测周期">
-          <el-select v-model="queryParams.reportType" style="width: 160px">
-            <el-option v-for="item in reportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="统计区间">
-          <el-date-picker
-            v-model="queryRange"
-            type="daterange"
-            value-format="YYYY-MM-DD"
-            format="YYYY-MM-DD"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            style="width: 300px"
+    <div class="azb-ai-report-layout">
+      <aside class="azb-section-nav">
+        <div class="azb-section-nav__title">AI 治理</div>
+        <button
+          v-for="item in navItems"
+          :key="item.key"
+          type="button"
+          class="azb-section-nav__item"
+          :class="{ 'is-active': item.key === activeSection }"
+          @click="scrollToSection(item.key)"
+        >
+          <span class="azb-section-nav__index">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </button>
+      </aside>
+
+      <main class="azb-report-main">
+        <section ref="filterSectionRef" class="azb-report-card azb-report-card--filter">
+          <div class="azb-report-card__head">
+            <div>
+              <h3>监测筛选</h3>
+              <p>按周期、行政区划、企业类型和风险等级刷新当前安责保 AI 治理视图。</p>
+            </div>
+            <div class="azb-report-actions">
+              <el-button type="primary" icon="Search" @click="handleQuery">查询刷新</el-button>
+              <el-button type="danger" plain @click="standardOpen = true">AI 评分标准</el-button>
+              <el-button type="success" plain @click="handlePreviewReport">预览报告</el-button>
+              <el-button plain @click="goAiTaskPage" v-hasPermi="['ygb:aiReportTask:list']">建议任务</el-button>
+              <el-button plain @click="goAiSubscriptionPage" v-hasPermi="['ygb:aiReportSubscription:list']">订阅管理</el-button>
+            </div>
+          </div>
+
+          <el-form ref="queryRef" :model="queryParams" :inline="true" v-show="showSearch" class="azb-report-filter-form">
+            <el-form-item label="监测周期">
+              <el-select v-model="queryParams.reportType" style="width: 160px">
+                <el-option v-for="item in reportTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="统计区间">
+              <el-date-picker
+                v-model="queryRange"
+                type="daterange"
+                value-format="YYYY-MM-DD"
+                format="YYYY-MM-DD"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                style="width: 300px"
+              />
+            </el-form-item>
+            <el-form-item label="行政区划">
+              <el-select v-model="queryParams.regionCode" style="width: 180px" @change="handleConfigRefresh">
+                <el-option v-for="item in regionOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="企业类型">
+              <el-select v-model="queryParams.enterpriseType" clearable style="width: 160px">
+                <el-option v-for="item in enterpriseTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="风险等级">
+              <el-select v-model="queryParams.riskLevel" clearable style="width: 160px">
+                <el-option v-for="item in riskLevelOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+              <el-button v-if="canGenerate" type="primary" plain icon="MagicStick" @click="openGenerateDialog()">生成报告</el-button>
+              <el-button v-if="canExport" type="warning" plain icon="Download" @click="handleExport">导出列表</el-button>
+              <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
+            </el-form-item>
+          </el-form>
+        </section>
+
+        <section ref="overviewSectionRef" class="azb-report-card">
+          <div class="azb-report-section-title">
+            <span class="azb-report-section-title__bar" />
+            <div>
+              <h3>综合评分概览</h3>
+              <p>{{ selectedReportTitle }}</p>
+            </div>
+          </div>
+
+          <div class="azb-overview-hero">
+            <div class="azb-overview-hero__main">
+              <div class="azb-overview-hero__eyebrow">治理摘要</div>
+              <div class="azb-overview-hero__scoreline">
+                <div class="azb-overview-hero__score">{{ selectedReport?.totalScore || averageScore }}</div>
+                <div class="azb-overview-hero__meta">
+                  <div class="azb-overview-hero__risk">
+                    <el-tag :type="riskTagType(selectedReport?.riskLevel)">{{ riskLevelLabel(selectedReport?.riskLevel) }}</el-tag>
+                    <span>{{ activeReportSummary }}</span>
+                  </div>
+                  <div class="azb-overview-hero__submeta">
+                    <span>当前排名 {{ selectedReport?.rankingNo || '-' }}</span>
+                    <span>样本总量 {{ dashboard.totalCount || 0 }}</span>
+                    <span>高风险 {{ dashboard.highRiskCount || 0 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="azb-overview-hero__aside">
+              <div v-for="item in overviewDigestItems" :key="item.label" class="azb-overview-digest">
+                <span class="azb-overview-digest__label">{{ item.label }}</span>
+                <strong class="azb-overview-digest__value">{{ item.value }}</strong>
+                <span class="azb-overview-digest__hint">{{ item.hint }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="azb-score-grid">
+            <article v-for="item in scoreCards" :key="item.label" class="azb-score-card">
+              <div class="azb-score-card__value">{{ item.value }}</div>
+              <div class="azb-score-card__label">{{ resolveAzbDimensionLabel(item.dimensionCode, item.label) }}</div>
+              <div class="azb-score-card__trend">{{ item.trend || item.remark || '用于判断当前治理短板。' }}</div>
+            </article>
+          </div>
+
+          <div class="azb-overview-tags">
+            <span v-for="item in overviewTags" :key="item" class="azb-overview-tags__item">{{ item }}</span>
+          </div>
+        </section>
+
+        <section ref="conclusionSectionRef" class="azb-report-card azb-ai-conclusion-card">
+          <div class="azb-report-section-title">
+            <span class="azb-report-section-title__bar" />
+            <div>
+              <h3>AI 监测结论</h3>
+              <p>系统基于当前评分维度和近期风险样本自动生成治理结论摘要。</p>
+            </div>
+          </div>
+
+          <div class="azb-ai-conclusion-body">
+            <p><strong>综合判断：</strong>{{ conclusionSummary }}</p>
+            <p><strong>主要优势：</strong>{{ conclusionStrength }}</p>
+            <p><strong>突出问题：</strong>{{ conclusionWeakness }}</p>
+            <p><strong>建议动作：</strong>{{ conclusionAdvice }}</p>
+          </div>
+        </section>
+
+        <section ref="chartSectionRef" class="azb-report-card">
+          <div class="azb-report-section-title">
+            <span class="azb-report-section-title__bar" />
+            <div>
+              <h3>趋势与维度得分</h3>
+              <p>结合维度评分和历史趋势，识别隐患压降中的薄弱环节与波动方向。</p>
+            </div>
+          </div>
+
+          <div class="azb-chart-section">
+            <div class="azb-chart-card">
+              <div class="azb-chart-card__title">各维度治理得分对比</div>
+              <div ref="dimensionChartRef" class="azb-chart-box" />
+            </div>
+            <div class="azb-chart-card">
+              <div class="azb-chart-card__title">近 6 次监测得分趋势</div>
+              <div ref="trendChartRef" class="azb-chart-box" />
+            </div>
+          </div>
+        </section>
+
+        <section ref="rankingSectionRef" class="azb-report-card">
+          <div class="azb-report-section-title">
+            <span class="azb-report-section-title__bar" />
+            <div>
+              <h3>风险排名对照</h3>
+              <p>同步展示前位样本和尾部样本，便于横向对照和重点研判。</p>
+            </div>
+          </div>
+
+          <div class="azb-ranking-summary-strip">
+            <div v-for="item in rankingSummaryItems" :key="item.label" class="azb-ranking-summary-strip__item">
+              <span class="azb-ranking-summary-strip__label">{{ item.label }}</span>
+              <strong class="azb-ranking-summary-strip__value">{{ item.value }}</strong>
+              <span class="azb-ranking-summary-strip__hint">{{ item.hint }}</span>
+            </div>
+          </div>
+
+          <div class="azb-ranking-grid">
+            <el-card shadow="never" class="azb-ranking-panel">
+              <template #header>
+                <div class="azb-ranking-panel__head">
+                  <div class="azb-ranking-panel__title">前 5 样本</div>
+                  <div class="azb-ranking-panel__desc">作为正向对标和治理口径校准参考。</div>
+                </div>
+              </template>
+              <el-table :data="topRankingList" size="small" empty-text="暂无样本">
+                <el-table-column label="序位" width="74">
+                  <template #default="scope">
+                    <span class="azb-ranking-no azb-ranking-no--good">#{{ scope.row.rankingNo || scope.$index + 1 }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="对象" min-width="180">
+                  <template #default="scope">{{ reportDisplayName(scope.row) }}</template>
+                </el-table-column>
+                <el-table-column label="区域" prop="regionName" min-width="120" />
+                <el-table-column label="得分" prop="totalScore" width="86" />
+                <el-table-column label="亮点" min-width="180" show-overflow-tooltip>
+                  <template #default="scope">{{ buildRankingHighlight(scope.row, 'positive') }}</template>
+                </el-table-column>
+              </el-table>
+            </el-card>
+
+            <el-card shadow="never" class="azb-ranking-panel">
+              <template #header>
+                <div class="azb-ranking-panel__head">
+                  <div class="azb-ranking-panel__title">后 5 样本</div>
+                  <div class="azb-ranking-panel__desc">用于锁定低分尾部样本和重点复核对象。</div>
+                </div>
+              </template>
+              <el-table :data="bottomRankingList" size="small" empty-text="暂无尾部样本">
+                <el-table-column label="序位" width="74">
+                  <template #default="scope">
+                    <span class="azb-ranking-no azb-ranking-no--risk">#{{ scope.row.rankingNo || scope.$index + 1 }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="对象" min-width="180">
+                  <template #default="scope">{{ reportDisplayName(scope.row) }}</template>
+                </el-table-column>
+                <el-table-column label="区域" prop="regionName" min-width="120" />
+                <el-table-column label="得分" prop="totalScore" width="86" />
+                <el-table-column label="风险因子" min-width="180" show-overflow-tooltip>
+                  <template #default="scope">{{ buildRankingHighlight(scope.row, 'risk') }}</template>
+                </el-table-column>
+              </el-table>
+            </el-card>
+          </div>
+        </section>
+
+        <section ref="riskSectionRef" class="azb-report-card">
+          <div class="azb-report-section-title">
+            <span class="azb-report-section-title__bar" />
+            <div>
+              <h3>高风险对象与整改建议</h3>
+              <p>列出当前高风险对象、主要问题和整改建议，便于重点处置和闭环跟踪。</p>
+            </div>
+          </div>
+
+          <div class="azb-risk-focus-grid">
+            <article v-for="item in riskFocusCards" :key="item.title" class="azb-risk-focus-card">
+              <div class="azb-risk-focus-card__head">
+                <span class="azb-risk-focus-card__badge">重点对象</span>
+                <span class="azb-risk-focus-card__score">{{ item.score }}</span>
+              </div>
+              <h4>{{ item.title }}</h4>
+              <p>{{ item.reason }}</p>
+              <div class="azb-risk-focus-card__foot">{{ item.advice }}</div>
+            </article>
+          </div>
+
+          <el-table :data="highRiskList" size="small" empty-text="暂无高风险对象">
+            <el-table-column label="序位" width="74">
+              <template #default="scope">
+                <span class="azb-ranking-no azb-ranking-no--risk">#{{ scope.row.rankingNo || scope.$index + 1 }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="对象" min-width="180">
+              <template #default="scope">{{ reportDisplayName(scope.row) }}</template>
+            </el-table-column>
+            <el-table-column label="风险等级" width="100">
+              <template #default="scope">
+                <el-tag :type="riskTagType(scope.row.riskLevel)">{{ riskLevelLabel(scope.row.riskLevel) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="得分" prop="totalScore" width="86" />
+            <el-table-column label="主要风险点" min-width="180" show-overflow-tooltip>
+              <template #default="scope">{{ buildHighRiskReason(scope.row) }}</template>
+            </el-table-column>
+            <el-table-column label="建议措施" min-width="180" show-overflow-tooltip>
+              <template #default="scope">{{ buildHighRiskAdvice(scope.row) }}</template>
+            </el-table-column>
+          </el-table>
+        </section>
+
+        <section ref="reportTableSectionRef" class="azb-report-card">
+          <div class="azb-report-card__head azb-report-card__head--table">
+            <div>
+              <h3>AI 报告台账</h3>
+              <p>{{ focusTableHint }}</p>
+            </div>
+            <div class="azb-report-card__summary">{{ currentConfigSummary }}</div>
+          </div>
+
+          <el-table
+            v-loading="loading"
+            :data="visibleReportList"
+            row-key="reportId"
+            :row-class-name="reportRowClassName"
+            @row-click="handleSelectReport"
+          >
+            <el-table-column label="报告ID" prop="reportId" width="96" />
+            <el-table-column label="报告类型" width="110">
+              <template #default="scope">{{ reportTypeLabel(scope.row.reportType) }}</template>
+            </el-table-column>
+            <el-table-column label="区域" min-width="140" prop="regionName" />
+            <el-table-column label="统计区间" min-width="220">
+              <template #default="scope">
+                {{ parseTime(scope.row.periodStart, '{y}-{m}-{d}') }} 至 {{ parseTime(scope.row.periodEnd, '{y}-{m}-{d}') }}
+              </template>
+            </el-table-column>
+            <el-table-column label="企业类型" width="110">
+              <template #default="scope">{{ enterpriseTypeLabel(scope.row.enterpriseType) }}</template>
+            </el-table-column>
+            <el-table-column label="综合得分" prop="totalScore" width="100" />
+            <el-table-column label="风险等级" width="100">
+              <template #default="scope">
+                <el-tag :type="riskTagType(scope.row.riskLevel)">{{ riskLevelLabel(scope.row.riskLevel) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="排名" prop="rankingNo" width="86" />
+            <el-table-column label="摘要" prop="reportSummary" min-width="280" show-overflow-tooltip />
+            <el-table-column label="生成时间" min-width="170">
+              <template #default="scope">{{ parseTime(scope.row.generatedTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</template>
+            </el-table-column>
+            <el-table-column class-name="table-fill-column" min-width="1" />
+            <el-table-column label="操作" fixed="right" :width="tableActionWidth" align="center">
+              <template #default="scope">
+                <el-button link type="info" icon="View" @click.stop="openDetail(scope.row)">详情</el-button>
+                <el-button link type="primary" icon="Document" @click.stop="selectAndPreview(scope.row)">预览</el-button>
+                <el-button v-if="canGenerate" link type="primary" icon="RefreshRight" @click.stop="openGenerateDialog(scope.row)">重生成</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <pagination
+            v-show="total > 0"
+            :total="total"
+            v-model:page="queryParams.pageNum"
+            v-model:limit="queryParams.pageSize"
+            @pagination="getList"
           />
-        </el-form-item>
-        <el-form-item label="行政区划">
-          <el-select v-model="queryParams.regionCode" style="width: 180px">
-            <el-option v-for="item in regionOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="企业类型">
-          <el-select v-model="queryParams.enterpriseType" clearable style="width: 160px">
-            <el-option v-for="item in enterpriseTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="风险等级">
-          <el-select v-model="queryParams.riskLevel" clearable style="width: 160px">
-            <el-option v-for="item in riskLevelOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
-    <el-card class="toolbar-card azb-toolbar-card" shadow="never">
-      <el-row :gutter="10">
-        <el-col v-if="!isReadOnlyRole" :span="1.5">
-          <el-button type="primary" plain icon="MagicStick" @click="openGenerateDialog()" v-hasPermi="['ygb:aiReport:generate']">生成报告</el-button>
-        </el-col>
-        <el-col :span="1.5">
-          <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['ygb:aiReport:export']">导出</el-button>
-        </el-col>
-        <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
-      </el-row>
-    </el-card>
-
-    <div class="azb-chart-grid">
-      <el-card class="azb-chart-card" shadow="never">
-        <template #header>
-          <div class="azb-chart-card__head">
-            <div>
-              <div class="azb-chart-card__title">风险排名（前 5）</div>
-              <div class="azb-chart-card__desc">当前筛选范围内的优良样本，可作为对照基线和区域参考面。</div>
-            </div>
-          </div>
-        </template>
-        <el-table :data="dashboard.topRankingList || []" size="small" empty-text="暂无样本">
-          <el-table-column label="序位" width="74">
-            <template #default="scope">
-              <span class="azb-ranking-no azb-ranking-no--good">#{{ scope.row.rankingNo || scope.$index + 1 }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="区域" prop="regionName" min-width="140" />
-          <el-table-column label="企业类型" min-width="110">
-            <template #default="scope">
-              {{ enterpriseTypeLabel(scope.row.enterpriseType) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="得分" prop="totalScore" width="90" />
-          <el-table-column label="亮点" prop="highlight" min-width="180" show-overflow-tooltip />
-        </el-table>
-      </el-card>
-
-      <el-card class="azb-chart-card" shadow="never">
-        <template #header>
-          <div class="azb-chart-card__head">
-            <div>
-              <div class="azb-chart-card__title">高风险对象</div>
-              <div class="azb-chart-card__desc">重点展示高风险样本的风险原因和建议动作。</div>
-            </div>
-          </div>
-        </template>
-        <el-table :data="dashboard.highRiskList || []" size="small" empty-text="暂无高风险对象">
-          <el-table-column label="序位" width="74">
-            <template #default="scope">
-              <span class="azb-ranking-no azb-ranking-no--risk">#{{ scope.row.rankingNo || scope.$index + 1 }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="区域" prop="regionName" min-width="140" />
-          <el-table-column label="等级" width="100">
-            <template #default="scope">
-              <el-tag :type="riskTagType(scope.row.riskLevel)">{{ riskLevelLabel(scope.row.riskLevel) }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="风险原因" prop="riskReason" min-width="180" show-overflow-tooltip />
-          <el-table-column label="建议动作" prop="advice" min-width="180" show-overflow-tooltip />
-        </el-table>
-      </el-card>
+        </section>
+      </main>
     </div>
-
-    <el-card class="table-card azb-table-card" shadow="never">
-      <template #header>
-        <div class="azb-card-head azb-card-head--between">
-          <div>
-            <div class="azb-card-head__title">AI 报告台账</div>
-            <div class="azb-card-head__desc">{{ focusTableHint }}</div>
-          </div>
-          <div class="azb-card-head__desc">当前总量 {{ total }} 份</div>
-        </div>
-      </template>
-      <div class="azb-report-conclusion" v-if="dashboard.conclusion">
-        <div class="azb-report-conclusion__title">AI 监测结论</div>
-        <div class="azb-report-conclusion__body">
-          <p><strong>综合判断：</strong>{{ dashboard.conclusion.summary || '-' }}</p>
-          <p><strong>主要优势：</strong>{{ dashboard.conclusion.strength || '-' }}</p>
-          <p><strong>突出问题：</strong>{{ dashboard.conclusion.weakness || '-' }}</p>
-          <p><strong>建议动作：</strong>{{ dashboard.conclusion.advice || '-' }}</p>
-        </div>
-      </div>
-
-      <el-table
-        v-loading="loading"
-        :data="visibleReportList"
-        row-key="reportId"
-        @row-click="handleSelectReport"
-      >
-        <el-table-column label="报告ID" prop="reportId" width="96" />
-        <el-table-column label="报告类型" width="110">
-          <template #default="scope">
-            {{ reportTypeLabel(scope.row.reportType) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="区域" min-width="140" prop="regionName" />
-        <el-table-column label="统计区间" min-width="220">
-          <template #default="scope">
-            {{ parseTime(scope.row.periodStart, '{y}-{m}-{d}') }} 至 {{ parseTime(scope.row.periodEnd, '{y}-{m}-{d}') }}
-          </template>
-        </el-table-column>
-        <el-table-column label="企业类型" width="110">
-          <template #default="scope">
-            {{ enterpriseTypeLabel(scope.row.enterpriseType) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="综合得分" prop="totalScore" width="100" />
-        <el-table-column label="风险等级" width="100">
-          <template #default="scope">
-            <el-tag :type="riskTagType(scope.row.riskLevel)">{{ riskLevelLabel(scope.row.riskLevel) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="排名" prop="rankingNo" width="86" />
-        <el-table-column label="摘要" prop="reportSummary" min-width="280" show-overflow-tooltip />
-        <el-table-column label="生成时间" min-width="170">
-          <template #default="scope">
-            {{ parseTime(scope.row.generatedTime, '{y}-{m}-{d} {h}:{i}:{s}') }}
-          </template>
-        </el-table-column>
-        <el-table-column class-name="table-fill-column" min-width="1" />
-
-        <el-table-column label="操作" fixed="right" width="220" align="center">
-          <template #default="scope">
-            <el-button link type="info" icon="View" @click.stop="openDetail(scope.row)">详情</el-button>
-            <el-button
-              v-if="!isReadOnlyRole"
-              link
-              type="primary"
-              icon="RefreshRight"
-              @click.stop="openGenerateDialog(scope.row)"
-              v-hasPermi="['ygb:aiReport:generate']"
-            >
-              重生成
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <pagination
-        v-show="total > 0"
-        :total="total"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
-        @pagination="getList"
-      />
-    </el-card>
 
     <el-dialog v-model="generateOpen" title="生成 AI 监测报告" width="620px">
       <el-form ref="generateRef" :model="generateForm" :rules="generateRules" label-width="96px">
@@ -289,6 +433,19 @@
       <template #footer>
         <el-button @click="generateOpen = false">取消</el-button>
         <el-button type="primary" @click="submitGenerate">确认生成</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="standardOpen" title="安责保 AI 监测评分标准" width="760px">
+      <el-alert :title="currentConfigSummary" type="info" :closable="false" show-icon style="margin-bottom: 16px;" />
+      <el-table :data="standardRows" border>
+        <el-table-column label="维度" prop="label" min-width="180" />
+        <el-table-column label="权重" prop="weight" width="90" />
+        <el-table-column label="目标值" prop="target" min-width="140" />
+        <el-table-column label="说明" prop="remark" min-width="220" show-overflow-tooltip />
+      </el-table>
+      <template #footer>
+        <el-button type="primary" @click="standardOpen = false">知道了</el-button>
       </template>
     </el-dialog>
 
@@ -345,8 +502,10 @@
 </template>
 
 <script setup name="AzbAiReport">
-import { computed, getCurrentInstance, ref, watchEffect } from 'vue'
+import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import * as echarts from 'echarts'
+import { ElMessage } from 'element-plus'
 import { useWorkbenchAssist } from '@/composables/useWorkbenchAssist'
 import useUserStore from '@/store/modules/user'
 import {
@@ -357,18 +516,23 @@ import {
 import { useRoleViewMode } from '@/utils/roleView'
 import { applyWorkbenchRouteQuery, buildWorkbenchContext, stripWorkbenchRouteQuery } from '@/utils/workbenchLink'
 import { authorizedDefaultRegionCode, useAuthorizedRegionOptions } from '@/utils/regionScope'
+import { parseTime } from '@/utils/yuegongbao'
 import {
   buildBaseAiReportHintTags,
+  buildReportSummary,
   currentMonthRange,
   dimensionOptions,
   enterpriseTypeLabel,
   enterpriseTypeOptions,
+  formatDate,
   focusQueue,
   formatDecimal,
   matchReportFocus,
+  parseJson,
   prioritizeFocusRows,
   regionNameMap,
   regionOptions as allRegionOptions,
+  reportDisplayName,
   reportTypeLabel,
   reportTypeOptions,
   riskLevelLabel,
@@ -398,6 +562,35 @@ const AZB_AI_DIMENSION_LABEL_MAP = Object.freeze({
   E: '风险闭环处置'
 })
 
+function hasPermission(permissions, targets) {
+  if (!Array.isArray(permissions)) {
+    return false
+  }
+  if (permissions.includes('*:*:*')) {
+    return true
+  }
+  return targets.some(target => {
+    if (permissions.includes(target)) {
+      return true
+    }
+    const segments = target.split(':')
+    if (segments.length === 3) {
+      return permissions.includes(`${segments[0]}:${segments[1]}:*`)
+    }
+    return false
+  })
+}
+
+const navItems = [
+  { key: 'filter', label: '监测筛选', icon: '01' },
+  { key: 'overview', label: '综合概览', icon: '02' },
+  { key: 'conclusion', label: 'AI 结论', icon: '03' },
+  { key: 'charts', label: '趋势图表', icon: '04' },
+  { key: 'ranking', label: '排名对照', icon: '05' },
+  { key: 'risk', label: '高风险对象', icon: '06' },
+  { key: 'reports', label: '报告台账', icon: '07' }
+]
+
 applyWorkbenchRouteQuery(route.query, aiReportInitialQuery, aiReportWorkbenchFields)
 
 const {
@@ -415,10 +608,12 @@ const {
   queryParams,
   generateForm,
   generateRules,
+  selectedDimensionItems,
   detailDimensionItems,
   detailDisplayReport,
   getList,
   loadDashboard,
+  loadCurrentConfig,
   handleQuery,
   resetQuery: pageResetQuery,
   openGenerateDialog,
@@ -439,6 +634,22 @@ const {
 
 Object.assign(queryParams, aiReportInitialQuery)
 
+const standardOpen = ref(false)
+const activeSection = ref('filter')
+const filterSectionRef = ref(null)
+const overviewSectionRef = ref(null)
+const conclusionSectionRef = ref(null)
+const chartSectionRef = ref(null)
+const rankingSectionRef = ref(null)
+const riskSectionRef = ref(null)
+const reportTableSectionRef = ref(null)
+const dimensionChartRef = ref(null)
+const trendChartRef = ref(null)
+
+let dimensionChart = null
+let trendChart = null
+
+const permissions = computed(() => userStore.permissions || [])
 const portalExplanations = computed(() => dashboard.azbExplanation || [])
 const portalExplanationItems = computed(() => decoratePortalExplanationItems(portalExplanations.value, {
   portalCode: 'azb',
@@ -544,6 +755,14 @@ const activeFocus = computed(() => {
   return focusQueues.value.find(item => item.key === activeFocusKey.value) || focusQueues.value[0]
 })
 
+const canGenerate = computed(() => !isReadOnlyRole.value && hasPermission(permissions.value, ['ygb:aiReport:generate']))
+const canExport = computed(() => hasPermission(permissions.value, ['ygb:aiReport:export']))
+const averageScore = computed(() => formatDecimal(dashboard.averageScore))
+const topRankingList = computed(() => dashboard.topRankingList || [])
+const bottomRankingList = computed(() => dashboard.bottomRankingList || [])
+const highRiskList = computed(() => dashboard.highRiskList || [])
+const trendPoints = computed(() => dashboard.trendPoints || [])
+
 const visibleReportList = computed(() => {
   return prioritizeFocusRows(reportList.value, row => matchReportFocus(row, activeFocus.value?.key, dashboard.averageScore))
 })
@@ -592,6 +811,21 @@ const summaryCards = computed(() => {
   ]
 })
 
+const scoreCards = computed(() => {
+  const rows = dashboard.scoreCards || []
+  if (rows.length) {
+    return rows.map(item => ({
+      ...item,
+      label: resolveAzbDimensionLabel(item.dimensionCode, item.label)
+    }))
+  }
+  return selectedDimensionItems.value.map(item => ({
+    label: resolveAzbDimensionLabel(item.dimensionCode, item.dimensionName),
+    value: formatDecimal(item.dimensionScore),
+    trend: item.suggestionText || '用于判断当前治理短板。'
+  }))
+})
+
 function handlePortalExplanationAction(action) {
   openPortalExplanationAction(router, action)
 }
@@ -628,6 +862,97 @@ const focusTableHint = computed(() => {
     return '按当前筛选条件展示 AI 报告台账。'
   }
   return `当前焦点为“${activeFocus.value.title}”，已把对应重点对象优先排到表格前列。`
+})
+
+const activeReportSummary = computed(() => buildReportSummary(selectedReport.value).replace('业务', '治理'))
+const conclusionSummary = computed(() => dashboard.conclusion?.summary || '当前暂无报告数据。')
+const conclusionStrength = computed(() => dashboard.conclusion?.strength || '暂无优势维度识别结果。')
+const conclusionWeakness = computed(() => dashboard.conclusion?.weakness || '暂无薄弱维度识别结果。')
+const conclusionAdvice = computed(() => dashboard.conclusion?.advice || '建议先生成报告样本，再进行治理对比分析。')
+
+const currentConfigSummary = computed(() => {
+  const weights = parseJson(currentConfig.value.dimensionWeights)
+  const targets = parseJson(currentConfig.value.targetValues)
+  const weightText = ['A', 'B', 'C', 'D', 'E'].map(code => `${code}:${weights[code] || 0}`).join(' / ')
+  return `当前模型 ${currentConfig.value.version || 'DEFAULT-STUB'}，权重 ${weightText}，目标值 主体${targets.contractRate || '-'}% / 在岗${targets.attendanceRate || '-'}% / 收入${targets.paySuccessRate || '-'}% / 在线${targets.onlineRate || '-'}% / 工伤${targets.injuryRate || '-'}‰ / 闭环${targets.warningCloseRate || '-'}%。`
+})
+
+const selectedReportTitle = computed(() => {
+  if (!selectedReport.value) {
+    return '当前暂无可分析报告，请先生成或筛选报告样本。'
+  }
+  return `${selectedReport.value.regionName || '-'} · ${reportTypeLabel(selectedReport.value.reportType)} · ${formatDate(selectedReport.value.periodStart)} 至 ${formatDate(selectedReport.value.periodEnd)}`
+})
+
+const overviewDigestItems = computed(() => {
+  const best = topRankingList.value[0]
+  const weakest = highRiskList.value[0] || bottomRankingList.value[0]
+  const scoreGap = best && weakest ? formatDecimal(Number(best.totalScore || 0) - Number(weakest.totalScore || 0)) : '-'
+  return [
+    { label: '平均得分', value: averageScore.value, hint: '当前筛选范围综合均值' },
+    { label: '排名跨度', value: scoreGap, hint: '优良样本与高风险样本分差' },
+    { label: '治理模型', value: currentConfig.value.version || 'DEFAULT-STUB', hint: '评分权重口径同步生效' }
+  ]
+})
+
+const overviewTags = computed(() => {
+  const tags = [
+    `${reportTypeLabel(queryParams.reportType)}监测`,
+    `${regionNameMap[queryParams.regionCode] || queryParams.regionCode || '广东省'}治理视角`,
+    `高风险 ${dashboard.highRiskCount || 0} 项`
+  ]
+  if (queryParams.enterpriseType) {
+    tags.push(enterpriseTypeLabel(queryParams.enterpriseType))
+  }
+  if (queryParams.riskLevel) {
+    tags.push(`${riskLevelLabel(queryParams.riskLevel)}筛选`)
+  }
+  return tags
+})
+
+const rankingSummaryItems = computed(() => {
+  const best = topRankingList.value[0]
+  const weakest = bottomRankingList.value[0]
+  return [
+    {
+      label: '最佳样本',
+      value: best ? reportDisplayName(best) : '-',
+      hint: best ? `得分 ${best.totalScore}` : '暂无数据'
+    },
+    {
+      label: '重点风险样本',
+      value: weakest ? reportDisplayName(weakest) : '-',
+      hint: weakest ? `得分 ${weakest.totalScore}` : '暂无数据'
+    },
+    {
+      label: '重点复核对象',
+      value: highRiskList.value.length,
+      hint: '已纳入高风险治理清单'
+    }
+  ]
+})
+
+const riskFocusCards = computed(() => {
+  return highRiskList.value.slice(0, 3).map((row, index) => ({
+    title: `${index + 1}. ${reportDisplayName(row)}`,
+    score: `${row.totalScore ?? '-'}`,
+    reason: buildHighRiskReason(row),
+    advice: buildHighRiskAdvice(row)
+  }))
+})
+
+const tableActionWidth = computed(() => (canGenerate.value ? 220 : 150))
+
+const standardRows = computed(() => {
+  const weights = parseJson(currentConfig.value.dimensionWeights)
+  const targets = parseJson(currentConfig.value.targetValues)
+  return [
+    { label: 'A 主体台账合规', weight: weights.A || 0, target: `${targets.contractRate || '-'}%`, remark: '围绕参保主体、项目主体、人员主体和基础台账完整性。' },
+    { label: 'B 在岗留痕合规', weight: weights.B || 0, target: `${targets.attendanceRate || '-'}%`, remark: '围绕在岗记录、培训留痕和现场作业轨迹。' },
+    { label: 'C 收入联动合规', weight: weights.C || 0, target: `${targets.paySuccessRate || '-'}%`, remark: '围绕保费、赔付、资金流和银行协同数据一致性。' },
+    { label: 'D 设备作业安全', weight: weights.D || 0, target: `${targets.onlineRate || '-'}% / ${targets.injuryRate || '-'}‰`, remark: '围绕设备在线、工伤事件、隐患预警和高危作业风险。' },
+    { label: 'E 风险闭环处置', weight: weights.E || 0, target: `${targets.warningCloseRate || '-'}%`, remark: '围绕预警签收、整改闭环、压降效果和协同处置时效。' }
+  ]
 })
 
 const selectedReportOverview = computed(() => {
@@ -809,18 +1134,30 @@ function syncCurrentReport() {
   activeReportId.value = selectedReport.value?.reportId || visibleReportList.value[0]?.reportId
 }
 
-function handleSelectReport(row) {
+async function handleSelectReport(row) {
   activeReportId.value = row.reportId
-  loadDashboard(row.reportId)
+  await loadDashboard(row.reportId)
+  await nextTick()
+  renderCharts()
 }
 
-function handleSelectFocus(item) {
+async function selectAndPreview(row) {
+  activeReportId.value = row.reportId
+  await loadDashboard(row.reportId)
+  await handlePreviewReport()
+}
+
+async function handleSelectFocus(item) {
   activeFocusKey.value = item.key
   syncCurrentReport()
-  loadDashboard(activeReportId.value)
+  if (activeReportId.value) {
+    await loadDashboard(activeReportId.value)
+    await nextTick()
+    renderCharts()
+  }
 }
 
-function handlePrimaryReportAction() {
+async function handlePrimaryReportAction() {
   if (!selectedReport.value) return
   if (primaryReportAction.value.action === 'generate') {
     if (isReadOnlyRole.value) {
@@ -830,7 +1167,46 @@ function handlePrimaryReportAction() {
     openGenerateDialog(selectedReport.value)
     return
   }
-  openDetail(selectedReport.value)
+  await openDetail(selectedReport.value)
+}
+
+function reportRowClassName({ row }) {
+  return row.reportId === activeReportId.value ? 'is-dashboard-active' : ''
+}
+
+function buildRankingHighlight(row, mode) {
+  if (!row) return '-'
+  if (mode === 'positive') {
+    return row.highlight || buildReportSummary(row)
+  }
+  return row.riskReason || buildReportSummary(row)
+}
+
+function buildHighRiskReason(row) {
+  return row?.riskReason || buildReportSummary(row)
+}
+
+function buildHighRiskAdvice(row) {
+  return row?.advice || '建议重新生成报告并复核薄弱维度，形成整改治理台账。'
+}
+
+function handleConfigRefresh() {
+  loadCurrentConfig()
+}
+
+function goAiTaskPage() {
+  if (selectedReport.value?.reportId) {
+    router.push({
+      path: '/azb/aiReportTask',
+      query: { reportId: String(selectedReport.value.reportId) }
+    })
+    return
+  }
+  router.push('/azb/aiReportTask')
+}
+
+function goAiSubscriptionPage() {
+  router.push('/azb/aiReportSubscription')
 }
 
 function resetQuery() {
@@ -867,11 +1243,337 @@ function clearWorkbenchContext() {
   getList()
 }
 
-getList()
+function renderDimensionChart() {
+  if (!dimensionChartRef.value) return
+  if (!dimensionChart) {
+    dimensionChart = echarts.init(dimensionChartRef.value)
+  }
+  const categories = selectedDimensionItems.value.map(item => `${item.dimensionCode} ${resolveAzbDimensionLabel(item.dimensionCode, item.dimensionName)}`)
+  const scores = selectedDimensionItems.value.map(item => Number(item.dimensionScore || 0))
+  dimensionChart.setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { left: '4%', right: '4%', top: 36, bottom: 48, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: categories,
+      axisLabel: {
+        color: '#48656e',
+        interval: 0,
+        rotate: categories.length > 3 ? 18 : 0
+      },
+      axisLine: { lineStyle: { color: '#c8d8de' } }
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 100,
+      axisLabel: { color: '#48656e' },
+      splitLine: { lineStyle: { color: '#e5eef2' } }
+    },
+    series: [
+      {
+        name: '治理得分',
+        type: 'bar',
+        barWidth: '42%',
+        data: scores,
+        itemStyle: {
+          color: '#0b6b78',
+          borderRadius: [8, 8, 0, 0]
+        }
+      },
+      {
+        name: '达标线',
+        type: 'line',
+        smooth: true,
+        symbol: 'none',
+        data: scores.map(() => 85),
+        lineStyle: {
+          color: '#d7563f',
+          width: 2,
+          type: 'dashed'
+        }
+      }
+    ]
+  })
+}
+
+function renderTrendChart() {
+  if (!trendChartRef.value) return
+  if (!trendChart) {
+    trendChart = echarts.init(trendChartRef.value)
+  }
+  trendChart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: {
+      top: 0,
+      textStyle: { color: '#48656e' }
+    },
+    grid: { left: '4%', right: '4%', top: 40, bottom: 48, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: trendPoints.value.map(item => item.label),
+      axisLine: { lineStyle: { color: '#c8d8de' } },
+      axisLabel: { color: '#48656e' }
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 100,
+      axisLabel: { color: '#48656e' },
+      splitLine: { lineStyle: { color: '#e5eef2' } }
+    },
+    series: [
+      {
+        name: '综合得分',
+        type: 'line',
+        smooth: true,
+        data: trendPoints.value.map(item => Number(item.score || 0)),
+        symbolSize: 8,
+        itemStyle: { color: '#0b6b78' },
+        lineStyle: { width: 3, color: '#0b6b78' }
+      }
+    ]
+  })
+}
+
+function renderCharts() {
+  renderDimensionChart()
+  renderTrendChart()
+}
+
+function handleResize() {
+  dimensionChart?.resize()
+  trendChart?.resize()
+}
+
+function getAppScrollContainer() {
+  return document.querySelector('.main-container > .app-main')
+}
+
+function scrollToSection(key) {
+  activeSection.value = key
+  const sectionMap = {
+    filter: filterSectionRef.value,
+    overview: overviewSectionRef.value,
+    conclusion: conclusionSectionRef.value,
+    charts: chartSectionRef.value,
+    ranking: rankingSectionRef.value,
+    risk: riskSectionRef.value,
+    reports: reportTableSectionRef.value
+  }
+  const target = sectionMap[key]
+  const container = getAppScrollContainer()
+  if (!target) return
+  if (container) {
+    const offset = 20
+    const top = target.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - offset
+    container.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' })
+    return
+  }
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function escapeHtml(text) {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function buildPreviewHtml() {
+  const current = selectedReport.value
+  const detailRows = selectedDimensionItems.value
+  const filterPairs = [
+    ['监测周期', reportTypeLabel(queryParams.reportType)],
+    ['统计区间', `${queryRange.value?.[0] || '-'} 至 ${queryRange.value?.[1] || '-'}`],
+    ['行政区划', regionNameMap[queryParams.regionCode] || queryParams.regionCode || '广东省'],
+    ['企业类型', enterpriseTypeLabel(queryParams.enterpriseType || 'ALL')],
+    ['风险等级', queryParams.riskLevel ? riskLevelLabel(queryParams.riskLevel) : '全部']
+  ]
+  const filterHtml = filterPairs.map(([label, value]) => `
+    <div class="chip">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </div>
+  `).join('')
+  const rankingRows = topRankingList.value.slice(0, 5).map((row, index) => `
+    <tr>
+      <td>#${escapeHtml(row.rankingNo || index + 1)}</td>
+      <td>${escapeHtml(reportDisplayName(row))}</td>
+      <td>${escapeHtml(row.regionName)}</td>
+      <td>${escapeHtml(row.totalScore)}</td>
+    </tr>
+  `).join('')
+  const riskRows = highRiskList.value.slice(0, 5).map((row, index) => `
+    <tr>
+      <td>#${escapeHtml(row.rankingNo || index + 1)}</td>
+      <td>${escapeHtml(reportDisplayName(row))}</td>
+      <td>${escapeHtml(riskLevelLabel(row.riskLevel))}</td>
+      <td>${escapeHtml(buildHighRiskReason(row))}</td>
+    </tr>
+  `).join('')
+  const dimensionRows = detailRows.map(item => `
+    <tr>
+      <td>${escapeHtml(`${item.dimensionCode} ${resolveAzbDimensionLabel(item.dimensionCode, item.dimensionName)}`)}</td>
+      <td>${escapeHtml(item.metricLabel)}</td>
+      <td>${escapeHtml(item.metricValue)}</td>
+      <td>${escapeHtml(item.targetValue)}</td>
+      <td>${escapeHtml(item.dimensionScore)}</td>
+    </tr>
+  `).join('')
+
+  return `<!DOCTYPE html>
+  <html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>${escapeHtml((current?.regionName || '广东省') + ' 安责保 AI 监测报告预览')}</title>
+    <style>
+      body { margin: 0; background: #eef4f5; color: #12333c; font-family: "Microsoft YaHei", sans-serif; }
+      .toolbar { display: flex; justify-content: flex-end; gap: 12px; padding: 20px 24px 0; }
+      .toolbar button { border: none; border-radius: 10px; padding: 10px 18px; background: #0b3f49; color: #fff; cursor: pointer; }
+      .report { max-width: 1180px; margin: 20px auto 32px; padding: 28px 32px 40px; background: #fff; border-radius: 24px; box-shadow: 0 12px 32px rgba(11, 63, 73, 0.1); }
+      .header { display: flex; justify-content: space-between; gap: 16px; border-bottom: 2px solid #d7e3e8; padding-bottom: 18px; }
+      .header h1 { margin: 0; font-size: 28px; color: #12333c; }
+      .header p { margin: 8px 0 0; color: #58707b; font-size: 14px; }
+      .badge { padding: 8px 14px; border-radius: 999px; background: #e8f5f4; color: #0b6b78; font-size: 13px; }
+      .chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+      .chip { display: grid; gap: 6px; padding: 14px; border-radius: 14px; background: #f7fafb; border: 1px solid #dde9ed; }
+      .chip span { color: #66808a; font-size: 12px; }
+      .hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; margin-top: 22px; }
+      .hero-main { padding: 22px 24px; border-radius: 18px; background: linear-gradient(135deg, #0b3f49 0%, #0b6b78 62%, #eef7f6 62%, #f8fbfb 100%); color: #fff; }
+      .hero-score { font-size: 54px; font-weight: 700; line-height: 1; margin-top: 12px; }
+      .hero-note { margin-top: 10px; line-height: 1.8; font-size: 14px; }
+      .hero-side { display: grid; gap: 12px; }
+      .digest { display: grid; gap: 4px; padding: 16px 18px; border-radius: 16px; background: #f7fafb; border: 1px solid #dde9ed; }
+      .digest span { color: #66808a; font-size: 12px; }
+      .digest strong { font-size: 22px; color: #12333c; }
+      .section-title { margin: 28px 0 12px; font-size: 20px; font-weight: 700; border-left: 4px solid #d7563f; padding-left: 12px; }
+      .conclusion { border-left: 6px solid #0b6b78; background: #f2faf9; border-radius: 16px; padding: 18px 20px; line-height: 1.85; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+      th, td { border: 1px solid #dfe9ed; padding: 10px 12px; text-align: left; vertical-align: top; }
+      th { background: #f7fafb; color: #12333c; }
+      .fragment { margin-top: 14px; padding: 18px 20px; border: 1px solid #dfe9ed; border-radius: 16px; background: #fafcfc; }
+      @media print {
+        body { background: #fff; }
+        .toolbar { display: none; }
+        .report { box-shadow: none; border-radius: 0; max-width: none; padding: 18px 24px; margin: 0; }
+      }
+      @media (max-width: 900px) {
+        .chips, .hero { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <button onclick="window.print()">打印</button>
+      <button onclick="window.close()">关闭</button>
+    </div>
+    <div class="report">
+      <div class="header">
+        <div>
+          <h1>${escapeHtml((current?.regionName || '广东省') + ' 安责保 AI 监测报告')}</h1>
+          <p>报告类型：${escapeHtml(reportTypeLabel(current?.reportType))} · 统计区间：${escapeHtml(formatDate(current?.periodStart))} 至 ${escapeHtml(formatDate(current?.periodEnd))} · 模型版本：${escapeHtml(current?.configVersion || currentConfig.value.version || 'DEFAULT-STUB')}</p>
+        </div>
+        <div class="badge">${escapeHtml(riskLevelLabel(current?.riskLevel))}</div>
+      </div>
+      <div class="chips">${filterHtml}</div>
+      <div class="hero">
+        <div class="hero-main">
+          <div>治理摘要</div>
+          <div class="hero-score">${escapeHtml(current?.totalScore || averageScore.value)}</div>
+          <div class="hero-note">${escapeHtml(activeReportSummary.value)}</div>
+        </div>
+        <div class="hero-side">
+          ${overviewDigestItems.value.map(item => `
+            <div class="digest">
+              <span>${escapeHtml(item.label)}</span>
+              <strong>${escapeHtml(item.value)}</strong>
+              <span>${escapeHtml(item.hint)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="section-title">一、AI 监测结论</div>
+      <div class="conclusion">
+        <p><strong>综合判断：</strong>${escapeHtml(conclusionSummary.value)}</p>
+        <p><strong>主要优势：</strong>${escapeHtml(conclusionStrength.value)}</p>
+        <p><strong>突出问题：</strong>${escapeHtml(conclusionWeakness.value)}</p>
+        <p><strong>建议动作：</strong>${escapeHtml(conclusionAdvice.value)}</p>
+      </div>
+      <div class="section-title">二、风险排名</div>
+      <table>
+        <thead><tr><th>序位</th><th>对象</th><th>区域</th><th>得分</th></tr></thead>
+        <tbody>${rankingRows || '<tr><td colspan="4">暂无样本</td></tr>'}</tbody>
+      </table>
+      <div class="section-title">三、高风险对象</div>
+      <table>
+        <thead><tr><th>序位</th><th>对象</th><th>风险等级</th><th>主要风险点</th></tr></thead>
+        <tbody>${riskRows || '<tr><td colspan="4">暂无高风险对象</td></tr>'}</tbody>
+      </table>
+      <div class="section-title">四、维度明细</div>
+      <table>
+        <thead><tr><th>维度</th><th>指标</th><th>指标值</th><th>目标值</th><th>得分</th></tr></thead>
+        <tbody>${dimensionRows || '<tr><td colspan="5">暂无维度明细</td></tr>'}</tbody>
+      </table>
+      <div class="section-title">五、原始片段</div>
+      <div class="fragment">${current?.reportHtml || '暂无原始监测片段。'}</div>
+    </div>
+  </body>
+  </html>`
+}
+
+async function handlePreviewReport() {
+  if (!selectedReport.value && !reportList.value.length) {
+    ElMessage.warning('当前没有可预览的报告样本')
+    return
+  }
+  if (!selectedReport.value && reportList.value[0]?.reportId) {
+    await loadDashboard(reportList.value[0].reportId)
+  }
+  const previewWindow = window.open('', '_blank')
+  if (!previewWindow) {
+    ElMessage.warning('浏览器拦截了新窗口，请允许弹窗后重试')
+    return
+  }
+  previewWindow.opener = null
+  previewWindow.document.write(buildPreviewHtml())
+  previewWindow.document.close()
+}
+
+watch(
+  () => [selectedDimensionItems.value.length, trendPoints.value.length, activeReportId.value],
+  async () => {
+    await nextTick()
+    renderCharts()
+  }
+)
+
+onMounted(async () => {
+  window.addEventListener('resize', handleResize)
+  applyWorkbenchRouteQuery(route.query, queryParams, aiReportWorkbenchFields)
+  await getList()
+  await nextTick()
+  renderCharts()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  dimensionChart?.dispose()
+  trendChart?.dispose()
+  dimensionChart = null
+  trendChart = null
+})
 </script>
 
 <style scoped lang="scss">
 .azb-ai-report-workbench {
+  background: #f3f7f8;
+  padding-bottom: 48px;
+  min-width: 0;
+  max-width: 100%;
+
   .azb-focus-grid,
   .azb-chart-grid {
     display: grid;
@@ -925,6 +1627,435 @@ getList()
 
   .azb-workbench-alert__desc strong {
     color: #0b6b78;
+  }
+
+  .azb-ai-report-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .azb-section-nav {
+    position: sticky;
+    top: 18px;
+    padding: 18px 14px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #0b3f49 0%, #125b68 100%);
+    color: #d8edf0;
+    box-shadow: 0 16px 28px rgba(11, 63, 73, 0.18);
+  }
+
+  .azb-section-nav__title {
+    padding: 0 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .azb-section-nav__item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 12px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: #d8edf0;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .azb-section-nav__item:hover,
+  .azb-section-nav__item.is-active {
+    background: rgba(255, 255, 255, 0.13);
+  }
+
+  .azb-section-nav__index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.13);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .azb-report-main {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .azb-report-card {
+    padding: 22px 24px;
+    border: 1px solid #d7e3e8;
+    border-radius: 18px;
+    background: #fff;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .azb-report-card--filter {
+    background: linear-gradient(180deg, #ffffff 0%, #f7fbfb 100%);
+  }
+
+  .azb-report-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .azb-report-card__head h3 {
+    margin: 0;
+    color: #12333c;
+    font-size: 20px;
+  }
+
+  .azb-report-card__head p,
+  .azb-report-card__summary {
+    margin: 6px 0 0;
+    color: #58707b;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .azb-report-card__head--table {
+    align-items: center;
+  }
+
+  .azb-report-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .azb-report-filter-form {
+    margin-bottom: -18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 12px;
+  }
+
+  .azb-report-filter-form :deep(.el-form-item) {
+    margin-right: 0;
+  }
+
+  .azb-report-section-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .azb-report-section-title__bar {
+    width: 4px;
+    min-height: 44px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #0b6b78 0%, #d7563f 100%);
+  }
+
+  .azb-report-section-title h3 {
+    margin: 0;
+    color: #12333c;
+    font-size: 22px;
+  }
+
+  .azb-report-section-title p {
+    margin: 6px 0 0;
+    color: #58707b;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .azb-overview-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: 18px;
+    margin-bottom: 18px;
+    min-width: 0;
+  }
+
+  .azb-overview-hero__main {
+    padding: 22px 24px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0b3f49 0%, #0b6b78 62%, #eef7f6 62%, #f8fbfb 100%);
+    color: #fff;
+    min-width: 0;
+  }
+
+  .azb-overview-hero__eyebrow {
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+
+  .azb-overview-hero__scoreline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: flex-end;
+    margin-top: 12px;
+  }
+
+  .azb-overview-hero__score {
+    font-size: 54px;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .azb-overview-hero__meta {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 220px;
+  }
+
+  .azb-overview-hero__risk,
+  .azb-overview-hero__submeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .azb-overview-hero__submeta {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12px;
+  }
+
+  .azb-overview-hero__aside {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .azb-overview-digest,
+  .azb-score-card,
+  .azb-chart-card,
+  .azb-ranking-summary-strip__item {
+    border: 1px solid #dfe9ed;
+    border-radius: 16px;
+    background: #f7fafb;
+    min-width: 0;
+  }
+
+  .azb-overview-digest {
+    display: grid;
+    gap: 4px;
+    padding: 16px 18px;
+  }
+
+  .azb-overview-digest__label,
+  .azb-ranking-summary-strip__label {
+    color: #66808a;
+    font-size: 12px;
+  }
+
+  .azb-overview-digest__value {
+    color: #12333c;
+    font-size: 22px;
+    font-weight: 700;
+    word-break: break-word;
+  }
+
+  .azb-overview-digest__hint,
+  .azb-ranking-summary-strip__hint {
+    color: #7a9099;
+    font-size: 12px;
+  }
+
+  .azb-score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .azb-score-card {
+    padding: 18px;
+  }
+
+  .azb-score-card__value {
+    color: #12333c;
+    font-size: 30px;
+    font-weight: 700;
+    word-break: break-word;
+  }
+
+  .azb-score-card__label {
+    margin-top: 8px;
+    color: #45626b;
+    font-size: 14px;
+  }
+
+  .azb-score-card__trend {
+    margin-top: 8px;
+    color: #6b828b;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .azb-overview-tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .azb-overview-tags__item {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid #dfe9ed;
+    background: #f4f8f9;
+    color: #45626b;
+    font-size: 12px;
+  }
+
+  .azb-ai-conclusion-body {
+    border-left: 6px solid #0b6b78;
+    border-radius: 16px;
+    background: #f2faf9;
+    padding: 18px 20px;
+    color: #48656e;
+    line-height: 1.85;
+  }
+
+  .azb-chart-section,
+  .azb-ranking-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .azb-chart-card {
+    padding: 18px 20px;
+  }
+
+  .azb-chart-card__title,
+  .azb-ranking-panel__title {
+    color: #12333c;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .azb-chart-box {
+    width: 100%;
+    min-height: 360px;
+    height: 360px;
+  }
+
+  .azb-ranking-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .azb-ranking-summary-strip__item {
+    display: grid;
+    gap: 5px;
+    padding: 14px 16px;
+  }
+
+  .azb-ranking-summary-strip__value {
+    color: #12333c;
+    font-size: 18px;
+    font-weight: 700;
+    word-break: break-word;
+  }
+
+  .azb-ranking-panel {
+    border: 1px solid #dfe9ed;
+    border-radius: 18px;
+    background: #fbfdfd;
+  }
+
+  .azb-ranking-panel__desc {
+    margin-top: 6px;
+    color: #6b828b;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .azb-risk-focus-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .azb-risk-focus-card {
+    padding: 16px 18px;
+    border: 1px solid #f1d4cf;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #fff7f5 0%, #fffdfc 100%);
+  }
+
+  .azb-risk-focus-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .azb-risk-focus-card__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #feeceb;
+    color: #b42318;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .azb-risk-focus-card__score {
+    color: #b42318;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .azb-risk-focus-card h4 {
+    margin: 14px 0 8px;
+    color: #12333c;
+    font-size: 16px;
+  }
+
+  .azb-risk-focus-card p {
+    margin: 0;
+    color: #58707b;
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .azb-risk-focus-card__foot {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #ead0cd;
+    color: #7b5b57;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  :deep(.el-table .is-dashboard-active) {
+    --el-table-tr-bg-color: #f5fbfb;
   }
 
   .azb-summary-card,
@@ -1222,6 +2353,29 @@ getList()
   }
 
   @media (max-width: 1200px) {
+    .azb-ai-report-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .azb-section-nav {
+      position: static;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .azb-section-nav__title {
+      grid-column: 1 / -1;
+    }
+
+    .azb-overview-hero {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .azb-overview-hero__aside {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .azb-summary-grid,
     .azb-focus-grid,
     .azb-chart-grid {
@@ -1229,7 +2383,31 @@ getList()
     }
   }
 
+  @media (max-width: 1024px) {
+    .azb-overview-hero__aside,
+    .azb-chart-section,
+    .azb-ranking-grid,
+    .azb-ranking-summary-strip,
+    .azb-risk-focus-grid,
+    .azb-score-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
   @media (max-width: 768px) {
+    .azb-report-card__head,
+    .azb-report-card__head--table {
+      display: block;
+    }
+
+    .azb-report-actions {
+      margin-top: 12px;
+    }
+
+    .azb-section-nav {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .azb-summary-grid,
     .azb-focus-grid,
     .azb-chart-grid {

@@ -8,6 +8,14 @@ export function listSalaryArrears(query) {
   })
 }
 
+export function getSalaryArrearsSummary(query) {
+  return request({
+    url: '/ygb/salary/batch/arrears/summary',
+    method: 'get',
+    params: query
+  })
+}
+
 export function getSalaryArrears(batchId) {
   return request({
     url: '/ygb/salary/batch/arrears/' + batchId,

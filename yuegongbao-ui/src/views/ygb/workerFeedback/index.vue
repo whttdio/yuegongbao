@@ -6,7 +6,7 @@
           <div class="hero-card__eyebrow">用工宝 / 劳动者服务</div>
           <div class="hero-card__title">用户反馈记录</div>
           <div class="hero-card__desc">
-            集中查看劳动者提交的产品反馈、功能建议和服务意见，当前模块提供只读管理视图。
+            集中处理劳动者提交的产品反馈、功能建议和服务意见，形成受理、办结和重新跟进的闭环记录。
           </div>
         </div>
         <div class="hero-card__meta">
@@ -182,20 +182,51 @@
           <el-col :span="8">
             <el-card shadow="never" class="detail-section">
               <template #header>
-                <div class="detail-section__title">模块说明</div>
+                <div class="detail-section__title">处理跟进</div>
               </template>
-              <div class="readonly-panel">
-                <div class="readonly-panel__item">
-                  <div class="readonly-panel__label">当前能力</div>
-                  <div class="readonly-panel__value">只读查看反馈记录，不提供后台直接回写处理。</div>
+              <div class="handle-panel">
+                <div class="handle-panel__item">
+                  <div class="handle-panel__label">当前状态</div>
+                  <div class="handle-panel__value">
+                    <el-tag :type="statusTagType(detail.status)">{{ statusLabel(detail.status) }}</el-tag>
+                  </div>
                 </div>
-                <div class="readonly-panel__item">
-                  <div class="readonly-panel__label">状态含义</div>
-                  <div class="readonly-panel__value">`待处理` 表示已收到反馈，`已处理` 表示记录已被线下或其他流程消费。</div>
+                <div class="handle-panel__item">
+                  <div class="handle-panel__label">最近处理记录</div>
+                  <div class="handle-panel__value">{{ detail.remark || '暂无处理记录' }}</div>
                 </div>
-                <div class="readonly-panel__item">
-                  <div class="readonly-panel__label">建议用途</div>
-                  <div class="readonly-panel__value">适合用于产品问题筛查、反馈分类和后续研发需求整理。</div>
+                <el-form label-position="top" class="handle-form">
+                  <el-form-item label="处理意见">
+                    <el-input
+                      v-model="handleForm.replyContent"
+                      type="textarea"
+                      :rows="5"
+                      maxlength="300"
+                      show-word-limit
+                      placeholder="请输入核实结果、处理方式或重新跟进原因"
+                    />
+                  </el-form-item>
+                </el-form>
+                <div class="handle-panel__actions">
+                  <el-button
+                    type="success"
+                    icon="Check"
+                    :loading="handleLoading"
+                    :disabled="detail.status === '1'"
+                    @click="submitFeedbackHandle('1')"
+                    v-hasPermi="['ygb:workerMessage:flow']"
+                  >
+                    标记已处理
+                  </el-button>
+                  <el-button
+                    icon="RefreshLeft"
+                    :loading="handleLoading"
+                    :disabled="detail.status === '0'"
+                    @click="submitFeedbackHandle('0')"
+                    v-hasPermi="['ygb:workerMessage:flow']"
+                  >
+                    重新打开
+                  </el-button>
                 </div>
               </div>
             </el-card>
@@ -208,7 +239,7 @@
 
 <script setup name="YgbWorkerFeedback">
 import { computed } from 'vue'
-import { getWorkerFeedback, listWorkerFeedback } from '@/api/ygb/workerMessage'
+import { getWorkerFeedback, listWorkerFeedback, updateWorkerFeedbackStatus } from '@/api/ygb/workerMessage'
 
 const { proxy } = getCurrentInstance()
 
@@ -218,6 +249,10 @@ const total = ref(0)
 const feedbackList = ref([])
 const detail = ref(null)
 const detailOpen = ref(false)
+const handleLoading = ref(false)
+const handleForm = reactive({
+  replyContent: ''
+})
 
 const statusOptions = [
   { label: '待处理', value: '0' },
@@ -259,7 +294,10 @@ const overviewCards = computed(() => {
 function getList() {
   loading.value = true
   listWorkerFeedback(queryParams.value).then(response => {
-    feedbackList.value = response.rows || []
+    feedbackList.value = (response.rows || []).map(item => ({
+      ...item,
+      feedbackId: resolveFeedbackId(item)
+    }))
     total.value = response.total || 0
     loading.value = false
   }).catch(() => {
@@ -282,10 +320,46 @@ function handleStatusFilter(status) {
   handleQuery()
 }
 
+function resolveFeedbackId(row = {}) {
+  return row.feedbackId || row.id
+}
+
 function handleDetail(row) {
-  getWorkerFeedback(row.feedbackId).then(response => {
+  const feedbackId = resolveFeedbackId(row)
+  if (!feedbackId) {
+    proxy.$modal.msgWarning('当前反馈记录缺少有效ID，无法打开详情')
+    return
+  }
+  getWorkerFeedback(feedbackId).then(response => {
     detail.value = response.data
+    handleForm.replyContent = ''
     detailOpen.value = true
+  })
+}
+
+function submitFeedbackHandle(status) {
+  if (!detail.value?.feedbackId) {
+    proxy.$modal.msgWarning('当前反馈记录缺少有效ID，无法处理')
+    return
+  }
+  const replyContent = (handleForm.replyContent || '').trim()
+  if (status === '1' && !replyContent) {
+    proxy.$modal.msgWarning('标记已处理前请填写处理意见')
+    return
+  }
+  handleLoading.value = true
+  updateWorkerFeedbackStatus(detail.value.feedbackId, {
+    status,
+    replyContent
+  }).then(() => {
+    proxy.$modal.msgSuccess(status === '1' ? '反馈已标记为已处理' : '反馈已重新打开')
+    return getWorkerFeedback(detail.value.feedbackId)
+  }).then(response => {
+    detail.value = response.data
+    handleForm.replyContent = ''
+    getList()
+  }).finally(() => {
+    handleLoading.value = false
   })
 }
 
@@ -492,28 +566,40 @@ getList()
   color: #1f2937;
 }
 
-.readonly-panel {
+.handle-panel {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.readonly-panel__item {
+.handle-panel__item {
   padding: 14px 16px;
   border-radius: 12px;
   background: #f8fafc;
 }
 
-.readonly-panel__label {
+.handle-panel__label {
   font-size: 12px;
   color: #64748b;
 }
 
-.readonly-panel__value {
+.handle-panel__value {
   margin-top: 8px;
   font-size: 14px;
   line-height: 1.7;
   color: #1f2937;
+}
+
+.handle-form {
+  padding: 14px 16px 2px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.handle-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 :deep(.el-table .row-pending) {

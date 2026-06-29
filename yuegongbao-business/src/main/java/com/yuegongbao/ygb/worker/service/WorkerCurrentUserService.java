@@ -8,4 +8,6 @@ public interface WorkerCurrentUserService
     SysUser getCurrentSysUser();
 
     YgbPerson getCurrentWorker();
+
+    YgbPerson getCurrentWorkerIfPresent();
 }

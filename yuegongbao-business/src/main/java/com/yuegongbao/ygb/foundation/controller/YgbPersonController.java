@@ -42,7 +42,7 @@ public class YgbPersonController extends BaseController
     @Autowired
     private IYgbModuleRecordService moduleRecordService;
 
-    @PreAuthorize("@ss.hasPermi('ygb:person:list')")
+    @PreAuthorize("@ss.hasAnyPermi('ygb:person:list,ygb:contract:add,ygb:contract:edit')")
     @GetMapping("/list")
     public TableDataInfo list(YgbPerson person)
     {

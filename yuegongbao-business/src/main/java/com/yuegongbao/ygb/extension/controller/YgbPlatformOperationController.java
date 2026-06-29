@@ -34,6 +34,7 @@ import com.yuegongbao.ygb.worker.domain.WorkerJobPost;
 import com.yuegongbao.ygb.worker.domain.WorkerResume;
 import com.yuegongbao.ygb.worker.mapper.WorkerJobMapper;
 import com.yuegongbao.ygb.worker.mapper.WorkerProfileMapper;
+import com.yuegongbao.ygb.worker.service.IWorkerJobPostService;
 
 @RestController
 @RequestMapping
@@ -51,6 +52,9 @@ public class YgbPlatformOperationController extends BaseController
 
     @Autowired
     private WorkerJobMapper workerJobMapper;
+
+    @Autowired
+    private IWorkerJobPostService workerJobPostService;
 
     @Autowired
     private WorkerProfileMapper workerProfileMapper;
@@ -128,19 +132,58 @@ public class YgbPlatformOperationController extends BaseController
         return toAjax(moduleRecordService.deleteModuleRecordByIds(recordIds, getUsername()));
     }
 
+    @PreAuthorize("@ss.hasPermi('ygb:operationRecruitStats:list')")
+    @GetMapping("/ygb/operation/recruitStats/list")
+    public TableDataInfo listRecruitStats(YgbModuleRecord query)
+    {
+        startPage();
+        YgbModuleRecord typedQuery = query == null ? new YgbModuleRecord() : query;
+        typedQuery.setRecordType("OPERATION_RECRUIT_STATS");
+        return getDataTable(moduleRecordService.selectModuleRecordList(typedQuery));
+    }
+
+    @PreAuthorize("@ss.hasPermi('ygb:operationRecruitStats:list')")
+    @GetMapping("/ygb/operation/recruitStats/summary")
+    public AjaxResult summaryRecruitStats(YgbModuleRecord query)
+    {
+        YgbModuleRecord typedQuery = query == null ? new YgbModuleRecord() : query;
+        typedQuery.setRecordType("OPERATION_RECRUIT_STATS");
+        return success(moduleRecordService.selectModuleRecordSummary(typedQuery));
+    }
+
+    @Log(title = "Operation Recruit Stats", businessType = BusinessType.EXPORT)
+    @PreAuthorize("@ss.hasPermi('ygb:operationRecruitStats:export')")
+    @PostMapping("/ygb/operation/recruitStats/export")
+    public void exportRecruitStats(HttpServletResponse response, YgbModuleRecord query)
+    {
+        YgbModuleRecord typedQuery = query == null ? new YgbModuleRecord() : query;
+        typedQuery.setRecordType("OPERATION_RECRUIT_STATS");
+        exportTyped(response, typedQuery, "operation_recruit_stats");
+    }
+
     @PreAuthorize("@ss.hasPermi('ygb:operationJobReview:list')")
     @GetMapping("/ygb/operation/jobReview/list")
     public TableDataInfo listJobReview(WorkerJobPost query)
     {
         startPage();
-        return getDataTable(workerJobMapper.selectAdminJobPostList(query));
+        return getDataTable(workerJobPostService.selectJobPostList(query));
     }
 
     @PreAuthorize("@ss.hasPermi('ygb:operationJobReview:query')")
     @GetMapping("/ygb/operation/jobReview/{jobId}")
     public AjaxResult getJobReview(@PathVariable Long jobId)
     {
-        return success(workerJobMapper.selectAdminJobPostById(jobId));
+        return success(workerJobPostService.selectJobPostById(jobId));
+    }
+
+    @Log(title = "Operation Job Review", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('ygb:operationJobReview:edit')")
+    @PutMapping("/ygb/operation/jobReview/{jobId}/review")
+    public AjaxResult reviewJobReview(@PathVariable Long jobId, @RequestBody Map<String, String> request)
+    {
+        String status = request == null ? null : request.get("status");
+        String opinion = request == null ? null : request.get("opinion");
+        return toAjax(workerJobPostService.reviewJobPost(jobId, status, opinion, getUsername()));
     }
 
     @Log(title = "Operation Job Review", businessType = BusinessType.EXPORT)
@@ -179,6 +222,27 @@ public class YgbPlatformOperationController extends BaseController
     {
         ExcelUtil<WorkerResume> util = new ExcelUtil<>(WorkerResume.class);
         util.exportExcel(response, workerProfileMapper.selectAdminWorkerResumeList(query), "operation_resume");
+    }
+
+    @Log(title = "Operation Resume", businessType = BusinessType.UPDATE)
+    @PreAuthorize("@ss.hasPermi('ygb:operationResume:edit')")
+    @PutMapping("/ygb/operation/resume/{resumeId}/mark")
+    public AjaxResult markResume(@PathVariable Long resumeId, @RequestBody Map<String, String> request)
+    {
+        WorkerResume resume = workerProfileMapper.selectWorkerResumeById(resumeId);
+        if (resume == null)
+        {
+            throw new ServiceException("Resume record not found");
+        }
+        String mark = request == null ? null : request.get("mark");
+        String opinion = request == null ? null : request.get("opinion");
+        if (!"quality".equals(mark) && !"incomplete".equals(mark) && !"blocked".equals(mark))
+        {
+            throw new ServiceException("Unsupported resume mark");
+        }
+        resume.setRemark(buildResumeRemark(mark, opinion));
+        resume.setUpdateBy(getUsername());
+        return toAjax(workerProfileMapper.updateWorkerResumeRemark(resume));
     }
 
     @PreAuthorize("@ss.hasPermi('ygb:platformRuntime:query')")
@@ -316,6 +380,13 @@ public class YgbPlatformOperationController extends BaseController
         YgbModuleRecord query = new YgbModuleRecord();
         query.setRecordType(recordType);
         return moduleRecordService.selectModuleRecordSummary(query);
+    }
+
+    private String buildResumeRemark(String mark, String opinion)
+    {
+        String label = "quality".equals(mark) ? "优质简历" : ("incomplete".equals(mark) ? "待补充" : "暂不推荐");
+        String text = opinion == null || opinion.isBlank() ? "运营标记：" + label : opinion.trim();
+        return "运营标记：" + label + "；" + text;
     }
 
     private String resolveOperationRecordType(String submodule)

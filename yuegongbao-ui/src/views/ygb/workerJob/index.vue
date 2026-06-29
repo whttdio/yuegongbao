@@ -4,7 +4,7 @@
       <el-form-item label="岗位名称" prop="title">
         <el-input v-model="queryParams.title" placeholder="请输入岗位名称" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="企业名称" prop="enterpriseName">
+      <el-form-item v-if="!isEnterpriseFilterLocked()" label="企业名称" prop="enterpriseName">
         <el-input v-model="queryParams.enterpriseName" placeholder="请输入企业名称" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
@@ -160,6 +160,7 @@
 
 <script setup name="YgbWorkerJob">
 import { listWorkerJob, getWorkerJob, addWorkerJob, updateWorkerJob, delWorkerJob } from '@/api/ygb/workerJob'
+import { applyLockedEnterpriseQuery, isEnterpriseFilterLocked } from '@/utils/enterpriseScope'
 
 const { proxy } = getCurrentInstance()
 
@@ -192,7 +193,8 @@ const { queryParams, form, rules } = toRefs(data)
 
 function getList() {
   loading.value = true
-  listWorkerJob(queryParams.value).then(response => {
+  const params = applyLockedEnterpriseQuery(queryParams.value)
+  listWorkerJob(params).then(response => {
     jobList.value = response.rows
     total.value = response.total
     loading.value = false

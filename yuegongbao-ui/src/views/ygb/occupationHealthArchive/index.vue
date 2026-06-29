@@ -1,30 +1,18 @@
 <template>
-  <module-record-page :config="config" />
+  <business-record-page :config="config" />
 </template>
 
 <script setup>
-import ModuleRecordPage from '@/views/ygb/shared/ModuleRecordPage.vue'
-import {
-  getOccupationHealthArchive,
-  getOccupationHealthArchiveSummary,
-  listOccupationHealthArchive
-} from '@/api/ygb/occupationMonitor'
+import BusinessRecordPage from '@/views/ygb/shared/BusinessRecordPage.vue'
+import { createBusinessRecordPageConfig } from '@/views/ygb/shared/businessRecordPageConfig.js'
 
-const config = {
+const config = createBusinessRecordPageConfig({
+  module: 'occupationHealthArchive',
   title: '职业健康档案',
-  description: '以只读台账方式承接职业健康档案、年度检查留痕和专题回函。',
-  permPrefix: 'ygb:occupationHealthArchive',
-  filePrefix: 'occupation_health_archive',
-  defaultCategoryCode: 'health_archive',
-  defaultSourceLabel: '职业病监管',
-  recordNameLabel: '档案名称',
-  recordNamePlaceholder: '请输入档案名称',
-  filters: ['statMonth', 'regionCode', 'industryType', 'warningLevel', 'recordName', 'workflowStatus', 'status'],
-  routeQueryFields: ['statMonth', 'regionCode', 'industryType', 'warningLevel'],
-  readOnly: true,
-  listApi: query => listOccupationHealthArchive(query),
-  summaryApi: query => getOccupationHealthArchiveSummary(query),
-  detailApi: id => getOccupationHealthArchive(id),
-  exportUrl: 'ygb/occupation/healthArchive/export'
-}
+  description: '围绕体检健康档案、复查提醒和处置记录维护开展查询、办理、处置跟踪和台账导出。',
+  businessNameLabel: '健康档案',
+  businessNamePlaceholder: '请输入健康档案',
+  defaultSourceLabel: '职业健康档案',
+  filters: ['statMonth', 'regionCode', 'enterpriseId', 'enterpriseName', 'personName', 'businessName', 'riskLevel', 'workflowStatus', 'status']
+})
 </script>

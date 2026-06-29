@@ -12,7 +12,7 @@
       <div class="ygb-page__tip">
         <div class="ygb-page__tip-item">当前视角：{{ roleBadge }}</div>
         <div class="ygb-page__tip-item">{{ roleTip }}</div>
-        <div class="ygb-page__tip-item">当前继续复用统一预警规则接口，不拆第二套规则表和门户专属接口。</div>
+        <div class="ygb-page__tip-item">规则调整会影响触达对象、超时升级和预警闭环，请在启用前完成复核。</div>
       </div>
     </section>
 
@@ -715,33 +715,33 @@ const selectedRuleOverview = computed(() => {
 function resolveModuleAction(rule, focusKey) {
   const sourceModule = String(rule?.sourceModule || '')
   if (sourceModule === 'SOCIAL') {
-    return { label: '查看社保缴费监控', path: '/ygb/socialPayment' }
+    return { label: '查看社保缴费监控', path: '/social-insurance/payment' }
   }
   if (sourceModule === 'TAX') {
-    return { label: '查看个税比对', path: '/ygb/taxCompare' }
+    return { label: '查看个税比对', path: '/tax-supervision/personalTax' }
   }
   if (sourceModule === 'EXPANSION') {
-    return { label: '查看漏保清单', path: '/ygb/uninsuredList' }
+    return { label: '查看漏保清单', path: '/expansion-reduction/uninsured' }
   }
   if (sourceModule === 'SPECIAL') {
-    return { label: '查看用工比例', path: '/ygb/employmentRatio' }
+    return { label: '查看用工比例', path: '/special-rectification/employmentRatio' }
   }
   if (sourceModule === 'DEVICE') {
-    return { label: '查看设备管理', path: '/ygb/device' }
+    return { label: '查看设备管理', path: '/device-management/detail' }
   }
   if (sourceModule === 'INJURY') {
-    return { label: '查看工伤事件', path: '/ygb/injuryEvent' }
+    return { label: '查看工伤事件', path: '/injury-supervision/event' }
   }
   if (focusKey === 'financial') {
-    return { label: '查看社保缴费监控', path: '/ygb/socialPayment' }
+    return { label: '查看社保缴费监控', path: '/social-insurance/payment' }
   }
   if (focusKey === 'targetMissing' || focusKey === 'timeoutShort' || focusKey === 'timeoutLong') {
-    return { label: '查看预警中心', path: '/ygb/warning' }
+    return { label: '查看预警中心', path: '/warning-center/workOrder' }
   }
   if (focusKey === 'disabled') {
-    return { label: '查看预警治理月报', path: '/ygb-report/statReport/warning' }
+    return { label: '查看预警治理月报', path: '/statistical-report/custom' }
   }
-  return { label: '查看预警中心', path: '/ygb/warning' }
+  return { label: '查看预警中心', path: '/warning-center/workOrder' }
 }
 
 function needsEdit(rule) {
@@ -832,7 +832,7 @@ function buildPageHintTags() {
     return [
       { label: '优先复核社保、税务和扩面减损来源规则', type: 'warning' },
       { label: '推送对象要覆盖财务经办和企业管理员', type: 'info' },
-      { label: '规则页继续复用统一预警规则接口', type: 'success' }
+      { label: '规则口径已纳入预警闭环管理', type: 'success' }
     ]
   }
   if (roleView.value === 'hrss') {
@@ -846,7 +846,7 @@ function buildPageHintTags() {
     return [
       { label: '优先补推送对象、规则说明和停用留痕', type: 'warning' },
       { label: '企业经办更适合先补材料，再交由管理员做最终校正', type: 'info' },
-      { label: '当前为 PC 办理台账，不新增第二套企业端规则页面', type: 'success' }
+      { label: '当前为 PC 办理台账，规则调整按统一审批口径留痕', type: 'success' }
     ]
   }
   if (roleView.value === 'admin') {
@@ -859,7 +859,7 @@ function buildPageHintTags() {
   return [
     { label: '优先复核红警规则和缺推送对象规则', type: 'warning' },
     { label: '规则配置要与来源模块办理链保持一致', type: 'info' },
-    { label: '当前页面仍复用统一规则接口与规则底数', type: 'success' }
+    { label: '当前规则已纳入统一预警口径和闭环统计', type: 'success' }
   ]
 }
 

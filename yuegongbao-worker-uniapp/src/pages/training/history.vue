@@ -1,16 +1,37 @@
 <template>
   <view class="worker-page">
-    <view class="worker-card">
-      <view class="worker-title">学习记录</view>
-      <view class="worker-subtitle">查看近月培训完成情况和课程学习进度。</view>
+    <view v-if="loading" class="worker-card worker-empty worker-empty--panel">
+      <view class="worker-empty__title">记录加载中...</view>
+    </view>
+
+    <template v-else>
+    <view class="worker-card worker-hero">
+      <view class="worker-title worker-title--display">学习记录</view>
+      <view class="worker-subtitle">查看近月培训完成情况和课程学习进度</view>
+      <view class="hero-stat-grid">
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ historyRows.length }}</view>
+          <view class="hero-stat__label">记录月份</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ passedMonthCount }}</view>
+          <view class="hero-stat__label">已通过</view>
+        </view>
+        <view class="hero-stat">
+          <view class="hero-stat__value">{{ courseRows.length }}</view>
+          <view class="hero-stat__label">课程记录</view>
+        </view>
+      </view>
     </view>
 
     <view class="worker-card">
-      <view class="worker-title">月度完成记录</view>
+      <view class="section-head">
+        <view class="worker-title">月度完成记录</view>
+      </view>
       <view v-if="historyRows.length">
-        <view v-for="item in historyRows" :key="item.month" class="list-row">
+        <view v-for="item in historyRows" :key="item.month" class="list-row" @click="openHistoryDetail(item)">
           <view>
-            <view class="list-row__title">{{ item.month }}</view>
+            <view class="list-row__title">{{ item.monthLabel || formatTrainingMonth(item.month) }}</view>
             <view class="list-row__subtitle">完成 {{ item.completed || 0 }}/{{ item.total || 0 }}</view>
           </view>
           <view class="worker-tag">{{ item.passed ? '已通过' : '进行中' }}</view>
@@ -45,6 +66,7 @@
         </view>
       </view>
     </view>
+    </template>
   </view>
 </template>
 
@@ -52,9 +74,13 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getTrainingCourses, getTrainingHistory } from '../../api/worker'
+import { formatTrainingMonth } from '../../utils/training-format'
 
 const historyRows = ref([])
+const courseRows = computed(() => courses.value)
+const passedMonthCount = computed(() => historyRows.value.filter((item) => item.passed).length)
 const courses = ref([])
+const loading = ref(true)
 const historyLastLoadedAt = ref('')
 const historyLastActionAt = ref('')
 const historyLastMessage = ref('')
@@ -93,6 +119,7 @@ const historySnapshotText = computed(() => {
 })
 
 async function loadData() {
+  loading.value = true
   try {
     const [historyData, courseData] = await Promise.all([getTrainingHistory(), getTrainingCourses()])
     historyRows.value = historyData?.rows || []
@@ -105,6 +132,8 @@ async function loadData() {
     historyLastLoadedAt.value = new Date().toLocaleString()
     historyLastMessage.value = error.message || '加载记录失败'
     uni.showToast({ title: error.message || '加载记录失败', icon: 'none' })
+  } finally {
+    loading.value = false
   }
 }
 
@@ -119,6 +148,14 @@ function openCourse(item) {
   }
   recordHistoryAction(`打开课程详情：${item.title || '-'}`, `courseKey=${item.courseKey}`)
   uni.navigateTo({ url: `/pages/training/course-detail?courseKey=${item.courseKey}` })
+}
+
+function openHistoryDetail(item) {
+  if (!item?.month) {
+    return
+  }
+  recordHistoryAction(`打开月度记录：${item.monthLabel || item.month}`, `month=${item.month}`)
+  uni.navigateTo({ url: `/pages/training/history-detail?month=${item.month}` })
 }
 
 function goTraining() {
@@ -142,117 +179,7 @@ onShow(loadData)
 </script>
 
 <style lang="scss">
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  margin-bottom: 18rpx;
-}
-
-.section-head--sub {
-  margin-top: 20rpx;
-}
-
-.worker-title--small {
-  font-size: 28rpx;
-}
-
-.list-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.list-row:last-child {
-  border-bottom: none;
-}
-
-.list-row__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.list-row__subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: #7890aa;
-}
-
-.worker-empty--panel {
-  padding: 24rpx 0;
-}
-
-.worker-empty__title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #16324f;
-}
-
-.worker-empty__desc {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.7;
-  color: #7890aa;
-}
-
-.worker-empty__actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 22rpx;
-}
-
 .worker-empty__actions button {
   flex: 1;
-}
-
-.detail-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #edf2f7;
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-row__label {
-  font-size: 26rpx;
-  color: #5f7893;
-}
-
-.detail-row__value {
-  flex: 1;
-  text-align: right;
-  font-size: 26rpx;
-  line-height: 1.7;
-  color: #16324f;
-}
-
-.result-block {
-  margin-top: 20rpx;
-  padding: 20rpx 24rpx;
-  border-radius: 18rpx;
-  background: #f5f8fc;
-}
-
-.result-block__label {
-  font-size: 24rpx;
-  color: #5f7893;
-}
-
-.result-block__value {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  line-height: 1.8;
-  color: #36506b;
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 </style>

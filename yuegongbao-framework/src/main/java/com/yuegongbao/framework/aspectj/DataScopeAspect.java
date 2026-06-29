@@ -5,6 +5,7 @@ import java.util.List;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import com.yuegongbao.common.annotation.DataScope;
 import com.yuegongbao.common.constant.Constants;
@@ -18,18 +19,10 @@ import com.yuegongbao.common.utils.SecurityUtils;
 import com.yuegongbao.common.utils.StringUtils;
 import com.yuegongbao.framework.security.context.PermissionContextHolder;
 
-/**
- * 数据过滤处理
- *
- * @author yuegongbao
- */
 @Aspect
 @Component
 public class DataScopeAspect
 {
-    /**
-     * 数据权限过滤关键字
-     */
     public static final String DATA_SCOPE = "dataScope";
 
     @Before("@annotation(controllerDataScope)")
@@ -41,36 +34,30 @@ public class DataScopeAspect
 
     protected void handleDataScope(final JoinPoint joinPoint, DataScope controllerDataScope)
     {
-        // 获取当前的用户
-        LoginUser loginUser = SecurityUtils.getLoginUser();
-        if (StringUtils.isNotNull(loginUser))
+        Authentication authentication = SecurityUtils.getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof LoginUser loginUser))
         {
-            SysUser currentUser = loginUser.getUser();
-            // 如果是超级管理员，则不过滤数据
-            if (StringUtils.isNotNull(currentUser) && !currentUser.isAdmin())
-            {
-                String permission = StringUtils.defaultIfEmpty(controllerDataScope.permission(), PermissionContextHolder.getContext());
-                dataScopeFilter(joinPoint, currentUser, controllerDataScope.userAlias(), controllerDataScope.deptAlias(), controllerDataScope.userField(), controllerDataScope.deptField(), permission);
-            }
+            return;
+        }
+
+        SysUser currentUser = loginUser.getUser();
+        if (StringUtils.isNotNull(currentUser) && !currentUser.isAdmin())
+        {
+            String permission = StringUtils.defaultIfEmpty(controllerDataScope.permission(), PermissionContextHolder.getContext());
+            dataScopeFilter(joinPoint, currentUser, controllerDataScope.userAlias(), controllerDataScope.deptAlias(),
+                controllerDataScope.userField(), controllerDataScope.deptField(), permission);
         }
     }
 
-    /**
-     * 数据范围过滤
-     *
-     * @param joinPoint 切点
-     * @param user 用户
-     * @param deptAlias 部门别名
-     * @param userAlias 用户别名
-     * @param permission 权限字符
-     */
-    public static void dataScopeFilter(JoinPoint joinPoint, SysUser user, String userAlias, String deptAlias, String userField, String deptField, String permission)
+    public static void dataScopeFilter(JoinPoint joinPoint, SysUser user, String userAlias, String deptAlias,
+        String userField, String deptField, String permission)
     {
         StringBuilder sqlString = new StringBuilder();
         List<String> conditions = new ArrayList<String>();
         List<String> scopeCustomIds = new ArrayList<String>();
         user.getRoles().forEach(role -> {
-            if (Constants.Dept.DATA_SCOPE_CUSTOM.equals(role.getDataScope()) && StringUtils.equals(role.getStatus(), UserConstants.ROLE_NORMAL) && (StringUtils.isEmpty(permission) || StringUtils.containsAny(role.getPermissions(), Convert.toStrArray(permission))))
+            if (Constants.Dept.DATA_SCOPE_CUSTOM.equals(role.getDataScope()) && StringUtils.equals(role.getStatus(), UserConstants.ROLE_NORMAL)
+                && (StringUtils.isEmpty(permission) || StringUtils.containsAny(role.getPermissions(), Convert.toStrArray(permission))))
             {
                 scopeCustomIds.add(Convert.toStr(role.getRoleId()));
             }
@@ -97,12 +84,13 @@ public class DataScopeAspect
             {
                 if (scopeCustomIds.size() > 1)
                 {
-                    // 多个自定数据权限使用in查询，避免多次拼接。
-                    sqlString.append(StringUtils.format(" OR {}.{} IN ( SELECT dept_id FROM sys_role_dept WHERE role_id in ({}) ) ", deptAlias, deptField, String.join(",", scopeCustomIds)));
+                    sqlString.append(StringUtils.format(" OR {}.{} IN ( SELECT dept_id FROM sys_role_dept WHERE role_id in ({}) ) ",
+                        deptAlias, deptField, String.join(",", scopeCustomIds)));
                 }
                 else
                 {
-                    sqlString.append(StringUtils.format(" OR {}.{} IN ( SELECT dept_id FROM sys_role_dept WHERE role_id = {} ) ", deptAlias, deptField, role.getRoleId()));
+                    sqlString.append(StringUtils.format(" OR {}.{} IN ( SELECT dept_id FROM sys_role_dept WHERE role_id = {} ) ",
+                        deptAlias, deptField, role.getRoleId()));
                 }
             }
             else if (Constants.Dept.DATA_SCOPE_DEPT.equals(dataScope))
@@ -111,7 +99,8 @@ public class DataScopeAspect
             }
             else if (Constants.Dept.DATA_SCOPE_DEPT_AND_CHILD.equals(dataScope))
             {
-                sqlString.append(StringUtils.format(" OR {}.{} IN ( SELECT dept_id FROM sys_dept WHERE dept_id = {} or find_in_set( {} , ancestors ) )", deptAlias, deptField, user.getDeptId(), user.getDeptId()));
+                sqlString.append(StringUtils.format(" OR {}.{} IN ( SELECT dept_id FROM sys_dept WHERE dept_id = {} or find_in_set( {} , ancestors ) )",
+                    deptAlias, deptField, user.getDeptId(), user.getDeptId()));
             }
             else if (Constants.Dept.DATA_SCOPE_SELF.equals(dataScope))
             {
@@ -121,14 +110,12 @@ public class DataScopeAspect
                 }
                 else
                 {
-                    // 数据权限为仅本人且没有userAlias别名不查询任何数据
                     sqlString.append(StringUtils.format(" OR {}.{} = 0 ", deptAlias, deptField));
                 }
             }
             conditions.add(dataScope);
         }
 
-        // 角色都不包含传递过来的权限字符，这个时候sqlString也会为空，所以要限制一下,不查询任何数据
         if (StringUtils.isEmpty(conditions))
         {
             sqlString.append(StringUtils.format(" OR {}.{} = 0 ", deptAlias, deptField));
@@ -145,9 +132,6 @@ public class DataScopeAspect
         }
     }
 
-    /**
-     * 拼接权限sql前先清空params.dataScope参数防止注入
-     */
     private void clearDataScope(final JoinPoint joinPoint)
     {
         Object params = joinPoint.getArgs()[0];

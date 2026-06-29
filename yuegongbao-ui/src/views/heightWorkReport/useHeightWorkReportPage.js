@@ -10,6 +10,7 @@ import {
 } from '@/api/ygb/heightWorkReport'
 import { optionselectEnterprise } from '@/api/ygb/enterprise'
 import { useAuthorizedRegionOptions } from '@/utils/regionScope'
+import { gdRegionNameMap, gdRegionOptions } from '@/utils/regionName'
 
 export const reporterTypeOptions = [
   { label: '企业', value: '1' },
@@ -28,19 +29,9 @@ export const certStatusOptions = [
   { label: '全部失效', value: '2' }
 ]
 
-export const regionOptions = [
-  { label: '广东省', value: '440000' },
-  { label: '广州市天河区', value: '440106' },
-  { label: '深圳市南山区', value: '440305' },
-  { label: '佛山市顺德区', value: '440606' }
-]
+export const regionOptions = gdRegionOptions
 
-export const regionNameMap = {
-  '440000': '广东省',
-  '440106': '广州市天河区',
-  '440305': '深圳市南山区',
-  '440606': '佛山市顺德区'
-}
+export const regionNameMap = gdRegionNameMap
 
 export const safetyMeasureOptions = ['已佩戴安全带', '已设置安全网', '已配置监护人', '已进行安全交底', '天气条件允许']
 
@@ -509,8 +500,10 @@ export function sourceModeLabel(value) {
   const upper = String(value || '').toUpperCase()
   if (!upper) return '-'
   if (upper === 'PC') return 'PC录入'
-  if (upper.includes('STUB')) return 'Stub'
+  if (upper.includes('SYSTEM')) return '系统生成'
+  if (upper.includes('STUB')) return '接口同步'
   if (upper.includes('IMPORT')) return '导入'
+  if (upper.includes('THIRD')) return '第三方同步'
   return value
 }
 
@@ -531,7 +524,7 @@ export function buildBaseHintTags(report) {
   if (String(report.certValidStatus || '') === '1') {
     tags.push({ label: '部分证书异常，建议核对异常人员和补证留痕', type: 'warning' })
   }
-  if (sourceModeLabel(report.sourceMode) !== 'PC录入') {
+  if (isImportedSource(report.sourceMode)) {
     tags.push({ label: '外部导入来源，建议复核字段完整性和来源平台', type: 'info' })
   }
   if (String(report.reporterType || '') === '2') {
