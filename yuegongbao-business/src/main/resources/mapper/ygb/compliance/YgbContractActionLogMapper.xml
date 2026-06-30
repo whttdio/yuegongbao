@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.compliance.mapper.YgbContractActionLogMapper">
+
+    <insert id="insertContractActionLog" parameterType="YgbContractActionLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into t_contract_action_log (
+            contract_id, contract_no, template_id, action_type, action_status, action_result,
+            portal_scope, warning_id, action_time, remark, create_by, create_time
+        ) values (
+            #{contractId}, #{contractNo}, #{templateId}, #{actionType}, #{actionStatus}, #{actionResult},
+            #{portalScope}, #{warningId}, #{actionTime}, #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+</mapper>

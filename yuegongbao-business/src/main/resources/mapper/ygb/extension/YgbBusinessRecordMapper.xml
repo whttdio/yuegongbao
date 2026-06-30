@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuegongbao.ygb.extension.mapper.YgbBusinessRecordMapper">
+
+    <resultMap id="YgbBusinessRecordResult" type="com.yuegongbao.ygb.extension.domain.YgbBusinessRecord">
+        <id property="businessId" column="business_id" />
+        <result property="moduleCode" column="module_code" />
+        <result property="businessNo" column="business_no" />
+        <result property="businessName" column="business_name" />
+        <result property="businessType" column="business_type" />
+        <result property="statMonth" column="stat_month" />
+        <result property="portalCode" column="portal_code" />
+        <result property="workflowStatus" column="workflow_status" />
+        <result property="status" column="status" />
+        <result property="regionCode" column="region_code" />
+        <result property="enterpriseId" column="enterprise_id" />
+        <result property="enterpriseName" column="enterprise_name" />
+        <result property="personId" column="person_id" />
+        <result property="personName" column="person_name" />
+        <result property="relatedId" column="related_id" />
+        <result property="relatedCode" column="related_code" />
+        <result property="sourceLabel" column="source_label" />
+        <result property="riskLevel" column="risk_level" />
+        <result property="handleResult" column="handle_result" />
+        <result property="ownerName" column="owner_name" />
+        <result property="contactPhone" column="contact_phone" />
+        <result property="amount" column="amount" />
+        <result property="quantity" column="quantity" />
+        <result property="eventTime" column="event_time" />
+        <result property="startTime" column="start_time" />
+        <result property="endTime" column="end_time" />
+        <result property="contentText" column="content_text" />
+        <result property="attachmentUrl" column="attachment_url" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <sql id="selectBusinessRecordVo">
+        select business_id, module_code, business_no, business_name, business_type, stat_month, portal_code,
+               workflow_status, status, region_code, enterprise_id, enterprise_name, person_id, person_name,
+               related_id, related_code, source_label, risk_level, handle_result, owner_name, contact_phone,
+               amount, quantity, event_time, start_time, end_time, content_text, attachment_url, sort_order,
+               remark, create_by, create_time, update_by, update_time
+        from ${tableName}
+    </sql>
+
+    <select id="selectBusinessRecordList" resultMap="YgbBusinessRecordResult">
+        <include refid="selectBusinessRecordVo" />
+        <where>
+            del_flag = '0'
+            <if test="query.moduleCode != null and query.moduleCode != ''">
+                and module_code = #{query.moduleCode}
+            </if>
+            <if test="query.businessNo != null and query.businessNo != ''">
+                and business_no like concat('%', #{query.businessNo}, '%')
+            </if>
+            <if test="query.businessName != null and query.businessName != ''">
+                and business_name like concat('%', #{query.businessName}, '%')
+            </if>
+            <if test="query.businessType != null and query.businessType != ''">
+                and business_type = #{query.businessType}
+            </if>
+            <if test="query.statMonth != null and query.statMonth != ''">
+                and stat_month = #{query.statMonth}
+            </if>
+            <if test="query.portalCode != null and query.portalCode != ''">
+                and portal_code = #{query.portalCode}
+            </if>
+            <if test="query.workflowStatus != null and query.workflowStatus != ''">
+                and workflow_status = #{query.workflowStatus}
+            </if>
+            <if test="query.status != null and query.status != ''">
+                and status = #{query.status}
+            </if>
+            <if test="query.regionCode != null and query.regionCode != ''">
+                and region_code like concat(#{query.regionCode}, '%')
+            </if>
+            <if test="query.enterpriseId != null">
+                and enterprise_id = #{query.enterpriseId}
+            </if>
+            <if test="query.enterpriseName != null and query.enterpriseName != ''">
+                and enterprise_name like concat('%', #{query.enterpriseName}, '%')
+            </if>
+            <if test="query.personId != null">
+                and person_id = #{query.personId}
+            </if>
+            <if test="query.personName != null and query.personName != ''">
+                and person_name like concat('%', #{query.personName}, '%')
+            </if>
+            <if test="query.riskLevel != null and query.riskLevel != ''">
+                and risk_level = #{query.riskLevel}
+            </if>
+            ${query.params.regionDataScope}
+            ${query.params.enterpriseDataScope}
+        </where>
+        order by sort_order asc, business_id desc
+    </select>
+
+    <select id="selectBusinessRecordById" resultMap="YgbBusinessRecordResult">
+        <include refid="selectBusinessRecordVo" />
+        where business_id = #{businessId}
+          and del_flag = '0'
+    </select>
+
+    <insert id="insertBusinessRecord" useGeneratedKeys="true" keyProperty="record.businessId">
+        insert into ${tableName} (
+            module_code, business_no, business_name, business_type, stat_month, portal_code, workflow_status, status,
+            region_code, enterprise_id, enterprise_name, person_id, person_name, related_id, related_code, source_label,
+            risk_level, handle_result, owner_name, contact_phone, amount, quantity, event_time, start_time, end_time,
+            content_text, attachment_url, sort_order, remark, create_by, create_time, del_flag
+        ) values (
+            #{record.moduleCode}, #{record.businessNo}, #{record.businessName}, #{record.businessType}, #{record.statMonth},
+            #{record.portalCode}, #{record.workflowStatus}, #{record.status}, #{record.regionCode}, #{record.enterpriseId},
+            #{record.enterpriseName}, #{record.personId}, #{record.personName}, #{record.relatedId}, #{record.relatedCode},
+            #{record.sourceLabel}, #{record.riskLevel}, #{record.handleResult}, #{record.ownerName}, #{record.contactPhone},
+            #{record.amount}, #{record.quantity}, #{record.eventTime}, #{record.startTime}, #{record.endTime},
+            #{record.contentText}, #{record.attachmentUrl}, #{record.sortOrder}, #{record.remark}, #{record.createBy},
+            sysdate(), '0'
+        )
+    </insert>
+
+    <update id="updateBusinessRecord">
+        update ${tableName}
+        <set>
+            <if test="record.moduleCode != null">module_code = #{record.moduleCode},</if>
+            <if test="record.businessNo != null">business_no = #{record.businessNo},</if>
+            <if test="record.businessName != null">business_name = #{record.businessName},</if>
+            <if test="record.businessType != null">business_type = #{record.businessType},</if>
+            <if test="record.statMonth != null">stat_month = #{record.statMonth},</if>
+            <if test="record.portalCode != null">portal_code = #{record.portalCode},</if>
+            <if test="record.workflowStatus != null">workflow_status = #{record.workflowStatus},</if>
+            <if test="record.status != null">status = #{record.status},</if>
+            <if test="record.regionCode != null">region_code = #{record.regionCode},</if>
+            <if test="record.enterpriseId != null">enterprise_id = #{record.enterpriseId},</if>
+            <if test="record.enterpriseName != null">enterprise_name = #{record.enterpriseName},</if>
+            <if test="record.personId != null">person_id = #{record.personId},</if>
+            <if test="record.personName != null">person_name = #{record.personName},</if>
+            <if test="record.relatedId != null">related_id = #{record.relatedId},</if>
+            <if test="record.relatedCode != null">related_code = #{record.relatedCode},</if>
+            <if test="record.sourceLabel != null">source_label = #{record.sourceLabel},</if>
+            <if test="record.riskLevel != null">risk_level = #{record.riskLevel},</if>
+            <if test="record.handleResult != null">handle_result = #{record.handleResult},</if>
+            <if test="record.ownerName != null">owner_name = #{record.ownerName},</if>
+            <if test="record.contactPhone != null">contact_phone = #{record.contactPhone},</if>
+            <if test="record.amount != null">amount = #{record.amount},</if>
+            <if test="record.quantity != null">quantity = #{record.quantity},</if>
+            <if test="record.eventTime != null">event_time = #{record.eventTime},</if>
+            <if test="record.startTime != null">start_time = #{record.startTime},</if>
+            <if test="record.endTime != null">end_time = #{record.endTime},</if>
+            <if test="record.contentText != null">content_text = #{record.contentText},</if>
+            <if test="record.attachmentUrl != null">attachment_url = #{record.attachmentUrl},</if>
+            <if test="record.sortOrder != null">sort_order = #{record.sortOrder},</if>
+            <if test="record.remark != null">remark = #{record.remark},</if>
+            <if test="record.updateBy != null and record.updateBy != ''">update_by = #{record.updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where business_id = #{record.businessId}
+          and del_flag = '0'
+    </update>
+
+    <update id="deleteBusinessRecordByIds">
+        update ${tableName}
+        set del_flag = '2',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where del_flag = '0'
+          and business_id in
+        <foreach collection="businessIds" item="businessId" open="(" separator="," close=")">
+            #{businessId}
+        </foreach>
+    </update>
+</mapper>

@@ -1,0 +1,14 @@
+{
+  "name": "粤工保企业端",
+  "appid": "__UNI__YGB_ENTERPRISE__",
+  "description": "粤工保企业端微信小程序",
+  "versionName": "0.1.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "app-plus": {
+    "usingComponents": true
+  },
+  "h5": {
+    "title": "粤工保企业端"
+  }
+}

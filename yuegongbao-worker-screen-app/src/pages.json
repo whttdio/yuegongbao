@@ -1,0 +1,390 @@
+{
+  "pages": [
+    {
+      "path": "pages/standby/index",
+      "style": {
+        "navigationBarTitleText": "服务大厅待机页",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "刷脸识别登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/main/index",
+      "style": {
+        "navigationBarTitleText": "服务目录总览",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/device/index",
+      "style": {
+        "navigationBarTitleText": "设备运维面板",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "服务屏首页"
+      }
+    },
+    {
+      "path": "pages/workbench/index",
+      "style": {
+        "navigationBarTitleText": "服务屏工作台"
+      }
+    },
+    {
+      "path": "pages/attendance/checkin",
+      "style": {
+        "navigationBarTitleText": "考勤打卡"
+      }
+    },
+    {
+      "path": "pages/attendance/detail",
+      "style": {
+        "navigationBarTitleText": "考勤明细"
+      }
+    },
+    {
+      "path": "pages/camera/index",
+      "style": {
+        "navigationBarTitleText": "拍照上传"
+      }
+    },
+    {
+      "path": "pages/training/index",
+      "style": {
+        "navigationBarTitleText": "培训中心"
+      }
+    },
+    {
+      "path": "pages/training/course-detail",
+      "style": {
+        "navigationBarTitleText": "培训课程详情"
+      }
+    },
+    {
+      "path": "pages/training/questions",
+      "style": {
+        "navigationBarTitleText": "培训答题"
+      }
+    },
+    {
+      "path": "pages/training/history",
+      "style": {
+        "navigationBarTitleText": "培训记录"
+      }
+    },
+    {
+      "path": "pages/training/history-detail",
+      "style": {
+        "navigationBarTitleText": "培训记录详情"
+      }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": {
+        "navigationBarTitleText": "我的服务"
+      }
+    },
+    {
+      "path": "pages/salary/list",
+      "style": {
+        "navigationBarTitleText": "工资列表"
+      }
+    },
+    {
+      "path": "pages/salary/detail",
+      "style": {
+        "navigationBarTitleText": "工资详情"
+      }
+    },
+    {
+      "path": "pages/social/list",
+      "style": {
+        "navigationBarTitleText": "社保列表"
+      }
+    },
+    {
+      "path": "pages/social/detail",
+      "style": {
+        "navigationBarTitleText": "社保详情"
+      }
+    },
+    {
+      "path": "pages/tax/list",
+      "style": {
+        "navigationBarTitleText": "个税列表"
+      }
+    },
+    {
+      "path": "pages/tax/detail",
+      "style": {
+        "navigationBarTitleText": "个税详情"
+      }
+    },
+    {
+      "path": "pages/complaint/index",
+      "style": {
+        "navigationBarTitleText": "投诉举报"
+      }
+    },
+    {
+      "path": "pages/complaint/detail",
+      "style": {
+        "navigationBarTitleText": "投诉详情"
+      }
+    },
+    {
+      "path": "pages/legal/index",
+      "style": {
+        "navigationBarTitleText": "法律咨询"
+      }
+    },
+    {
+      "path": "pages/legal/detail",
+      "style": {
+        "navigationBarTitleText": "咨询详情"
+      }
+    },
+    {
+      "path": "pages/legal/article-list",
+      "style": {
+        "navigationBarTitleText": "法律公益讲座"
+      }
+    },
+    {
+      "path": "pages/legal/article-detail",
+      "style": {
+        "navigationBarTitleText": "讲座详情"
+      }
+    },
+    {
+      "path": "pages/legal/faq-detail",
+      "style": {
+        "navigationBarTitleText": "常见问题"
+      }
+    },
+    {
+      "path": "pages/activity/detail",
+      "style": {
+        "navigationBarTitleText": "活动服务"
+      }
+    },
+    {
+      "path": "pages/activity/join-list",
+      "style": {
+        "navigationBarTitleText": "参与记录"
+      }
+    },
+    {
+      "path": "pages/activity/webview",
+      "style": {
+        "navigationBarTitleText": "活动详情"
+      }
+    },
+    {
+      "path": "pages/video/list",
+      "style": {
+        "navigationBarTitleText": "视频服务"
+      }
+    },
+    {
+      "path": "pages/video/detail",
+      "style": {
+        "navigationBarTitleText": "视频详情"
+      }
+    },
+    {
+      "path": "pages/ai-training/detail",
+      "style": {
+        "navigationBarTitleText": "AI 培训"
+      }
+    },
+    {
+      "path": "pages/notice/list",
+      "style": {
+        "navigationBarTitleText": "通知公告"
+      }
+    },
+    {
+      "path": "pages/notice/detail",
+      "style": {
+        "navigationBarTitleText": "通知详情"
+      }
+    },
+    {
+      "path": "pages/job/list",
+      "style": {
+        "navigationBarTitleText": "岗位列表"
+      }
+    },
+    {
+      "path": "pages/job/detail",
+      "style": {
+        "navigationBarTitleText": "岗位详情"
+      }
+    },
+    {
+      "path": "pages/job/map",
+      "style": {
+        "navigationBarTitleText": "附近岗位"
+      }
+    },
+    {
+      "path": "pages/job/apply-list",
+      "style": {
+        "navigationBarTitleText": "投递记录"
+      }
+    },
+    {
+      "path": "pages/profile/resume",
+      "style": {
+        "navigationBarTitleText": "我的简历"
+      }
+    },
+    {
+      "path": "pages/profile/labor-contracts",
+      "style": {
+        "navigationBarTitleText": "劳动合同"
+      }
+    },
+    {
+      "path": "pages/profile/labor-contract-detail",
+      "style": {
+        "navigationBarTitleText": "合同详情"
+      }
+    },
+    {
+      "path": "pages/profile/labor-contract-preview",
+      "style": {
+        "navigationBarTitleText": "合同预览"
+      }
+    },
+    {
+      "path": "pages/profile/help",
+      "style": {
+        "navigationBarTitleText": "帮助中心"
+      }
+    },
+    {
+      "path": "pages/profile/help-detail",
+      "style": {
+        "navigationBarTitleText": "帮助详情"
+      }
+    },
+    {
+      "path": "pages/profile/settings",
+      "style": {
+        "navigationBarTitleText": "设置"
+      }
+    },
+    {
+      "path": "pages/profile/privacy",
+      "style": {
+        "navigationBarTitleText": "隐私协议"
+      }
+    },
+    {
+      "path": "pages/profile/account-security",
+      "style": {
+        "navigationBarTitleText": "账号安全"
+      }
+    },
+    {
+      "path": "pages/profile/real-name",
+      "style": {
+        "navigationBarTitleText": "实名认证"
+      }
+    },
+    {
+      "path": "pages/profile/points",
+      "style": {
+        "navigationBarTitleText": "积分商城"
+      }
+    },
+    {
+      "path": "pages/profile/upload-records",
+      "style": {
+        "navigationBarTitleText": "上传记录"
+      }
+    },
+    {
+      "path": "pages/profile/security",
+      "style": {
+        "navigationBarTitleText": "保险保障"
+      }
+    },
+    {
+      "path": "pages/union/index",
+      "style": {
+        "navigationBarTitleText": "工会服务"
+      }
+    },
+    {
+      "path": "pages/union/case-detail",
+      "style": {
+        "navigationBarTitleText": "工会案例"
+      }
+    },
+    {
+      "path": "pages/union/contracts",
+      "style": {
+        "navigationBarTitleText": "集体合同查阅"
+      }
+    },
+    {
+      "path": "pages/union/contract-detail",
+      "style": {
+        "navigationBarTitleText": "工会合同详情"
+      }
+    },
+    {
+      "path": "pages/union/notice-detail",
+      "style": {
+        "navigationBarTitleText": "工会通知"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#6f8096",
+    "selectedColor": "#0f62fe",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/standby/index",
+        "text": "大厅",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/main/index",
+        "text": "服务",
+        "iconPath": "static/tabbar/workbench.png",
+        "selectedIconPath": "static/tabbar/workbench-active.png"
+      },
+      {
+        "pagePath": "pages/device/index",
+        "text": "设备",
+        "iconPath": "static/tabbar/profile.png",
+        "selectedIconPath": "static/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "粤工保服务屏",
+    "navigationBarBackgroundColor": "#f4f7fb",
+    "backgroundColor": "#edf3fb",
+    "backgroundTextStyle": "dark",
+    "enablePullDownRefresh": false
+  }
+}

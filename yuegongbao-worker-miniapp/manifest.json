@@ -1,0 +1,24 @@
+{
+  "name": "粤工保劳动者端",
+  "appid": "__UNI__YGB_WORKER__",
+  "description": "粤工保劳动者微信小程序",
+  "versionName": "0.1.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "app-plus": {
+    "usingComponents": true,
+    "distribute": {
+      "sdkConfigs": {
+        "push": {
+          "unipush": {
+            "version": "2",
+            "offline": true
+          }
+        }
+      }
+    }
+  },
+  "h5": {
+    "title": "粤工保劳动者端"
+  }
+}

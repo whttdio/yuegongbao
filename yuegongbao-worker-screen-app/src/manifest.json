@@ -1,0 +1,31 @@
+{
+  "name": "粤工保用工屏",
+  "appid": "__UNI__YGB_SCREEN__",
+  "description": "粤工保服务屏 APP",
+  "versionName": "0.1.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "app-plus": {
+    "usingComponents": true,
+    "screenOrientation": [
+      "portrait-primary"
+    ],
+    "splashscreen": {
+      "alwaysShowBeforeRender": true,
+      "autoclose": true
+    },
+    "distribute": {
+      "sdkConfigs": {
+        "push": {
+          "unipush": {
+            "version": "2",
+            "offline": true
+          }
+        }
+      }
+    }
+  },
+  "h5": {
+    "title": "粤工保用工屏"
+  }
+}

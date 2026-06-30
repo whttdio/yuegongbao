@@ -1,0 +1,3361 @@
+[
+  {
+    "title": "指标总览",
+    "component": "ygb/cockpit/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\cockpit\\index.vue",
+    "actions": [
+      "openModule(defaultWarningAction)",
+      "handleExport",
+      "toggleFullscreen",
+      "openModule(item.action)",
+      "openModule(item)",
+      "openModule({ path: '/cockpit/config' })"
+    ],
+    "imports": [
+      {
+        "fn": "getYgbCockpitDashboard",
+        "api": "ygb/cockpit"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "featureStatus",
+      "monthStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "地图可视化",
+    "component": "ygb/cockpit/map/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\cockpit\\map\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "getCockpitMap",
+        "api": "ygb/cockpit"
+      },
+      {
+        "fn": "getCockpitIndicators",
+        "api": "ygb/cockpit"
+      }
+    ],
+    "downloads": [
+      "ygb/cockpit/export"
+    ],
+    "statusFields": [
+      "featureStatus",
+      "sourceMode"
+    ]
+  },
+  {
+    "title": "实时预警流",
+    "component": "ygb/cockpit/warningStream/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\cockpit\\warningStream\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listWarning",
+        "api": "ygb/warning"
+      },
+      {
+        "fn": "getWarningSummary",
+        "api": "ygb/warning"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/cockpit/export"
+    ],
+    "statusFields": [
+      "warnStatus"
+    ]
+  },
+  {
+    "title": "红黄绿码企业分类",
+    "component": "ygb/cockpit/enterpriseCode/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\cockpit\\enterpriseCode\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listCreditScore",
+        "api": "ygb/creditScore"
+      },
+      {
+        "fn": "getCreditScoreSummary",
+        "api": "ygb/creditScore"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/credit/score/export"
+    ],
+    "statusFields": [
+      "warningStatus"
+    ]
+  },
+  {
+    "title": "趋势分析",
+    "component": "ygb/cockpitTrend/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\cockpitTrend\\index.vue",
+    "actions": [
+      "router.push('/cockpit/overview')",
+      "handleExport"
+    ],
+    "imports": [
+      {
+        "fn": "getYgbCockpitDashboard",
+        "api": "ygb/cockpit"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "驾驶舱配置",
+    "component": "ygb/cockpitConfig/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\cockpitConfig\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleExport",
+      "handleUpdate(scope.row)",
+      "handleView(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "open = false"
+    ],
+    "imports": [
+      {
+        "fn": "addCockpitConfig",
+        "api": "ygb/cockpitConfig"
+      },
+      {
+        "fn": "delCockpitConfig",
+        "api": "ygb/cockpitConfig"
+      },
+      {
+        "fn": "getCockpitConfig",
+        "api": "ygb/cockpitConfig"
+      },
+      {
+        "fn": "getCockpitConfigSummary",
+        "api": "ygb/cockpitConfig"
+      },
+      {
+        "fn": "listCockpitConfig",
+        "api": "ygb/cockpitConfig"
+      },
+      {
+        "fn": "updateCockpitConfig",
+        "api": "ygb/cockpitConfig"
+      }
+    ],
+    "downloads": [
+      "/ygb/cockpit/config/export"
+    ],
+    "statusFields": [
+      "status",
+      "sourceMode"
+    ]
+  },
+  {
+    "title": "预警工单管理",
+    "component": "ygb/warning/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\warning\\index.vue",
+    "actions": [
+      "clearWorkbenchContext",
+      "handleExport",
+      "openDetail(scope.row)",
+      "openHandleDialog(scope.row)",
+      "submitHandle",
+      "handleOpen = false"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "warnStatus",
+      "beforeStatus",
+      "afterStatus"
+    ]
+  },
+  {
+    "title": "预警规则配置",
+    "component": "ygb/warningRule/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\warningRule\\index.vue",
+    "actions": [
+      "clearWorkbenchContext",
+      "handleAdd",
+      "handleUpdate()",
+      "handleDelete()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "handleUpdate(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "ruleStatus"
+    ]
+  },
+  {
+    "title": "预警统计分析",
+    "component": "ygb/warningStat/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\warningStat\\index.vue",
+    "actions": [
+      "goWarningCenter",
+      "loadAll",
+      "drillDown(section.filterField, item)"
+    ],
+    "imports": [
+      {
+        "fn": "getWarningAnalysis",
+        "api": "ygb/warning"
+      },
+      {
+        "fn": "getWarningSummary",
+        "api": "ygb/warning"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status",
+      "warnStatus"
+    ]
+  },
+  {
+    "title": "监测报告生成",
+    "component": "ygb/aiReport/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\aiReport\\index.vue",
+    "actions": [
+      "clearWorkbenchContext",
+      "scrollToSection(item.key)",
+      "standardOpen = true",
+      "handlePreviewReport",
+      "goAiTaskPage",
+      "goAiSubscriptionPage",
+      "openGenerateDialog()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "selectAndPreview(scope.row)",
+      "openGenerateDialog(scope.row)",
+      "generateOpen = false",
+      "submitGenerate"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "风险评分与排名",
+    "component": "ygb/aiReport/ranking/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\aiReport\\ranking\\index.vue",
+    "actions": [
+      "openReportWorkbench()",
+      "openTaskPage()",
+      "handleExport",
+      "openReportDetail(scope.row)",
+      "openReportWorkbench(scope.row)",
+      "openTaskPage(scope.row)"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "多维筛选与穿透",
+    "component": "ygb/aiReport/filter/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\aiReport\\filter\\index.vue",
+    "actions": [
+      "handleDimensionQuery",
+      "resetDimensionQuery",
+      "openReportWorkbench()",
+      "openTaskPage()",
+      "openSubscriptionPage()",
+      "handleExport",
+      "openReportDetail(scope.row)",
+      "openReportWorkbench(scope.row)",
+      "openTaskPage(scope.row)",
+      "openSubscriptionPage(scope.row)"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "监测建议与任务",
+    "component": "ygb/aiReportTask/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\aiReportTask\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleExport",
+      "handleUpdate(scope.row)",
+      "handleView(scope.row)",
+      "changeStatus(scope.row, 'processing')",
+      "changeStatus(scope.row, 'closed')",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "open = false"
+    ],
+    "imports": [
+      {
+        "fn": "getAiReport",
+        "api": "ygb/aiReport"
+      },
+      {
+        "fn": "addAiReportTask",
+        "api": "ygb/aiReportTask"
+      },
+      {
+        "fn": "delAiReportTask",
+        "api": "ygb/aiReportTask"
+      },
+      {
+        "fn": "getAiReportTask",
+        "api": "ygb/aiReportTask"
+      },
+      {
+        "fn": "getAiReportTaskSummary",
+        "api": "ygb/aiReportTask"
+      },
+      {
+        "fn": "listAiReportTask",
+        "api": "ygb/aiReportTask"
+      },
+      {
+        "fn": "updateAiReportTask",
+        "api": "ygb/aiReportTask"
+      },
+      {
+        "fn": "updateAiReportTaskStatus",
+        "api": "ygb/aiReportTask"
+      }
+    ],
+    "downloads": [
+      "/ygb/aiReport/task/export"
+    ],
+    "statusFields": [
+      "handleStatus",
+      "changeStatus",
+      "status",
+      "updateAiReportTaskStatus"
+    ]
+  },
+  {
+    "title": "报告导出与订阅",
+    "component": "ygb/aiReportSubscription/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\aiReportSubscription\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleExport",
+      "handleUpdate(scope.row)",
+      "handleView(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "open = false"
+    ],
+    "imports": [
+      {
+        "fn": "addAiReportSubscription",
+        "api": "ygb/aiReportSubscription"
+      },
+      {
+        "fn": "delAiReportSubscription",
+        "api": "ygb/aiReportSubscription"
+      },
+      {
+        "fn": "getAiReportSubscription",
+        "api": "ygb/aiReportSubscription"
+      },
+      {
+        "fn": "getAiReportSubscriptionSummary",
+        "api": "ygb/aiReportSubscription"
+      },
+      {
+        "fn": "listAiReportSubscription",
+        "api": "ygb/aiReportSubscription"
+      },
+      {
+        "fn": "updateAiReportSubscription",
+        "api": "ygb/aiReportSubscription"
+      }
+    ],
+    "downloads": [
+      "/ygb/aiReport/subscription/export"
+    ],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "评分模型管理",
+    "component": "ygb/aiReportConfig/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\aiReportConfig\\index.vue",
+    "actions": [
+      "clearWorkbenchContext",
+      "handleAdd",
+      "handleUpdate()",
+      "handleActivate()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "handleUpdate(scope.row)",
+      "handleActivate(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "configStatus"
+    ]
+  },
+  {
+    "title": "考勤总览",
+    "component": "ygb/attendance/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\attendance\\overview\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listAttendanceRaw",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "getAttendanceRawOverview",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/attendance/raw/export"
+    ],
+    "statusFields": [
+      "attendanceStatus"
+    ]
+  },
+  {
+    "title": "异常考勤统计",
+    "component": "ygb/attendance/abnormal/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\attendance\\abnormal\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listAttendanceRaw",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "getAttendanceRawSummary",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/attendance/raw/export"
+    ],
+    "statusFields": [
+      "attendanceStatus",
+      "formatAttendanceStatus"
+    ]
+  },
+  {
+    "title": "考勤明细查询",
+    "component": "ygb/attendanceRaw/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\attendanceRaw\\index.vue",
+    "actions": [
+      "clearWorkbenchContext",
+      "applyOverviewFilter('regionCode', item.dimensionKey)",
+      "applyOverviewFilter('sourceType', item.dimensionKey)",
+      "handleAdd",
+      "handleUpdate()",
+      "handleDelete()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "handleUpdate(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [
+      {
+        "fn": "addAttendanceRaw",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "delAttendanceRaw",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "getAttendanceRaw",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "getAttendanceRawOverview",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "getAttendanceRawSummary",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "listAttendanceRaw",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "updateAttendanceRaw",
+        "api": "ygb/attendanceRaw"
+      },
+      {
+        "fn": "optionselectContract",
+        "api": "ygb/contract"
+      }
+    ],
+    "downloads": [
+      "ygb/attendance/raw/export"
+    ],
+    "statusFields": [
+      "attendanceStatus",
+      "collectStatus"
+    ]
+  },
+  {
+    "title": "设备在线率报表",
+    "component": "ygb/attendance/deviceOnline/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\attendance\\deviceOnline\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listDevice",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "getDeviceSummary",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/attendance/raw/export"
+    ],
+    "statusFields": [
+      "deviceStatus"
+    ]
+  },
+  {
+    "title": "工资发放监控",
+    "component": "ygb/salary/paymentMonitor/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\salary\\paymentMonitor\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listSalaryBatch",
+        "api": "ygb/salaryBatch"
+      },
+      {
+        "fn": "getSalaryBatchSummary",
+        "api": "ygb/salaryBatch"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/salary/batch/export"
+    ],
+    "statusFields": [
+      "batchStatus",
+      "formatBatchStatus"
+    ]
+  },
+  {
+    "title": "监管账户监控",
+    "component": "ygb/salary/accountMonitor/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\salary\\accountMonitor\\index.vue",
+    "actions": [
+      "openAccountDialog()",
+      "openBatchPage()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "openAccountDialog(scope.row)",
+      "openBatchPage(scope.row)",
+      "accountOpen = false",
+      "submitAccount"
+    ],
+    "imports": [
+      {
+        "fn": "listSalaryAccount",
+        "api": "ygb/salaryAccount"
+      },
+      {
+        "fn": "getSalaryAccountSummary",
+        "api": "ygb/salaryAccount"
+      },
+      {
+        "fn": "confirmSalaryAccount",
+        "api": "ygb/salaryBatch"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/salary/account/export"
+    ],
+    "statusFields": [
+      "accountStatus",
+      "formatAccountStatus"
+    ]
+  },
+  {
+    "title": "拖欠工资预警",
+    "component": "ygb/salary/overdueWarning/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\salary\\overdueWarning\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listSalaryArrears",
+        "api": "ygb/salaryArrears"
+      },
+      {
+        "fn": "getSalaryArrearsSummary",
+        "api": "ygb/salaryArrears"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/salary/batch/arrears/export"
+    ],
+    "statusFields": [
+      "handleStatus"
+    ]
+  },
+  {
+    "title": "银行代发结果监控",
+    "component": "ygb/salary/bankDistribution/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\salary\\bankDistribution\\index.vue",
+    "actions": [
+      "openBatchPage()",
+      "handleBankCallback()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "handleBankCallback(scope.row)",
+      "openBatchPage(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listSalaryBank",
+        "api": "ygb/salaryBank"
+      },
+      {
+        "fn": "getSalaryBankSummary",
+        "api": "ygb/salaryBank"
+      },
+      {
+        "fn": "handleSalaryBatchCallback",
+        "api": "ygb/salaryBatch"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/salary/bank/export"
+    ],
+    "statusFields": [
+      "batchStatus",
+      "formatDistributionStatus",
+      "formatAccountStatus",
+      "accountStatus"
+    ]
+  },
+  {
+    "title": "社保缴费监控",
+    "component": "ygb/socialPayment/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\socialPayment\\index.vue",
+    "actions": [
+      "handleSync",
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listSocialPayment",
+        "api": "ygb/socialPayment"
+      },
+      {
+        "fn": "getSocialPaymentSummary",
+        "api": "ygb/socialPayment"
+      },
+      {
+        "fn": "getSocialPayment",
+        "api": "ygb/socialPayment"
+      },
+      {
+        "fn": "syncSocialPayment",
+        "api": "ygb/socialPayment"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/social/payment/export"
+    ],
+    "statusFields": [
+      "paymentStatus",
+      "sourceStatus"
+    ]
+  },
+  {
+    "title": "基数比对",
+    "component": "ygb/socialBaseCompare/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\socialBaseCompare\\index.vue",
+    "actions": [
+      "handleCompare",
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listSocialBaseCompare",
+        "api": "ygb/socialBaseCompare"
+      },
+      {
+        "fn": "getSocialBaseCompareSummary",
+        "api": "ygb/socialBaseCompare"
+      },
+      {
+        "fn": "executeSocialBaseCompare",
+        "api": "ygb/socialBaseCompare"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/social/compare/export"
+    ],
+    "statusFields": [
+      "warningStatus"
+    ]
+  },
+  {
+    "title": "参保率统计",
+    "component": "ygb/socialEnrollment/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\socialEnrollment\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "社保补缴跟踪",
+    "component": "ygb/socialSupplement/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\socialSupplement\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "工伤事件管理",
+    "component": "ygb/injuryEvent/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\injuryEvent\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleUpdate()",
+      "openStatusDialog()",
+      "handleDelete()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "handleUpdate(scope.row)",
+      "openStatusDialog(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel",
+      "submitStatus",
+      "statusOpen = false"
+    ],
+    "imports": [
+      {
+        "fn": "getInjuryEvent",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "getInjuryEventAnalysis",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "getInjuryEventMonitor",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "getRecognitionAssist",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "listRecognitionAssist",
+        "api": "ygb/injuryEvent"
+      }
+    ],
+    "downloads": [
+      "ygb/injury/event/recognitionAssist/export"
+    ],
+    "statusFields": [
+      "injuryStatus",
+      "warningStatus",
+      "submitStatus",
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "工伤认定辅助",
+    "component": "ygb/injury/recognitionAssist/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\injury\\recognitionAssist\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listRecognitionAssist",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "getRecognitionAssist",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "getRecognitionAssistSummary",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/injury/event/recognitionAssist/export"
+    ],
+    "statusFields": [
+      "injuryStatus",
+      "workflowStatus",
+      "formatInjuryStatus",
+      "formatWorkflowStatus"
+    ]
+  },
+  {
+    "title": "工伤统计分析",
+    "component": "ygb/injury/statisticalAnalysis/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\injury\\statisticalAnalysis\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listInjuryEvent",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "getInjuryEventAnalysis",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "getInjuryEventSummary",
+        "api": "ygb/injuryEvent"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/injury/event/export"
+    ],
+    "statusFields": [
+      "injuryStatus",
+      "formatInjuryStatus",
+      "warningStatus"
+    ]
+  },
+  {
+    "title": "工伤预防",
+    "component": "ygb/preventionProject/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\preventionProject\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleUpdate()",
+      "handleDelete()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "handleUpdate(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "projectStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "工伤监测",
+    "component": "ygb/injuryPersonMonitor/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\injuryPersonMonitor\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "用工比例监控",
+    "component": "ygb/employmentRatio/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\employmentRatio\\index.vue",
+    "actions": [
+      "handleCalculate",
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listEmploymentRatio",
+        "api": "ygb/employmentRatio"
+      },
+      {
+        "fn": "getEmploymentRatioSummary",
+        "api": "ygb/employmentRatio"
+      },
+      {
+        "fn": "calculateEmploymentRatio",
+        "api": "ygb/employmentRatio"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/special/employmentRatio/export"
+    ],
+    "statusFields": [
+      "warningStatus"
+    ]
+  },
+  {
+    "title": "三性岗位审核",
+    "component": "ygb/threeNaturePost/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\threeNaturePost\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "假外包识别",
+    "component": "ygb/fakeOutsourcing/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\fakeOutsourcing\\index.vue",
+    "actions": [
+      "openAnalyzeDialog",
+      "handleExport",
+      "openDetail(scope.row)",
+      "submitAnalyze",
+      "analyzeOpen = false"
+    ],
+    "imports": [
+      {
+        "fn": "listFakeOutsourcing",
+        "api": "ygb/fakeOutsourcing"
+      },
+      {
+        "fn": "getFakeOutsourcingSummary",
+        "api": "ygb/fakeOutsourcing"
+      },
+      {
+        "fn": "analyzeFakeOutsourcing",
+        "api": "ygb/fakeOutsourcing"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/special/fakeOutsourcing/export"
+    ],
+    "statusFields": [
+      "warningStatus"
+    ]
+  },
+  {
+    "title": "专项整治台账",
+    "component": "ygb/specialRectification/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\specialRectification\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "个税比对",
+    "component": "ygb/taxCompare/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\taxCompare\\index.vue",
+    "actions": [
+      "handleSync",
+      "handleCompare",
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listTaxCompare",
+        "api": "ygb/taxCompare"
+      },
+      {
+        "fn": "getTaxCompareSummary",
+        "api": "ygb/taxCompare"
+      },
+      {
+        "fn": "syncTaxCompare",
+        "api": "ygb/taxCompare"
+      },
+      {
+        "fn": "executeTaxCompare",
+        "api": "ygb/taxCompare"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/tax/compare/export"
+    ],
+    "statusFields": [
+      "warningStatus",
+      "sourceStatus"
+    ]
+  },
+  {
+    "title": "发票比对",
+    "component": "ygb/taxInvoice/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\taxInvoice\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "资金流穿透分析",
+    "component": "ygb/taxFundFlow/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\taxFundFlow\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "税务预警处置",
+    "component": "ygb/taxCompare/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\taxCompare\\index.vue",
+    "actions": [
+      "handleSync",
+      "handleCompare",
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listTaxCompare",
+        "api": "ygb/taxCompare"
+      },
+      {
+        "fn": "getTaxCompareSummary",
+        "api": "ygb/taxCompare"
+      },
+      {
+        "fn": "syncTaxCompare",
+        "api": "ygb/taxCompare"
+      },
+      {
+        "fn": "executeTaxCompare",
+        "api": "ygb/taxCompare"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/tax/compare/export"
+    ],
+    "statusFields": [
+      "warningStatus",
+      "sourceStatus"
+    ]
+  },
+  {
+    "title": "追缴税款统计",
+    "component": "ygb/statReport/tax/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\statReport\\tax\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "reportStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "投保监管",
+    "component": "ygb/aqInsurance/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\aqInsurance\\index.vue",
+    "actions": [
+      "handleSync",
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "policyStatus",
+      "sourceStatus"
+    ]
+  },
+  {
+    "title": "事故预防服务",
+    "component": "ygb/aqInsurance/preventionService/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\aqInsurance\\preventionService\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listPreventionProject",
+        "api": "ygb/preventionProject"
+      },
+      {
+        "fn": "getPreventionProjectSummary",
+        "api": "ygb/preventionProject"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/injury/prevention/export"
+    ],
+    "statusFields": [
+      "serviceStatus",
+      "formatServiceStatus"
+    ]
+  },
+  {
+    "title": "赔付率监控",
+    "component": "ygb/aqInsuranceClaim/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\aqInsuranceClaim\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "资金池管理",
+    "component": "ygb/preventionFund/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\preventionFund\\index.vue",
+    "actions": [
+      "openEditDialog()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "openEditDialog(scope.row)",
+      "submitForm",
+      "open = false"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "fundStatus",
+      "sourceMode"
+    ]
+  },
+  {
+    "title": "阳光劳务屏管理",
+    "component": "ygb/device/sunlightScreen/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\device\\sunlightScreen\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listDevice",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "getDeviceSummary",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/device/export"
+    ],
+    "statusFields": [
+      "deviceStatus",
+      "authStatus"
+    ]
+  },
+  {
+    "title": "千机万码芯片设备管理",
+    "component": "ygb/deviceChip/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\deviceChip\\index.vue",
+    "actions": [],
+    "imports": [
+      {
+        "fn": "getDeviceSubledgerSummary",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "listDeviceSubledger",
+        "api": "ygb/device"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "deviceStatus",
+      "authStatus"
+    ]
+  },
+  {
+    "title": "AI智能监控设备管理",
+    "component": "ygb/deviceAi/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\deviceAi\\index.vue",
+    "actions": [],
+    "imports": [
+      {
+        "fn": "getDeviceSubledgerSummary",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "listDeviceSubledger",
+        "api": "ygb/device"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "deviceStatus",
+      "authStatus"
+    ]
+  },
+  {
+    "title": "设备台账",
+    "component": "ygb/device/ledger/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\device\\ledger\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listDevice",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "getDeviceSummary",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/device/export"
+    ],
+    "statusFields": [
+      "deviceStatus",
+      "formatDeviceStatus"
+    ]
+  },
+  {
+    "title": "设备详情",
+    "component": "ygb/device/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\device\\index.vue",
+    "actions": [
+      "clearWorkbenchContext",
+      "openSubmodule(entry)",
+      "handleAdd",
+      "handleUpdate()",
+      "handleDelete()",
+      "handleExport",
+      "handleRowClick(scope.row)",
+      "handleUpdate(scope.row)",
+      "handleLock(scope.row)",
+      "handleUnlock(scope.row)",
+      "openAuthorizeDialog(scope.row)",
+      "openHeartbeatDialog(scope.row)",
+      "openAiDialog(scope.row)",
+      "submitForm",
+      "cancel",
+      "submitAuthorize",
+      "authorizeOpen = false",
+      "submitHeartbeat",
+      "heartbeatOpen = false",
+      "submitAiEvent",
+      "aiOpen = false"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "deviceStatus",
+      "authStatus",
+      "sourceStatus",
+      "eventStatus",
+      "heartbeatStatus"
+    ]
+  },
+  {
+    "title": "拆卸报警处理",
+    "component": "ygb/deviceUninstallAlert/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\deviceUninstallAlert\\index.vue",
+    "actions": [],
+    "imports": [
+      {
+        "fn": "listDeviceUninstallAlert",
+        "api": "ygb/device"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "批量操作",
+    "component": "ygb/device/batchOperation/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\device\\batchOperation\\index.vue",
+    "actions": [
+      "batchLock",
+      "batchUnlock",
+      "batchAuthorize",
+      "handleExport",
+      "openDetail(scope.row)",
+      "authorizeOpen = false",
+      "submitBatchAuthorize"
+    ],
+    "imports": [
+      {
+        "fn": "listDevice",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "getDeviceSummary",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "batchLockDevice",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "batchUnlockDevice",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "batchAuthorizeDevice",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      },
+      {
+        "fn": "optionselectPerson",
+        "api": "ygb/person"
+      }
+    ],
+    "downloads": [
+      "ygb/device/export"
+    ],
+    "statusFields": [
+      "deviceStatus"
+    ]
+  },
+  {
+    "title": "物联卡管理",
+    "component": "ygb/deviceIotCard/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\deviceIotCard\\index.vue",
+    "actions": [],
+    "imports": [
+      {
+        "fn": "getDeviceIotCard",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "getDeviceIotCardSummary",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "listDeviceIotCard",
+        "api": "ygb/device"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "deviceStatus",
+      "authStatus"
+    ]
+  },
+  {
+    "title": "芯片库存",
+    "component": "ygb/deviceChipInventory/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\deviceChipInventory\\index.vue",
+    "actions": [],
+    "imports": [
+      {
+        "fn": "getDeviceChipInventory",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "getDeviceChipInventorySummary",
+        "api": "ygb/device"
+      },
+      {
+        "fn": "listDeviceChipInventory",
+        "api": "ygb/device"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "deviceStatus",
+      "authStatus"
+    ]
+  },
+  {
+    "title": "电子围栏",
+    "component": "ygb/deviceGeofence/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\deviceGeofence\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "数据碰撞与漏保清单",
+    "component": "ygb/uninsuredList/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\uninsuredList\\index.vue",
+    "actions": [
+      "handleGenerate",
+      "handleExport",
+      "openDetail(scope.row)",
+      "openHandleDialog(scope.row)",
+      "submitHandle",
+      "handleOpen = false"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "disposalStatus",
+      "warningStatus"
+    ]
+  },
+  {
+    "title": "催缴跟踪",
+    "component": "ygb/expansion/collectionTracking/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\expansion\\collectionTracking\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listExpansionCollection",
+        "api": "ygb/expansionCollection"
+      },
+      {
+        "fn": "getExpansionCollectionSummary",
+        "api": "ygb/expansionCollection"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/expansion/collection/export"
+    ],
+    "statusFields": [
+      "collectionStatus"
+    ]
+  },
+  {
+    "title": "参保补贴管理",
+    "component": "ygb/expansionSubsidy/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\expansionSubsidy\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "工伤预防培训管理",
+    "component": "ygb/expansion/preventionTraining/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\expansion\\preventionTraining\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listPreventionProject",
+        "api": "ygb/preventionProject"
+      },
+      {
+        "fn": "getPreventionProjectSummary",
+        "api": "ygb/preventionProject"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/injury/prevention/export"
+    ],
+    "statusFields": [
+      "projectStatus"
+    ]
+  },
+  {
+    "title": "培训课程与学时管理",
+    "component": "ygb/expansion/courseHours/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\expansion\\courseHours\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listNewformTraining",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "getNewformTrainingSummary",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/newform/training/export"
+    ],
+    "statusFields": [
+      "courseStatus"
+    ]
+  },
+  {
+    "title": "培训效果评估",
+    "component": "ygb/expansion/trainingEvaluation/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\expansion\\trainingEvaluation\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listNewformTraining",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "getNewformTrainingSummary",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/newform/training/export"
+    ],
+    "statusFields": [
+      "evaluationStatus"
+    ]
+  },
+  {
+    "title": "信用总览",
+    "component": "ygb/credit/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\credit\\overview\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listCreditScore",
+        "api": "ygb/creditScore"
+      },
+      {
+        "fn": "getCreditScoreSummary",
+        "api": "ygb/creditScore"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/credit/score/export"
+    ],
+    "statusFields": [
+      "warningStatus"
+    ]
+  },
+  {
+    "title": "企业信用档案",
+    "component": "ygb/credit/enterpriseArchive/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\credit\\enterpriseArchive\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listCreditScore",
+        "api": "ygb/creditScore"
+      },
+      {
+        "fn": "getCreditScoreSummary",
+        "api": "ygb/creditScore"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/credit/score/export"
+    ],
+    "statusFields": [
+      "warningStatus"
+    ]
+  },
+  {
+    "title": "信用评分规则配置",
+    "component": "ygb/creditRule/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\creditRule\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "联合惩戒推送",
+    "component": "ygb/creditSanction/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\creditSanction\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "信用修复申请",
+    "component": "ygb/creditRepair/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\creditRepair\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "信用报告导出",
+    "component": "ygb/credit/reportExport/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\credit\\reportExport\\index.vue",
+    "actions": [
+      "generateReport",
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listCreditScore",
+        "api": "ygb/creditScore"
+      },
+      {
+        "fn": "getCreditScoreSummary",
+        "api": "ygb/creditScore"
+      },
+      {
+        "fn": "generateCreditScore",
+        "api": "ygb/creditScore"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/credit/score/export"
+    ],
+    "statusFields": [
+      "warningStatus"
+    ]
+  },
+  {
+    "title": "社保",
+    "component": "ygb/statReport/social/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\statReport\\social\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "reportStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "税务",
+    "component": "ygb/statReport/tax/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\statReport\\tax\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "reportStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "从业人员档案",
+    "component": "ygb/person/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\person\\index.vue",
+    "actions": [
+      "handleOpenWorkbenchLink(link)",
+      "openSubmodule(entry)",
+      "clearWorkbenchContext",
+      "handleAdd",
+      "handleUpdate()",
+      "handleDelete()",
+      "handleExport",
+      "openDetail(scope.row)",
+      "handleUpdate(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "certStatus",
+      "insuranceStatus",
+      "employmentStatus"
+    ]
+  },
+  {
+    "title": "特证管理",
+    "component": "ygb/personCertificate/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\personCertificate\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "黑名单管理",
+    "component": "ygb/personBlacklist/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\personBlacklist\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "人员培训监督",
+    "component": "ygb/personTraining/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\personTraining\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "高危岗位库",
+    "component": "ygb/personHighRiskPost/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\personHighRiskPost\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "风险岗位库",
+    "component": "ygb/personRiskPost/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\personRiskPost\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "工伤预防专家库",
+    "component": "ygb/personExpert/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\personExpert\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "新业态人员库",
+    "component": "ygb/person/newform/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\person\\newform\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listNewformWorker",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "getNewformWorkerSummary",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/newform/worker/export"
+    ],
+    "statusFields": [
+      "insuranceStatus"
+    ]
+  },
+  {
+    "title": "高危企业库管理",
+    "component": "ygb/enterpriseHighRisk/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterpriseHighRisk\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "派遣/用工关联关系",
+    "component": "ygb/enterprise/relation/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprise\\relation\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listEnterpriseSubmodule",
+        "api": "ygb/enterprise"
+      },
+      {
+        "fn": "getEnterpriseSubmoduleSummary",
+        "api": "ygb/enterprise"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/enterprise/relation/export"
+    ],
+    "statusFields": [
+      "workflowStatus",
+      "status",
+      "formatWorkflowStatus",
+      "formatStatus"
+    ]
+  },
+  {
+    "title": "新业态平台企业管理",
+    "component": "ygb/enterprise/newform/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprise\\newform\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listEnterpriseSubmodule",
+        "api": "ygb/enterprise"
+      },
+      {
+        "fn": "getEnterpriseSubmoduleSummary",
+        "api": "ygb/enterprise"
+      },
+      {
+        "fn": "listNewformPlatform",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "getNewformPlatformSummary",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/newform/platform/export"
+    ],
+    "statusFields": []
+  },
+  {
+    "title": "工会管理",
+    "component": "ygb/enterpriseUnion/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterpriseUnion\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "企业自主服务",
+    "component": "ygb/enterprise/selfService/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprise\\selfService\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listEnterprise",
+        "api": "ygb/enterprise"
+      },
+      {
+        "fn": "getEnterpriseSummary",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/enterprise/export"
+    ],
+    "statusFields": [
+      "syncStatus",
+      "status",
+      "formatSyncStatus",
+      "formatStatus"
+    ]
+  },
+  {
+    "title": "组织架构管理",
+    "component": "system/dept/index",
+    "file": "yuegongbao-ui\\src\\views\\system\\dept\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleSaveSort",
+      "toggleExpandAll",
+      "handleUpdate(scope.row)",
+      "handleAdd(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [
+      {
+        "fn": "listDept",
+        "api": "system/dept"
+      },
+      {
+        "fn": "getDept",
+        "api": "system/dept"
+      },
+      {
+        "fn": "delDept",
+        "api": "system/dept"
+      },
+      {
+        "fn": "addDept",
+        "api": "system/dept"
+      },
+      {
+        "fn": "updateDept",
+        "api": "system/dept"
+      },
+      {
+        "fn": "updateDeptSort",
+        "api": "system/dept"
+      },
+      {
+        "fn": "listDeptExcludeChild",
+        "api": "system/dept"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "用户与角色权限",
+    "component": "system/role/index",
+    "file": "yuegongbao-ui\\src\\views\\system\\role\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleUpdate",
+      "handleDelete",
+      "handleExport",
+      "handleUpdate(scope.row)",
+      "handleDelete(scope.row)",
+      "handleDataScope(scope.row)",
+      "handleAuthUser(scope.row)",
+      "submitForm",
+      "cancel",
+      "submitDataScope",
+      "cancelDataScope"
+    ],
+    "imports": [
+      {
+        "fn": "addRole",
+        "api": "system/role"
+      },
+      {
+        "fn": "changeRoleStatus",
+        "api": "system/role"
+      },
+      {
+        "fn": "dataScope",
+        "api": "system/role"
+      },
+      {
+        "fn": "delRole",
+        "api": "system/role"
+      },
+      {
+        "fn": "deptTreeSelect",
+        "api": "system/role"
+      },
+      {
+        "fn": "getRole",
+        "api": "system/role"
+      },
+      {
+        "fn": "listRole",
+        "api": "system/role"
+      },
+      {
+        "fn": "updateRole",
+        "api": "system/role"
+      },
+      {
+        "fn": "roleMenuTreeselect",
+        "api": "system/menu"
+      },
+      {
+        "fn": "treeselect",
+        "api": "system/menu"
+      }
+    ],
+    "downloads": [
+      "system/role/export"
+    ],
+    "statusFields": [
+      "status",
+      "changeRoleStatus"
+    ]
+  },
+  {
+    "title": "系统参数配置",
+    "component": "system/config/index",
+    "file": "yuegongbao-ui\\src\\views\\system\\config\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleUpdate",
+      "handleDelete",
+      "handleExport",
+      "handleRefreshCache",
+      "handleUpdate(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [
+      {
+        "fn": "listConfig",
+        "api": "system/config"
+      },
+      {
+        "fn": "getConfig",
+        "api": "system/config"
+      },
+      {
+        "fn": "delConfig",
+        "api": "system/config"
+      },
+      {
+        "fn": "addConfig",
+        "api": "system/config"
+      },
+      {
+        "fn": "updateConfig",
+        "api": "system/config"
+      },
+      {
+        "fn": "refreshCache",
+        "api": "system/config"
+      }
+    ],
+    "downloads": [
+      "system/config/export"
+    ],
+    "statusFields": []
+  },
+  {
+    "title": "数据字典",
+    "component": "system/dict/index",
+    "file": "yuegongbao-ui\\src\\views\\system\\dict\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleUpdate",
+      "handleDelete",
+      "handleExport",
+      "handleRefreshCache",
+      "handleViewData(scope.row)",
+      "handleUpdate(scope.row)",
+      "handleDataList(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [
+      {
+        "fn": "listType",
+        "api": "system/dict/type"
+      },
+      {
+        "fn": "getType",
+        "api": "system/dict/type"
+      },
+      {
+        "fn": "delType",
+        "api": "system/dict/type"
+      },
+      {
+        "fn": "addType",
+        "api": "system/dict/type"
+      },
+      {
+        "fn": "updateType",
+        "api": "system/dict/type"
+      },
+      {
+        "fn": "refreshCache",
+        "api": "system/dict/type"
+      }
+    ],
+    "downloads": [
+      "system/dict/type/export"
+    ],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "通知公告管理",
+    "component": "system/notice/index",
+    "file": "yuegongbao-ui\\src\\views\\system\\notice\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleUpdate",
+      "handleDelete",
+      "handleViewData(scope.row)",
+      "handleReadUsers(scope.row)",
+      "handleUpdate(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [
+      {
+        "fn": "listNotice",
+        "api": "system/notice"
+      },
+      {
+        "fn": "getNotice",
+        "api": "system/notice"
+      },
+      {
+        "fn": "delNotice",
+        "api": "system/notice"
+      },
+      {
+        "fn": "addNotice",
+        "api": "system/notice"
+      },
+      {
+        "fn": "updateNotice",
+        "api": "system/notice"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "文档管理",
+    "component": "ygb/platform/document/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\platform\\document\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "接口与数据交换监管",
+    "component": "ygb/platform/exchange/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\platform\\exchange\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "运行监控",
+    "component": "ygb/platform/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\platform\\overview\\index.vue",
+    "actions": [
+      "router.push(item.path)"
+    ],
+    "imports": [
+      {
+        "fn": "getPlatformRuntimeSummary",
+        "api": "ygb/platform"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "安全审计",
+    "component": "ygb/platform/securityAudit/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\platform\\securityAudit\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "数据备份与恢复",
+    "component": "ygb/platform/backup/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\platform\\backup\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "用户管理",
+    "component": "system/user/index",
+    "file": "yuegongbao-ui\\src\\views\\system\\user\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleUpdate",
+      "handleDelete",
+      "handleImport",
+      "handleExport",
+      "handleViewData(scope.row)",
+      "handleUpdate(scope.row)",
+      "handleDelete(scope.row)",
+      "handleResetPwd(scope.row)",
+      "handleAuthRole(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [
+      {
+        "fn": "changeUserStatus",
+        "api": "system/user"
+      },
+      {
+        "fn": "listUser",
+        "api": "system/user"
+      },
+      {
+        "fn": "resetUserPwd",
+        "api": "system/user"
+      },
+      {
+        "fn": "delUser",
+        "api": "system/user"
+      },
+      {
+        "fn": "getUser",
+        "api": "system/user"
+      },
+      {
+        "fn": "updateUser",
+        "api": "system/user"
+      },
+      {
+        "fn": "addUser",
+        "api": "system/user"
+      },
+      {
+        "fn": "deptTreeSelect",
+        "api": "system/user"
+      }
+    ],
+    "downloads": [
+      "system/user/export"
+    ],
+    "statusFields": [
+      "status",
+      "changeUserStatus"
+    ]
+  },
+  {
+    "title": "运营数据总览",
+    "component": "ygb/operation/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\operation\\overview\\index.vue",
+    "actions": [
+      "router.push(item.to)"
+    ],
+    "imports": [
+      {
+        "fn": "getOperationOverview",
+        "api": "ygb/operation"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "招聘岗位审核",
+    "component": "ygb/operation/jobReview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\operation\\jobReview\\index.vue",
+    "actions": [
+      "handleExport",
+      "handleView(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "getOperationJobReview",
+        "api": "ygb/operation"
+      },
+      {
+        "fn": "listOperationJobReview",
+        "api": "ygb/operation"
+      }
+    ],
+    "downloads": [
+      "ygb/operation/jobReview/export"
+    ],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "企业入驻审核",
+    "component": "ygb/operation/enterpriseReview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\operation\\enterpriseReview\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "简历管理",
+    "component": "ygb/operation/resume/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\operation\\resume\\index.vue",
+    "actions": [
+      "handleExport",
+      "handleView(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "getOperationResume",
+        "api": "ygb/operation"
+      },
+      {
+        "fn": "listOperationResume",
+        "api": "ygb/operation"
+      }
+    ],
+    "downloads": [
+      "ygb/operation/resume/export"
+    ],
+    "statusFields": []
+  },
+  {
+    "title": "职位分类管理",
+    "component": "ygb/operation/operationJobCategory/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\operation\\operationJobCategory\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "广告/轮播图管理",
+    "component": "ygb/portalContent/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\portalContent\\index.vue",
+    "actions": [
+      "handleAdd",
+      "handleUpdate()",
+      "handleDelete()",
+      "handleUpdate(scope.row)",
+      "handleDelete(scope.row)",
+      "submitForm",
+      "cancel"
+    ],
+    "imports": [
+      {
+        "fn": "listPortalContent",
+        "api": "ygb/portalContent"
+      },
+      {
+        "fn": "getPortalContent",
+        "api": "ygb/portalContent"
+      },
+      {
+        "fn": "addPortalContent",
+        "api": "ygb/portalContent"
+      },
+      {
+        "fn": "updatePortalContent",
+        "api": "ygb/portalContent"
+      },
+      {
+        "fn": "delPortalContent",
+        "api": "ygb/portalContent"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "数据统计与分析",
+    "component": "ygb/operation/dataAnalysis/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\operation\\dataAnalysis\\index.vue",
+    "actions": [
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listOperationModule",
+        "api": "ygb/operation"
+      },
+      {
+        "fn": "getOperationModuleSummary",
+        "api": "ygb/operation"
+      }
+    ],
+    "downloads": [
+      "ygb/operation/recruitStats/export"
+    ],
+    "statusFields": [
+      "workflowStatus",
+      "status",
+      "formatWorkflowStatus"
+    ]
+  },
+  {
+    "title": "消息推送管理",
+    "component": "ygb/operation/message/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\operation\\message\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "设备安装运维",
+    "component": "ygb/operation/deviceInstallOrder/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\operation\\deviceInstallOrder\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "企业仪表盘",
+    "component": "ygb/enterprisePortal/dashboard/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\dashboard\\index.vue",
+    "actions": [
+      "router.push(item.to)",
+      "handleWorkbenchEntry(entry)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseCreditScore",
+        "api": "ygb/creditScore"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "企业人员管理",
+    "component": "ygb/enterprisePortal/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\overview\\index.vue",
+    "actions": [
+      "openAction(item)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseInsuranceDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseJobPublishDraft",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseOperationDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseSalaryDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseTrainingDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterpriseDeviceLedger",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterprisePeopleLedger",
+        "api": "ygb/enterprisePortal"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "企业设备管理",
+    "component": "ygb/enterprisePortal/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\overview\\index.vue",
+    "actions": [
+      "openAction(item)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseInsuranceDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseJobPublishDraft",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseOperationDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseSalaryDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseTrainingDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterpriseDeviceLedger",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterprisePeopleLedger",
+        "api": "ygb/enterprisePortal"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "企业工资管理",
+    "component": "ygb/enterprisePortal/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\overview\\index.vue",
+    "actions": [
+      "openAction(item)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseInsuranceDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseJobPublishDraft",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseOperationDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseSalaryDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseTrainingDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterpriseDeviceLedger",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterprisePeopleLedger",
+        "api": "ygb/enterprisePortal"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "企业作业管理",
+    "component": "ygb/enterprisePortal/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\overview\\index.vue",
+    "actions": [
+      "openAction(item)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseInsuranceDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseJobPublishDraft",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseOperationDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseSalaryDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseTrainingDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterpriseDeviceLedger",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterprisePeopleLedger",
+        "api": "ygb/enterprisePortal"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "企业保险管理",
+    "component": "ygb/enterprisePortal/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\overview\\index.vue",
+    "actions": [
+      "openAction(item)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseInsuranceDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseJobPublishDraft",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseOperationDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseSalaryDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseTrainingDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterpriseDeviceLedger",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterprisePeopleLedger",
+        "api": "ygb/enterprisePortal"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "企业培训管理",
+    "component": "ygb/enterprisePortal/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\overview\\index.vue",
+    "actions": [
+      "openAction(item)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseInsuranceDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseJobPublishDraft",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseOperationDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseSalaryDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseTrainingDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterpriseDeviceLedger",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterprisePeopleLedger",
+        "api": "ygb/enterprisePortal"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "企业招聘管理",
+    "component": "ygb/enterprisePortal/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\overview\\index.vue",
+    "actions": [
+      "openAction(item)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseInsuranceDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseJobPublishDraft",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseOperationDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseSalaryDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseTrainingDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterpriseDeviceLedger",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterprisePeopleLedger",
+        "api": "ygb/enterprisePortal"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "企业财务管理",
+    "component": "ygb/enterprisePortal/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\overview\\index.vue",
+    "actions": [
+      "openAction(item)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseInsuranceDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseJobPublishDraft",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseOperationDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseSalaryDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseTrainingDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterpriseDeviceLedger",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterprisePeopleLedger",
+        "api": "ygb/enterprisePortal"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "企业信用报告",
+    "component": "ygb/enterprisePortal/overview/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\enterprisePortal\\overview\\index.vue",
+    "actions": [
+      "openAction(item)"
+    ],
+    "imports": [
+      {
+        "fn": "getEnterpriseHomeDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseInsuranceDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseJobPublishDraft",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseOperationDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseSalaryDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseTrainingDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "getEnterpriseWorkbenchDashboard",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterpriseDeviceLedger",
+        "api": "ygb/enterprisePortal"
+      },
+      {
+        "fn": "listEnterprisePeopleLedger",
+        "api": "ygb/enterprisePortal"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "status"
+    ]
+  },
+  {
+    "title": "暖新地图",
+    "component": "ygb/citizenService/warmMap/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\citizenService\\warmMap\\index.vue",
+    "actions": [
+      "handleSearch",
+      "openLink(item.linkUrl)",
+      "viewDetail(item.contentId)"
+    ],
+    "imports": [
+      {
+        "fn": "getCitizenServiceHome",
+        "api": "ygb/citizenService"
+      },
+      {
+        "fn": "searchCitizenServiceContent",
+        "api": "ygb/citizenService"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "培训课程",
+    "component": "ygb/citizenService/trainingCourse/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\citizenService\\trainingCourse\\index.vue",
+    "actions": [
+      "handleSearch",
+      "openLink(item.linkUrl)",
+      "viewDetail(item.contentId)"
+    ],
+    "imports": [
+      {
+        "fn": "getCitizenServiceHome",
+        "api": "ygb/citizenService"
+      },
+      {
+        "fn": "searchCitizenServiceContent",
+        "api": "ygb/citizenService"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "法规库",
+    "component": "ygb/citizenService/lawLibrary/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\citizenService\\lawLibrary\\index.vue",
+    "actions": [
+      "handleSearch",
+      "openLink(item.linkUrl)",
+      "viewDetail(item.contentId)"
+    ],
+    "imports": [
+      {
+        "fn": "getCitizenServiceHome",
+        "api": "ygb/citizenService"
+      },
+      {
+        "fn": "searchCitizenServiceContent",
+        "api": "ygb/citizenService"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "互助圈",
+    "component": "ygb/citizenService/mutualHelp/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\citizenService\\mutualHelp\\index.vue",
+    "actions": [
+      "handleSearch",
+      "openLink(item.linkUrl)",
+      "viewDetail(item.contentId)"
+    ],
+    "imports": [
+      {
+        "fn": "getCitizenServiceHome",
+        "api": "ygb/citizenService"
+      },
+      {
+        "fn": "searchCitizenServiceContent",
+        "api": "ygb/citizenService"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "招聘用工市场",
+    "component": "ygb/citizenService/recruitMarket/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\citizenService\\recruitMarket\\index.vue",
+    "actions": [
+      "handleSearch",
+      "openLink(item.linkUrl)",
+      "viewDetail(item.contentId)"
+    ],
+    "imports": [
+      {
+        "fn": "getCitizenServiceHome",
+        "api": "ygb/citizenService"
+      },
+      {
+        "fn": "searchCitizenServiceContent",
+        "api": "ygb/citizenService"
+      }
+    ],
+    "downloads": [],
+    "statusFields": []
+  },
+  {
+    "title": "新业态人员库",
+    "component": "ygb/newformWorker/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\newformWorker\\index.vue",
+    "actions": [
+      "openSubmodule(item)",
+      "handleSync",
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listNewformWorker",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "getNewformWorkerSummary",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "syncNewformWorker",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "optionselectEnterprise",
+        "api": "ygb/enterprise"
+      }
+    ],
+    "downloads": [
+      "ygb/newform/worker/export"
+    ],
+    "statusFields": [
+      "injuryInsuranceStatus",
+      "warningStatus",
+      "insuranceStatus",
+      "sourceStatus"
+    ]
+  },
+  {
+    "title": "平台企业管理",
+    "component": "ygb/newformPlatform/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\newformPlatform\\index.vue",
+    "actions": [],
+    "imports": [
+      {
+        "fn": "getNewformPlatformSummary",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "listNewformPlatform",
+        "api": "ygb/newformWorker"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "warningStatus",
+      "injuryInsuranceStatus"
+    ]
+  },
+  {
+    "title": "职业伤害监测",
+    "component": "ygb/newformInjuryMonitor/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\newformInjuryMonitor\\index.vue",
+    "actions": [],
+    "imports": [
+      {
+        "fn": "getNewformInjuryMonitorSummary",
+        "api": "ygb/newformWorker"
+      },
+      {
+        "fn": "listNewformInjuryMonitor",
+        "api": "ygb/newformWorker"
+      }
+    ],
+    "downloads": [],
+    "statusFields": [
+      "warningStatus",
+      "injuryInsuranceStatus"
+    ]
+  },
+  {
+    "title": "新业态培训管理",
+    "component": "ygb/newformTraining/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\newformTraining\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "职业病监测",
+    "component": "ygb/occupationMonitor/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\occupationMonitor\\index.vue",
+    "actions": [
+      "openSubmodule(item)",
+      "handleSync",
+      "handleExport",
+      "openDetail(scope.row)"
+    ],
+    "imports": [
+      {
+        "fn": "listOccupationMonitor",
+        "api": "ygb/occupationMonitor"
+      },
+      {
+        "fn": "getOccupationMonitorSummary",
+        "api": "ygb/occupationMonitor"
+      },
+      {
+        "fn": "syncOccupationMonitor",
+        "api": "ygb/occupationMonitor"
+      }
+    ],
+    "downloads": [
+      "ygb/occupation/monitor/export"
+    ],
+    "statusFields": [
+      "warningStatus",
+      "sourceStatus"
+    ]
+  },
+  {
+    "title": "职业病预防项目",
+    "component": "ygb/occupationPrevention/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\occupationPrevention\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  },
+  {
+    "title": "职业健康档案",
+    "component": "ygb/occupationHealthArchive/index",
+    "file": "yuegongbao-ui\\src\\views\\ygb\\occupationHealthArchive\\index.vue",
+    "actions": [],
+    "imports": [],
+    "downloads": [],
+    "statusFields": [
+      "workflowStatus",
+      "status"
+    ]
+  }
+]
