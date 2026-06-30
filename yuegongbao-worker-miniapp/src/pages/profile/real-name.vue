@@ -72,7 +72,7 @@
             <view class="upload-zone__desc">拍摄或选择身份证正面照片</view>
           </view>
           <image v-if="previewIdCardFrontUrl" :src="previewIdCardFrontUrl" class="face-block__preview" mode="aspectFill" />
-          <view v-else-if="form.idCardFrontUrl" class="worker-empty worker-empty--inline">Mock image unavailable in H5.</view>
+          <view v-else-if="form.idCardFrontUrl" class="worker-empty worker-empty--inline">图片已上传，请在小程序内查看预览。</view>
         </view>
 
         <view class="form-field">
@@ -83,7 +83,7 @@
             <view class="upload-zone__desc">拍摄或选择身份证反面照片</view>
           </view>
           <image v-if="previewIdCardBackUrl" :src="previewIdCardBackUrl" class="face-block__preview" mode="aspectFill" />
-          <view v-else-if="form.idCardBackUrl" class="worker-empty worker-empty--inline">Mock image unavailable in H5.</view>
+          <view v-else-if="form.idCardBackUrl" class="worker-empty worker-empty--inline">图片已上传，请在小程序内查看预览。</view>
         </view>
 
         <view class="form-field">
@@ -95,7 +95,7 @@
             <view class="upload-zone__desc">请现场拍摄本人免冠照片</view>
           </view>
           <image v-if="previewSelfieUrl" :src="previewSelfieUrl" class="face-block__preview" mode="aspectFill" />
-          <view v-else-if="form.selfieUrl" class="worker-empty worker-empty--inline">Mock image unavailable in H5.</view>
+          <view v-else-if="form.selfieUrl" class="worker-empty worker-empty--inline">图片已上传，请在小程序内查看预览。</view>
         </view>
       </view>
 
@@ -124,7 +124,7 @@ const form = reactive({
   idCardFrontUrl: '',
   idCardBackUrl: '',
   selfieUrl: '',
-  sourceModule: 'worker-uniapp'
+  sourceModule: 'worker-miniapp'
 })
 
 const submitting = ref(false)

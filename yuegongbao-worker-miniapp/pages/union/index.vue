@@ -15,7 +15,7 @@
       </view>
     </view>
 
-    <view class="entry-grid entry-grid--two">
+    <view v-if="displayQuickActions.length" class="entry-grid entry-grid--two">
       <view
         v-for="item in displayQuickActions"
         :key="item.key"
@@ -27,6 +27,10 @@
         </view>
         <view class="entry-item__label">{{ item.label }}</view>
       </view>
+    </view>
+    <view v-else class="worker-card worker-empty worker-empty--panel">
+      <view class="worker-empty__title">工会服务入口同步中</view>
+      <view class="worker-empty__desc">工会快捷入口将在服务首页返回后展示，当前可直接拨打服务热线。</view>
     </view>
 
     <view class="worker-card">
@@ -109,6 +113,7 @@ const cases = ref([])
 const notices = ref([])
 const contracts = ref([])
 const laborContracts = ref([])
+const homeLoadFailed = ref(false)
 const unionLastLoadedAt = ref('')
 const unionLastActionAt = ref('')
 const unionLastMessage = ref('')
@@ -122,24 +127,6 @@ const defaultQuickActions = [
   { key: 'hotline', mark: '线', label: '工会热线', hint: '一键拨打 12351', action: 'hotline' }
 ]
 
-const fallbackCases = [
-  {
-    caseKey: 'fallback-rights-case',
-    title: '制造业集体协商案例',
-    summary: '通过集体协商确定工资增长机制和工时安排，保障派遣员工合法权益。',
-    isFallback: true
-  }
-]
-
-const fallbackNotices = [
-  {
-    noticeKey: 'fallback-union-notice',
-    title: '工会服务指引',
-    summary: '如需法律咨询、合同查阅或维权协助，可通过工会服务入口提交需求。',
-    isFallback: true
-  }
-]
-
 const safeHotlineText = computed(() => {
   return safeText(home.value.hotline && home.value.hotline.displayText, fallbackHotlineText)
 })
@@ -150,23 +137,22 @@ const displayQuickActions = computed(() => {
     .map(sanitizeAction)
     .filter((item) => item.label && (item.path || item.action))
 
-  return sanitizedActions.length ? sanitizedActions : defaultQuickActions
+  if (sanitizedActions.length) {
+    return sanitizedActions
+  }
+  return homeLoadFailed.value ? defaultQuickActions : []
 })
 
 const displayCases = computed(() => {
-  const sanitizedCases = cases.value
+  return cases.value
     .map(sanitizeCase)
     .filter((item) => item.title && item.summary)
-
-  return sanitizedCases.length ? sanitizedCases : fallbackCases
 })
 
 const displayNotices = computed(() => {
-  const sanitizedNotices = notices.value
+  return notices.value
     .map(sanitizeNotice)
     .filter((item) => item.title && item.summary)
-
-  return sanitizedNotices.length ? sanitizedNotices : fallbackNotices
 })
 
 const displayContracts = computed(() => {
@@ -258,6 +244,7 @@ async function loadData() {
     if (homeResult.status !== 'fulfilled') {
       throw homeResult.reason
     }
+    homeLoadFailed.value = false
     home.value = homeResult.value || {}
     cases.value = caseResult.status === 'fulfilled' ? caseResult.value?.rows || [] : []
     notices.value = noticeResult.status === 'fulfilled' ? noticeResult.value?.rows || [] : []
@@ -280,6 +267,7 @@ async function loadData() {
     }
     unionLastMessage.value = messageParts.length ? messageParts.join('，') : '工会服务数据已加载'
   } catch (error) {
+    homeLoadFailed.value = true
     unionLastLoadedAt.value = new Date().toLocaleString()
     home.value = {}
     cases.value = []
@@ -306,18 +294,12 @@ function openAction(item) {
 }
 
 function openCase(item) {
-  if (item.isFallback) {
-    return
-  }
   unionLastActionAt.value = new Date().toLocaleString()
   unionLastMessage.value = `已打开维权案例：${item.title || '-'}`
   uni.navigateTo({ url: `/pages/union/case-detail?caseKey=${item.caseKey}` })
 }
 
 function openNotice(item) {
-  if (item.isFallback) {
-    return
-  }
   unionLastActionAt.value = new Date().toLocaleString()
   unionLastMessage.value = `已打开工会通知：${item.title || '-'}`
   uni.navigateTo({ url: `/pages/union/notice-detail?noticeKey=${item.noticeKey}` })

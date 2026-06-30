@@ -54,7 +54,7 @@
           {{ index + 1 }}. {{ item }}
         </view>
       </view>
-      <view v-if="fallbackTips.length" class="summary-panel">
+      <view v-if="fallbackTips.length && !detail.videoUrl" class="summary-panel">
         <view class="summary-panel__title">学习提示</view>
         <view v-for="(item, index) in fallbackTips" :key="`${item}-${index}`" class="summary-panel__content">
           {{ index + 1 }}. {{ item }}

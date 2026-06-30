@@ -123,13 +123,13 @@ function openDetail(item) {
 
 function goAiTraining() {
   videoLastActionAt.value = new Date().toLocaleString()
-  videoLastMessage.value = '已前往 AI 培训，待补充空态引导验收'
+  videoLastMessage.value = '已前往 AI 培训'
   uni.navigateTo({ url: '/pages/ai-training/detail' })
 }
 
 function goTraining() {
   videoLastActionAt.value = new Date().toLocaleString()
-  videoLastMessage.value = '已前往本月培训，待补充空态引导验收'
+  videoLastMessage.value = '已前往本月培训'
   uni.navigateTo({ url: '/pages/training/index' })
 }
 

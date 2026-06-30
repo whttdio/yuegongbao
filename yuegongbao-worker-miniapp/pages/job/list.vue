@@ -132,8 +132,6 @@ import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getJobList, getResumeDetail } from '../../api/worker'
 
-const EXPECTED_JOB_CHAIN_PAGES = ['岗位列表', '岗位详情', '附近岗位地图', '投递记录', '我的简历']
-
 const keyword = ref('')
 const total = ref(0)
 const jobs = ref([])
@@ -155,8 +153,6 @@ const selectedRadiusKm = ref(0)
 const latitude = ref(undefined)
 const longitude = ref(undefined)
 const locationAvailable = ref(false)
-const jobLastLoadedAt = ref('')
-const jobLastMessage = ref('')
 const resumeExpectedJob = ref('')
 const resumeIntro = ref('')
 const resumeLoadError = ref('')
@@ -169,7 +165,6 @@ const locationTip = computed(() => {
   }
   return '未获取到定位，当前距离筛选将按默认推荐中心计算'
 })
-const jobChainCoverageText = computed(() => EXPECTED_JOB_CHAIN_PAGES.join(' / '))
 const resumeReadinessText = computed(() => {
   const missingFields = []
   if (!String(resumeExpectedJob.value || '').trim()) {
@@ -183,59 +178,6 @@ const resumeReadinessText = computed(() => {
   }
   return `待完善 / 缺少${missingFields.join('、')}`
 })
-const locationSummaryText = computed(() => {
-  if (!locationAvailable.value || latitude.value === undefined || longitude.value === undefined) {
-    return '未定位，列表按默认推荐中心计算'
-  }
-  return `已定位 / ${formatCoordinate(latitude.value)}, ${formatCoordinate(longitude.value)}`
-})
-const jobFilterSummaryText = computed(() => {
-  return [
-    keyword.value ? `关键词 ${keyword.value}` : '关键词不限',
-    selectedJobType.value ? `工种 ${selectedJobType.value}` : '工种不限',
-    selectedSalaryLabel.value || '不限薪资',
-    selectedRadiusKm.value ? `${selectedRadiusKm.value}km 内` : '不限距离'
-  ].join(' / ')
-})
-const jobListSummaryText = computed(() => `岗位 ${total.value} 条 / 首页投递 ${applies.value.length} 条`)
-const jobConsistencyText = computed(() => {
-  const appliedInList = jobs.value.filter((item) => item.applied).length
-  if (!jobs.value.length && !applies.value.length) {
-    return '当前无岗位且无投递，需结合筛选和真实数据复核'
-  }
-  if (!jobs.value.length && applies.value.length) {
-    return `当前筛选无岗位 / 首页投递摘要 ${applies.value.length} 条`
-  }
-  if (appliedInList > applies.value.length) {
-    return `列表已投递标记 ${appliedInList} 条，大于首页投递摘要 ${applies.value.length} 条`
-  }
-  if (resumeReadinessText.value.startsWith('待完善') && appliedInList) {
-    return `简历待完善，但列表已有 ${appliedInList} 条已投递标记`
-  }
-  return `列表已投递标记 ${appliedInList} 条 / 首页投递摘要 ${applies.value.length} 条`
-})
-const jobSnapshotText = computed(() => {
-  return [
-    '## 求职链验收摘要',
-    `- 链路核对：${jobChainCoverageText.value}`,
-    `- 最近加载：${jobLastLoadedAt.value || '-'}`,
-    `- 定位状态：${locationSummaryText.value}`,
-    `- 筛选条件：${jobFilterSummaryText.value}`,
-    `- 简历状态：${resumeReadinessText.value}`,
-    `- 岗位与投递：${jobListSummaryText.value}`,
-    `- 跨页一致性：${jobConsistencyText.value}`,
-    `- 说明：${jobLastMessage.value || '-'}`,
-    '- 链路范围：岗位列表 / 岗位详情 / 附近岗位地图 / 投递记录'
-  ].join('\n')
-})
-
-function formatCoordinate(value) {
-  const numericValue = Number(value)
-  if (!Number.isFinite(numericValue)) {
-    return '-'
-  }
-  return numericValue.toFixed(4)
-}
 
 function resolveLocation() {
   return new Promise((resolve) => {
@@ -283,33 +225,10 @@ async function loadData() {
     locationAvailable.value = data?.locationAvailable ?? locationAvailable.value
     resumeExpectedJob.value = resumeData?.expectedJob || ''
     resumeIntro.value = resumeData?.intro || ''
-    jobLastLoadedAt.value = new Date().toLocaleString()
-    const messageParts = []
-    if (!jobs.value.length) {
-      messageParts.push('当前筛选下暂无匹配岗位')
-    }
-    if (!applies.value.length) {
-      messageParts.push('当前暂无投递记录')
-    }
-    if (resumeLoadError.value) {
-      messageParts.push(`简历快照异常：${resumeLoadError.value}`)
-    } else if (resumeReadinessText.value.startsWith('待完善')) {
-      messageParts.push('简历仍未满足当前前端投递校验条件')
-    }
-    const appliedInList = jobs.value.filter((item) => item.applied).length
-    if (appliedInList > applies.value.length) {
-      messageParts.push(`列表已投递标记 ${appliedInList} 条，超过首页投递摘要 ${applies.value.length} 条`)
-    }
-    if (!messageParts.length) {
-      messageParts.push('岗位列表、简历快照和首页投递摘要已同步加载')
-    }
-    jobLastMessage.value = messageParts.join('；')
   } catch (error) {
-    jobLastLoadedAt.value = new Date().toLocaleString()
     resumeExpectedJob.value = ''
     resumeIntro.value = ''
     resumeLoadError.value = ''
-    jobLastMessage.value = error.message || '加载岗位失败'
     uni.showToast({ title: error.message || '加载岗位失败', icon: 'none' })
   }
 }
@@ -360,18 +279,6 @@ function openMap() {
 
 function openResume() {
   uni.navigateTo({ url: '/pages/profile/resume' })
-}
-
-function copyText(content, successTitle) {
-  if (!content) {
-    uni.showToast({ title: '暂无可复制内容', icon: 'none' })
-    return
-  }
-  uni.setClipboardData({
-    data: content,
-    success: () => uni.showToast({ title: successTitle, icon: 'none' }),
-    fail: () => uni.showToast({ title: '复制失败，请改用截图', icon: 'none' })
-  })
 }
 
 onShow(async () => {

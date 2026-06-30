@@ -26,12 +26,12 @@
           <view class="attachment-row__action" @click.stop="removeAttachment(item)">删除</view>
         </view>
       </view>
+      <view v-else class="worker-empty worker-empty--inline">暂未上传现场附件。</view>
     </view>
 
     <view class="worker-card">
       <view class="worker-button-row">
         <button class="worker-button" :disabled="!canSubmit || submitting" @click="handleSubmit">{{ submitting ? '提交中...' : '提交申请' }}</button>
-        <button class="worker-button worker-button--ghost" @click="fillDemo">填写示例</button>
       </view>
       <view v-if="submitMessage" class="result-block">
         <view class="result-block__label">提交结果</view>
@@ -53,9 +53,13 @@ const submitMessage = ref('')
 const canSubmit = computed(() => form.location && form.schedule && form.guardian && form.summary)
 
 async function loadData() {
-  const data = await getOutworkApplyDraft()
-  Object.assign(form, data.form || {})
-  attachments.value = Array.isArray(data.attachments) ? data.attachments : []
+  try {
+    const data = await getOutworkApplyDraft()
+    Object.assign(form, data.form || {})
+    attachments.value = Array.isArray(data.attachments) ? data.attachments : []
+  } catch (error) {
+    uni.showToast({ title: error.message || '加载申请草稿失败', icon: 'none' })
+  }
 }
 
 async function handleUpload() {
@@ -64,6 +68,8 @@ async function handleUpload() {
     const result = await saveOutworkAttachment({ location: form.location })
     attachments.value = [...attachments.value, result.attachmentName]
     uni.showToast({ title: result.message || '附件已保存', icon: 'none' })
+  } catch (error) {
+    uni.showToast({ title: error.message || '上传附件失败', icon: 'none' })
   } finally {
     uploading.value = false
   }
@@ -73,19 +79,15 @@ function removeAttachment(item) {
   attachments.value = attachments.value.filter((current) => current !== item)
 }
 
-function fillDemo() {
-  form.location = '广州市南沙区 C3 焊接点位'
-  form.schedule = '2026-06-25 08:00 - 18:00'
-  form.guardian = '李工 13800138000'
-  form.summary = '外出焊接作业，已配备灭火器、监护人和隔离围挡。'
-}
-
 async function handleSubmit() {
   submitting.value = true
   try {
     const result = await submitOutworkApply({ ...form, attachments: attachments.value })
     submitMessage.value = result.message || ''
     uni.showToast({ title: result.message || '已提交', icon: 'none' })
+  } catch (error) {
+    submitMessage.value = error.message || ''
+    uni.showToast({ title: error.message || '提交申请失败', icon: 'none' })
   } finally {
     submitting.value = false
   }

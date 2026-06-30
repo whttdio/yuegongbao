@@ -45,13 +45,14 @@
 
     <view class="worker-card">
       <view class="section-head"><view class="worker-title">核心服务</view></view>
-      <view class="entry-grid">
+      <view v-if="quickEntries.length" class="entry-grid">
         <view v-for="item in home.quickEntries || []" :key="item.key" class="entry-item" :class="{ 'entry-item--locked': item.locked }" @click="openEntry(item)">
           <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone"><text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text></view>
           <view class="entry-item__label">{{ item.label }}</view>
-          <view v-if="item.locked" class="entry-item__tip">需先完成培训</view>
+          <view v-if="item.locked" class="entry-item__tip">{{ item.lockReason || '需先完成培训' }}</view>
         </view>
       </view>
+      <view v-else class="worker-empty worker-empty--panel">当前暂无可用服务入口</view>
     </view>
 
     <view class="worker-card" v-if="(home.moreEntries || []).length">
@@ -96,10 +97,10 @@ import { normalizeWorkerJumpTarget, openWorkerJumpTarget } from '../../utils/wor
 import { resolveEntryIcon } from '../../utils/entry-icon'
 
 const home = reactive({})
-const homeLastMessage = ref('')
 const unreadNoticeCount = computed(() => Number(home.unreadNoticeCount || 0))
 const hasUnreadNotice = computed(() => unreadNoticeCount.value > 0)
 const unreadNoticeText = computed(() => (unreadNoticeCount.value > 99 ? '99+' : String(unreadNoticeCount.value || 0)))
+const quickEntries = computed(() => (Array.isArray(home.quickEntries) ? home.quickEntries : []))
 const progressText = computed(() => {
   const progress = home.trainingProgress || {}
   return `${progress.completed || 0}/${progress.total || 10}`
@@ -112,9 +113,8 @@ function getEntryIcon(item) {
 async function loadHome() {
   try {
     Object.assign(home, await getWorkerHome())
-    homeLastMessage.value = '首页已加载'
   } catch (error) {
-    homeLastMessage.value = error.message || '首页加载失败'
+    uni.showToast({ title: error.message || '首页加载失败', icon: 'none' })
   }
 }
 
@@ -152,7 +152,13 @@ function openEntry(item) {
 }
 
 function openActivity() {
-  openPage('/pages/activity/detail')
+  const target = normalizeWorkerJumpTarget(home.activityCard?.target || home.activityCard)
+  if (target?.path) {
+    openWorkerJumpTarget(target)
+    return
+  }
+  const activityId = home.activityCard?.activityId || home.activityCard?.id
+  openPage(activityId ? `/pages/activity/detail?activityId=${activityId}` : '/pages/activity/detail')
 }
 
 function openNotice(item) {

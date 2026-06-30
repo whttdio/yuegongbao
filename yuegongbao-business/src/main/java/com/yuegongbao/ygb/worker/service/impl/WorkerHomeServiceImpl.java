@@ -273,6 +273,9 @@ public class WorkerHomeServiceImpl implements WorkerHomeService
         result.put("buttonText", Boolean.TRUE.equals(activityDetail.get("joined")) ? "已报名" : "立即参与");
         result.put("externalUrl", activityDetail.get("externalUrl"));
         result.put("jumpUrl", "/pages/activity/detail");
+        result.put("target", Map.of(
+            "path", "/pages/activity/detail",
+            "query", Map.of("activityKey", firstNonBlank((String) activityDetail.get("activityKey"), ""))));
         return result;
     }
 

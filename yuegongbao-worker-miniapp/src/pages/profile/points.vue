@@ -139,49 +139,13 @@ import { onShow } from '@dcloudio/uni-app'
 import { exchangeWorkerPointGoods, getWorkerPointsAccount } from '../../api/worker'
 import { openPage } from '../../utils/navigation'
 
-const EXPECTED_POINTS_CHAIN_PAGES = ['积分商城', '商品兑换', '兑换记录', '积分流水']
 const account = ref({})
 const rewards = ref([])
 const rows = ref([])
 const exchangeRows = ref([])
 const exchanging = ref(false)
-const pointsLastLoadedAt = ref('')
-const pointsLastExchangedAt = ref('')
-const pointsLastActionAt = ref('')
-const pointsLastMessage = ref('')
 
 const currentPoints = computed(() => account.value.currentPoints || 0)
-const pointsChainCoverageText = computed(() => EXPECTED_POINTS_CHAIN_PAGES.join(' / '))
-const pointsGoodsSummaryText = computed(() => `当前积分 ${currentPoints.value} / 商品 ${rewards.value.length} 个`)
-const pointsRecordsSummaryText = computed(() => `兑换 ${exchangeRows.value.length} 条 / 流水 ${rows.value.length} 条`)
-const pointsConsistencyText = computed(() => {
-  if (!rewards.value.length && !exchangeRows.value.length && !rows.value.length) {
-    return '当前无商品、兑换记录和流水，需结合真实接口复核'
-  }
-  return `商品 ${rewards.value.length} 个 / 兑换 ${exchangeRows.value.length} 条 / 流水 ${rows.value.length} 条`
-})
-const latestExchangeSummaryText = computed(() => {
-  if (!exchangeRows.value.length) {
-    return '暂无兑换记录'
-  }
-  const latest = exchangeRows.value[0] || {}
-  return `${latest.goodsName || '-'} / ${latest.exchangeStatusText || '-'} / -${latest.scoreCost || 0}`
-})
-const pointsSnapshotText = computed(() => {
-  return [
-    '## 积分商城验收摘要',
-    `- 链路核对：${pointsChainCoverageText.value}`,
-    `- 最近联动：${pointsLastActionAt.value || '-'}`,
-    `- 最近加载：${pointsLastLoadedAt.value || '-'}`,
-    `- 最近兑换：${pointsLastExchangedAt.value || '-'}`,
-    `- 积分与商品：${pointsGoodsSummaryText.value}`,
-    `- 兑换与流水：${pointsRecordsSummaryText.value}`,
-    `- 最近一条兑换：${latestExchangeSummaryText.value}`,
-    `- 数据核对：${pointsConsistencyText.value}`,
-    `- 说明：${pointsLastMessage.value || '-'}`,
-    '- 链路关联：积分商城 / 商品兑换 / 兑换记录 / 积分流水'
-  ].join('\n')
-})
 
 function formatDateTime(value) {
   if (!value) {
@@ -242,13 +206,7 @@ async function loadData() {
     rewards.value = data?.rewards || []
     rows.value = data?.rows || []
     exchangeRows.value = data?.exchangeRows || []
-    pointsLastLoadedAt.value = new Date().toLocaleString()
-    pointsLastMessage.value = rewards.value.length || exchangeRows.value.length || rows.value.length
-      ? '积分账户已加载，可核对余额、商品、兑换记录和流水'
-      : '当前暂无可兑换商品和积分流水，可先参与活动或培训'
   } catch (error) {
-    pointsLastLoadedAt.value = new Date().toLocaleString()
-    pointsLastMessage.value = error.message || '加载积分失败'
     uni.showToast({ title: error.message || '加载积分失败', icon: 'none' })
   }
 }
@@ -272,15 +230,10 @@ async function exchangeGoods(item) {
   }
   exchanging.value = true
   try {
-    pointsLastExchangedAt.value = new Date().toLocaleString()
-    pointsLastActionAt.value = pointsLastExchangedAt.value
     const result = await exchangeWorkerPointGoods({ goodsKey: item.goodsKey })
-    pointsLastMessage.value = result?.exchangeStatusText || '兑换成功'
     uni.showToast({ title: result?.exchangeStatusText || '兑换成功', icon: 'none' })
     await loadData()
   } catch (error) {
-    pointsLastExchangedAt.value = new Date().toLocaleString()
-    pointsLastMessage.value = error.message || '兑换失败'
     uni.showToast({ title: error.message || '兑换失败', icon: 'none' })
   } finally {
     exchanging.value = false
@@ -288,39 +241,19 @@ async function exchangeGoods(item) {
 }
 
 function goActivity() {
-  pointsLastActionAt.value = new Date().toLocaleString()
-  pointsLastMessage.value = '已前往福利活动，待补充空态引导验收'
   uni.navigateTo({ url: '/pages/activity/detail' })
 }
 
 function goTraining() {
-  pointsLastActionAt.value = new Date().toLocaleString()
-  pointsLastMessage.value = '已前往培训页，待补充空态引导验收'
   openPage('/pages/training/index')
 }
 
 function goHelp() {
-  pointsLastActionAt.value = new Date().toLocaleString()
-  pointsLastMessage.value = '已前往帮助中心，待补充空态引导验收'
   uni.navigateTo({ url: '/pages/profile/help' })
 }
 
 function goNotice() {
-  pointsLastActionAt.value = new Date().toLocaleString()
-  pointsLastMessage.value = '已前往通知列表，待补充空态引导验收'
   uni.navigateTo({ url: '/pages/notice/list' })
-}
-
-function copyText(content, successTitle) {
-  if (!content) {
-    uni.showToast({ title: '暂无可复制内容', icon: 'none' })
-    return
-  }
-  uni.setClipboardData({
-    data: content,
-    success: () => uni.showToast({ title: successTitle, icon: 'none' }),
-    fail: () => uni.showToast({ title: '复制失败，请改用截图', icon: 'none' })
-  })
 }
 
 onShow(loadData)

@@ -6,20 +6,26 @@
     </view>
 
     <view class="worker-card">
-      <view class="section-head"><view class="worker-title">记录列表</view></view>
+      <view class="section-head">
+        <view class="worker-title">记录列表</view>
+        <view class="worker-tag">{{ visibleRecords.length }} 条</view>
+      </view>
       <view class="filter-row">
         <view v-for="item in filters" :key="item" class="filter-chip" :class="{ 'filter-chip--active': activeFilter === item }" @click="activeFilter = item">{{ item }}</view>
       </view>
     </view>
 
     <view class="worker-card">
-      <view class="record-row" v-for="item in visibleRecords" :key="item.id">
-        <view>
-          <view class="record-row__title">{{ item.date }} / {{ item.device }}</view>
-          <view class="record-row__subtitle">{{ item.summary }}</view>
+      <view v-if="visibleRecords.length">
+        <view class="record-row" v-for="item in visibleRecords" :key="item.id">
+          <view>
+            <view class="record-row__title">{{ item.date }} / {{ item.device }}</view>
+            <view class="record-row__subtitle">{{ item.summary }}</view>
+          </view>
+          <view class="worker-tag" :class="statusClass(item.status)">{{ item.status }}</view>
         </view>
-        <view class="worker-tag" :class="statusClass(item.status)">{{ item.status }}</view>
       </view>
+      <view v-else class="worker-empty worker-empty--panel">{{ records.length ? '当前筛选暂无记录' : '当前暂无作业记录' }}</view>
     </view>
   </view>
 </template>
@@ -41,10 +47,15 @@ function statusClass(status) {
 }
 
 async function loadData() {
-  const data = await getHighRiskWorkRecords()
-  filters.value = Array.isArray(data.filters) ? data.filters : filters.value
-  activeFilter.value = data.activeFilter || '全部'
-  records.value = Array.isArray(data.list) ? data.list : []
+  try {
+    const data = await getHighRiskWorkRecords()
+    filters.value = Array.isArray(data.filters) && data.filters.length ? data.filters : filters.value
+    activeFilter.value = filters.value.includes(data.activeFilter) ? data.activeFilter : '全部'
+    records.value = Array.isArray(data.list) ? data.list : []
+  } catch (error) {
+    records.value = []
+    uni.showToast({ title: error.message || '加载作业记录失败', icon: 'none' })
+  }
 }
 
 onMounted(loadData)

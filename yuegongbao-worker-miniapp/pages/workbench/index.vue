@@ -36,22 +36,30 @@
 
     <view class="worker-card">
       <view class="section-head"><view class="worker-title">常用服务</view></view>
-      <view class="entry-grid">
+      <view v-if="commonEntries.length" class="entry-grid">
         <view v-for="item in commonEntries" :key="item.key" class="entry-item" :class="{ 'entry-item--locked': item.locked }" @click="openEntry(item)">
           <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone"><text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text></view>
           <view class="entry-item__label">{{ item.label }}</view>
-          <view v-if="item.locked" class="entry-item__tip">需先完成培训</view>
+          <view v-if="item.locked" class="entry-item__tip">{{ item.lockReason || '需先完成培训' }}</view>
         </view>
+      </view>
+      <view v-else class="worker-empty worker-empty--panel">
+        <view class="worker-empty__title">常用服务同步中</view>
+        <view class="worker-empty__desc">服务入口会在数据返回后展示，暂时可先使用上方高危作业入口。</view>
       </view>
     </view>
 
     <view class="worker-card">
       <view class="section-head"><view class="worker-title">权益与个人服务</view></view>
-      <view class="entry-grid entry-grid--two">
+      <view v-if="serviceEntries.length" class="entry-grid entry-grid--two">
         <view v-for="item in serviceEntries" :key="item.key" class="entry-item entry-item--wide" @click="openEntry(item)">
           <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone"><text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text></view>
           <view class="entry-item__label">{{ item.label }}</view>
         </view>
+      </view>
+      <view v-else class="worker-empty worker-empty--panel">
+        <view class="worker-empty__title">权益服务同步中</view>
+        <view class="worker-empty__desc">权益、个人服务和内容入口会在后台返回后统一展示。</view>
       </view>
     </view>
   </view>
@@ -63,6 +71,11 @@ import { getWorkerWorkbench } from '../../api/worker'
 import { openPage } from '../../utils/navigation'
 import { resolveEntryIcon } from '../../utils/entry-icon'
 import { normalizeWorkerJumpTarget, openWorkerJumpTarget } from '../../utils/worker-jump'
+
+const loadFailed = reactive({
+  commonEntries: false,
+  serviceEntries: false
+})
 
 const workbench = reactive({
   trainingProgress: { completed: 0, total: 10 },
@@ -98,10 +111,18 @@ const fallbackServiceEntries = [
 ]
 
 const trainingProgressText = computed(() => `${workbench.trainingProgress?.completed || 0}/${workbench.trainingProgress?.total || 10}`)
-const commonEntries = computed(() => (workbench.commonEntries?.length ? workbench.commonEntries : fallbackCommonEntries))
+const commonEntries = computed(() => {
+  if (workbench.commonEntries?.length) {
+    return workbench.commonEntries
+  }
+  return loadFailed.commonEntries ? fallbackCommonEntries : []
+})
 const serviceEntries = computed(() => {
   const merged = [...(workbench.rightsEntries || []), ...(workbench.personalEntries || []), ...(workbench.contentEntries || [])]
-  return merged.length ? merged : fallbackServiceEntries
+  if (merged.length) {
+    return merged
+  }
+  return loadFailed.serviceEntries ? fallbackServiceEntries : []
 })
 const lockedCount = computed(() => commonEntries.value.filter((item) => item.locked).length)
 const unlockedCount = computed(() => commonEntries.value.length + serviceEntries.value.length + highRiskEntries.length - lockedCount.value)
@@ -128,8 +149,12 @@ async function loadWorkbench() {
   try {
     const data = await getWorkerWorkbench()
     Object.assign(workbench, data || {})
+    loadFailed.commonEntries = false
+    loadFailed.serviceEntries = false
   } catch (error) {
     void error
+    loadFailed.commonEntries = true
+    loadFailed.serviceEntries = true
   }
 }
 

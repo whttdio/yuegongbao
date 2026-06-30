@@ -112,9 +112,6 @@ const detail = ref({})
 const hotline = ref({})
 const fallbackHotlineNumber = '12351'
 const fallbackHotlineText = '工会法律服务热线 12351'
-const securityLastLoadedAt = ref('')
-const securityLastActionAt = ref('')
-const securityLastMessage = ref('')
 
 const loginModeText = computed(() => {
   const loginType = getWorkerLoginType() || ''
@@ -163,21 +160,6 @@ const hotlineNumber = computed(() => {
   const matched = displayText.match(/1\d{4,}/)
   return matched?.[0] || fallbackHotlineNumber
 })
-const accountSummaryText = computed(() => {
-  return `${detail.value.userName || '-'} / ${detail.value.enterpriseName || '-'} / ${detail.value.realNameStatusText || '-'}`
-})
-const accountSecuritySnapshotText = computed(() => {
-  return [
-    '## 账号安全验收摘要',
-    `- 最近加载：${securityLastLoadedAt.value || '-'}`,
-    `- 最近动作：${securityLastActionAt.value || '-'}`,
-    `- 安全状态：${securityStatus.value.title}`,
-    `- 登录方式：${loginModeText.value}`,
-    `- 账号摘要：${accountSummaryText.value}`,
-    `- 说明：${securityLastMessage.value || '-'}`,
-    '- 链路关联：账号安全 / 实名认证 / 帮助中心 / 热线支持'
-  ].join('\n')
-})
 
 async function loadData() {
   try {
@@ -187,11 +169,7 @@ async function loadData() {
     ])
     detail.value = profileData || {}
     hotline.value = hotlineData || {}
-    securityLastLoadedAt.value = new Date().toLocaleString()
-    securityLastMessage.value = '账号安全信息已加载，可核对实名状态与登录方式'
   } catch (error) {
-    securityLastLoadedAt.value = new Date().toLocaleString()
-    securityLastMessage.value = error.message || '加载账号安全信息失败'
     uni.showToast({ title: error.message || '加载账号安全信息失败', icon: 'none' })
   }
 }
@@ -208,21 +186,15 @@ function copyText(value, emptyTitle, successTitle) {
 }
 
 function copyAccount() {
-  securityLastActionAt.value = new Date().toLocaleString()
-  securityLastMessage.value = '已复制账号'
   copyText(detail.value?.userName, '当前无可复制账号', '账号已复制')
 }
 
 function copyMobile() {
-  securityLastActionAt.value = new Date().toLocaleString()
-  securityLastMessage.value = '已复制手机号'
   copyText(detail.value?.mobile, '当前无可复制手机号', '手机号已复制')
 }
 
 function reAuth(mode) {
   const modeLabel = mode === 'sms' ? '短信验证码登录' : '账号密码登录'
-  securityLastActionAt.value = new Date().toLocaleString()
-  securityLastMessage.value = `准备切换到${modeLabel}`
   uni.showModal({
     title: '重新认证',
     content: `将退出当前设备，并跳转到${modeLabel}页面继续登录。`,
@@ -249,14 +221,10 @@ function clearLocalCache() {
     uni.setStorageSync(WORKER_API_BASE_URL_STORAGE_KEY, workerApiBaseUrl)
   }
   restoreWorkerSessionSnapshot(sessionSnapshot)
-  securityLastActionAt.value = new Date().toLocaleString()
-  securityLastMessage.value = '本地缓存已清理'
   uni.showToast({ title: '本地缓存已清理', icon: 'none' })
 }
 
 function logoutCurrentDevice() {
-  securityLastActionAt.value = new Date().toLocaleString()
-  securityLastMessage.value = '准备退出当前设备'
   uni.showModal({
     title: '退出当前设备',
     content: '退出后需要重新登录才能继续使用劳动者端服务。',
@@ -271,8 +239,6 @@ function logoutCurrentDevice() {
 }
 
 function callHotline() {
-  securityLastActionAt.value = new Date().toLocaleString()
-  securityLastMessage.value = `已呼叫${hotlineText.value}`
   uni.makePhoneCall({ phoneNumber: hotlineNumber.value })
 }
 
@@ -282,14 +248,6 @@ function goHelpCenter() {
 
 function goRealnamePage() {
   uni.navigateTo({ url: '/pages/profile/real-name' })
-}
-
-function copySnapshotText() {
-  uni.setClipboardData({
-    data: accountSecuritySnapshotText.value,
-    success: () => uni.showToast({ title: '账号安全验收摘要已复制', icon: 'none' }),
-    fail: () => uni.showToast({ title: '复制失败，请改用截图', icon: 'none' })
-  })
 }
 
 onShow(loadData)

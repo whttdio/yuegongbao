@@ -53,7 +53,7 @@ public class AppWorkerHighRiskServiceImpl implements AppWorkerHighRiskService
             summaryItem("证件数量", String.valueOf(parseCertificateList(resume == null ? null : resume.getCertificateText()).size()))));
         result.put("tips", List.of(
             "扫码开机需先完成刷脸、证件和保险校验。",
-            "当前接口已接入真实后端回执，真机扫码与设备网关可后续继续联调。"));
+            "完成设备扫码后，可继续刷脸核验并提交开机申请。"));
         return result;
     }
 
@@ -127,7 +127,7 @@ public class AppWorkerHighRiskServiceImpl implements AppWorkerHighRiskService
         result.put("attachments", attachments);
         result.put("tips", List.of(
             "外出作业申请会登记到真实业务台账。",
-            "附件上传当前返回真实回执，真机拍照能力可后续补齐。"));
+            "附件回执登记完成后，可继续补充现场材料并提交审批。"));
         return result;
     }
 

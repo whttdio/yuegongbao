@@ -20,6 +20,7 @@
           </view>
         </view>
       </view>
+      <view v-else class="worker-empty worker-empty--inline">常用帮助入口同步后会展示在这里。</view>
       <view v-if="rows.length">
         <view v-for="item in rows" :key="item.articleKey" class="list-row" @click="openDetail(item)">
           <view>
@@ -42,6 +43,13 @@
           <view class="service-actions">
             <button class="worker-button" @click="openServiceCard(item)">{{ item.actionLabel }}</button>
           </view>
+        </view>
+      </view>
+      <view v-else class="worker-empty worker-empty--panel">
+        <view class="worker-empty__title">暂无服务承接入口</view>
+        <view class="worker-empty__desc">当前可先查看帮助内容，或直接拨打服务热线获取支持。</view>
+        <view class="worker-empty__actions">
+          <button class="worker-button worker-button--secondary" @click="callHotline">拨打热线</button>
         </view>
       </view>
     </view>
@@ -156,6 +164,13 @@ function resolveHotlineNumber(value = {}) {
   const displayText = String(value?.displayText || '')
   const matched = displayText.match(/1\d{4,}/)
   return matched?.[0] || fallbackHotlineNumber
+}
+
+function callHotline() {
+  const phoneNumber = resolveHotlineNumber(hotline.value)
+  helpLastActionAt.value = new Date().toLocaleString()
+  helpLastMessage.value = `已呼叫服务热线：${phoneNumber}`
+  uni.makePhoneCall({ phoneNumber })
 }
 
 async function loadData() {
