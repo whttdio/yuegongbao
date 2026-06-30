@@ -1,43 +1,72 @@
 <template>
-  <div class="risk-ranking-panel">
-    <div class="risk-ranking-panel__list">
-      <button
-        v-for="item in rankingItems"
-        :key="item.key"
-        type="button"
-        class="risk-ranking-item"
-        :class="`risk-ranking-item--${item.tone}`"
-        @click="item.action && emit('open-module', item.action)"
-      >
-        <div class="risk-ranking-item__head">
-          <span class="risk-ranking-item__rank">TOP {{ item.rank }}</span>
-          <span :class="['risk-tag', `risk-tag--${item.tone}`]">{{ item.colorLabel }}</span>
-        </div>
-        <strong>{{ item.enterpriseName }}</strong>
-        <div class="risk-ranking-item__factors">
-          <span v-for="factor in item.factors" :key="factor">{{ factor }}</span>
-        </div>
-      </button>
-      <div v-if="!rankingItems.length" class="risk-ranking-panel__empty">暂无红黄绿码排行数据</div>
+  <div class="risk-ranking-panel" :class="`risk-ranking-panel--${layout}`">
+    <div v-if="layout !== 'chart'" class="risk-ranking-panel__table-wrap panel-body scrollable">
+      <table v-if="tableRows.length" class="risk-table">
+        <thead>
+          <tr>
+            <th>排名</th>
+            <th>企业名称</th>
+            <th>码</th>
+            <th>参保率</th>
+            <th>违规</th>
+            <th>事故率</th>
+            <th>风险值</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in tableRows" :key="row.key" @click="row.action && emit('open-module', row.action)">
+            <td class="risk-table__rank">#{{ row.rank }}</td>
+            <td class="risk-table__name">{{ row.enterpriseName }}</td>
+            <td>
+              <span :class="['risk-badge', row.tone]">{{ row.badgeLabel }}</span>
+            </td>
+            <td>{{ row.insuranceRateText }}</td>
+            <td :class="{ 'risk-table__warn': row.violationCount > 7 }">{{ row.violationCount }}次</td>
+            <td>{{ row.accidentRateText }}</td>
+            <td>
+              <span :class="['risk-table__score', `risk-table__score--${row.riskLevel}`]">{{ row.riskScore }}</span>
+              <span class="risk-bar-wrap">
+                <span class="risk-bar-fill" :class="row.riskLevel" :style="{ width: `${row.riskScore}%` }" />
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-else class="cockpit-empty risk-ranking-panel__empty">
+        <div class="cockpit-empty__icon" />
+        <div class="cockpit-empty__title">暂无红黄绿码排行数据</div>
+        <div class="cockpit-empty__desc">企业赋码完成后将在此展示风险分层与 TOP 排行</div>
+      </div>
     </div>
-    <div ref="chartRef" class="risk-ranking-panel__chart" />
+    <div v-if="layout !== 'table'" ref="chartRef" class="risk-ranking-panel__chart" />
   </div>
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import * as echarts from 'echarts'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
+import * as echarts from "echarts"
 
 const props = defineProps({
   creditSummary: { type: Object, default: () => ({}) },
   rankingList: { type: Array, default: () => [] },
-  colors: { type: Object, default: () => ({}) }
+  colors: { type: Object, default: () => ({}) },
+  layout: {
+    type: String,
+    default: "full",
+    validator: (value) => ["full", "table", "chart"].includes(value),
+  },
 })
 
-const emit = defineEmits(['open-module'])
+const emit = defineEmits(["open-module"])
 
 const chartRef = ref(null)
 let chartInstance = null
+
+const RISK_COLORS = Object.freeze({
+  red: "#ff4d4f",
+  yellow: "#ffcc00",
+  green: "#00ffc8",
+})
 
 const donutData = computed(() => {
   const red = Number(props.creditSummary?.redCount || 0)
@@ -45,85 +74,133 @@ const donutData = computed(() => {
   const total = Number(props.creditSummary?.totalCount || 0)
   const green = Math.max(total - red - yellow, 0)
   return [
-    { name: '红码', value: red, itemStyle: { color: props.colors.danger || '#ff6f91' } },
-    { name: '黄码', value: yellow, itemStyle: { color: props.colors.amber || '#ffbe62' } },
-    { name: '绿码', value: green, itemStyle: { color: props.colors.green || '#3df2b2' } }
+    { name: "红码 · 高危", value: red, itemStyle: { color: RISK_COLORS.red } },
+    { name: "黄码 · 预警", value: yellow, itemStyle: { color: RISK_COLORS.yellow } },
+    { name: "绿码 · 正常", value: green, itemStyle: { color: RISK_COLORS.green } },
   ]
 })
 
-const rankingItems = computed(() => props.rankingList.slice(0, 8).map((item, index) => {
-  const colorCode = String(item.colorCode || '').toUpperCase()
-  const tone = colorCode === 'RED' ? 'red' : colorCode === 'YELLOW' ? 'yellow' : 'green'
-  const factors = []
-  if (item.insuranceRate != null || item.socialTaxScore != null) {
-    factors.push(`参保率 ${Number(item.insuranceRate ?? item.socialTaxScore).toFixed(1)}%`)
-  }
-  if (item.codeRate != null || item.governanceScore != null) {
-    factors.push(`赋码率 ${Number(item.codeRate ?? item.governanceScore).toFixed(1)}%`)
-  }
-  if (item.violationCount != null) factors.push(`违规 ${item.violationCount} 次`)
-  if (item.accidentRate != null || item.safetyScore != null) {
-    factors.push(`事故率 ${Number(item.accidentRate ?? item.safetyScore).toFixed(2)}%`)
-  }
-  if (!factors.length && item.totalScore != null) factors.push(`信用分 ${item.totalScore}`)
-  return {
-    key: item.scoreId || item.enterpriseId || index,
-    rank: item.rankNo || index + 1,
-    enterpriseName: item.enterpriseName || '-',
-    colorLabel: tone === 'red' ? '红码' : tone === 'yellow' ? '黄码' : '绿码',
-    tone,
-    factors,
-    action: { path: '/credit/score', query: { enterpriseId: item.enterpriseId, colorCode } }
-  }
-}))
+const tableRows = computed(() =>
+  props.rankingList.slice(0, 15).map((item, index) => {
+    const colorCode = String(item.colorCode || "").toUpperCase()
+    const tone = colorCode === "RED" ? "red" : colorCode === "YELLOW" ? "yellow" : "green"
+    const insuranceRate = Number(item.insuranceRate ?? item.socialTaxScore ?? 0)
+    const violationCount = Number(item.violationCount ?? 0)
+    const accidentRate = Number(item.accidentRate ?? item.safetyScore ?? 0)
+    const riskScore = Math.min(
+      100,
+      Math.max(
+        12,
+        tone === "red" ? 72 : tone === "yellow" ? 48 : 24,
+        100 - Number(item.totalScore ?? 60),
+      ),
+    )
+    const riskLevel = riskScore >= 58 ? "high" : riskScore >= 32 ? "mid" : "low"
+    return {
+      key: item.scoreId || item.enterpriseId || index,
+      rank: item.rankNo || index + 1,
+      enterpriseName: item.enterpriseName || "-",
+      badgeLabel: tone === "red" ? "红" : tone === "yellow" ? "黄" : "绿",
+      tone,
+      insuranceRateText: insuranceRate ? `${insuranceRate.toFixed(1)}%` : "--",
+      violationCount,
+      accidentRateText: accidentRate ? `${accidentRate.toFixed(2)}%` : "--",
+      riskScore,
+      riskLevel,
+      action: { path: "/credit/score", query: { enterpriseId: item.enterpriseId, colorCode } },
+    }
+  }),
+)
 
 function renderChart() {
-  if (!chartRef.value) return
+  if (props.layout === "table" || !chartRef.value) return
   if (!chartInstance) chartInstance = echarts.init(chartRef.value)
   const total = donutData.value.reduce((sum, item) => sum + item.value, 0)
-  chartInstance.setOption({
-    tooltip: {
-      trigger: 'item',
-      backgroundColor: props.colors.tooltip || 'rgba(4, 12, 22, 0.96)',
-      borderColor: props.colors.border || 'rgba(82, 230, 255, 0.18)',
-      textStyle: { color: props.colors.text || '#ebf8ff' }
+  const redCount = Number(props.creditSummary?.redCount || 0)
+  chartInstance.setOption(
+    {
+      tooltip: {
+        trigger: "item",
+        backgroundColor: "rgba(5, 15, 28, 0.94)",
+        borderColor: "rgba(0, 229, 255, 0.28)",
+        textStyle: { color: "#e9fcff" },
+      },
+      legend: {
+        bottom: 4,
+        icon: "circle",
+        itemHeight: 8,
+        itemWidth: 8,
+        itemGap: 12,
+        textStyle: { color: "rgba(207, 230, 236, 0.82)", fontSize: 11 },
+      },
+      series: [
+        {
+          type: "pie",
+          radius: ["60%", "74%"],
+          center: ["50%", "42%"],
+          silent: true,
+          label: { show: false },
+          data: donutData.value.map((item) => ({
+            value: Math.max(item.value, 0),
+            itemStyle: { color: `${item.itemStyle.color}22` },
+          })),
+        },
+        {
+          type: "pie",
+          radius: ["48%", "58%"],
+          center: ["50%", "42%"],
+          label: { color: "#dffcff", formatter: "{d}%", fontSize: 11 },
+          itemStyle: {
+            borderColor: "rgba(4, 10, 23, 0.96)",
+            borderWidth: 2,
+            shadowBlur: 14,
+            shadowColor: "rgba(0, 229, 255, 0.2)",
+          },
+          data: total
+            ? donutData.value
+            : [{ name: "暂无", value: 1, itemStyle: { color: "rgba(0, 229, 255, 0.12)" } }],
+        },
+      ],
+      graphic: [
+        {
+          type: "text",
+          left: "center",
+          top: "28%",
+          style: {
+            text: redCount ? String(redCount) : total ? String(total) : "--",
+            fill: redCount ? RISK_COLORS.red : "#ebfbff",
+            fontSize: redCount ? 28 : 24,
+            fontWeight: 800,
+            textShadowBlur: redCount ? 20 : 16,
+            textShadowColor: redCount ? "rgba(255, 77, 79, 0.72)" : "rgba(0, 229, 255, 0.55)",
+          },
+        },
+        {
+          type: "text",
+          left: "center",
+          top: "44%",
+          style: {
+            text: redCount ? "红码企业" : "风险企业总量",
+            fill: "rgba(204, 228, 235, 0.72)",
+            fontSize: 11,
+          },
+        },
+      ],
     },
-    legend: {
-      bottom: 0,
-      textStyle: { color: props.colors.muted || 'rgba(177, 214, 237, 0.72)', fontSize: 11 }
-    },
-    series: [{
-      type: 'pie',
-      radius: ['54%', '74%'],
-      center: ['50%', '42%'],
-      label: { color: props.colors.text || '#ebf8ff', formatter: '{d}%' },
-      itemStyle: { borderColor: 'rgba(4, 12, 22, 0.96)', borderWidth: 2 },
-      data: total ? donutData.value : [{ name: '暂无', value: 1, itemStyle: { color: 'rgba(82, 132, 168, 0.24)' } }]
-    }],
-    graphic: [{
-      type: 'text',
-      left: 'center',
-      top: '36%',
-      style: {
-        text: total ? String(total) : '--',
-        fill: props.colors.text || '#ebf8ff',
-        fontSize: 24,
-        fontWeight: 700
-      }
-    }]
-  }, true)
+    true,
+  )
   chartInstance.resize()
 }
 
-watch([donutData, () => props.rankingList], () => nextTick(renderChart), { deep: true })
+watch([donutData, () => props.rankingList, () => props.layout], () => nextTick(renderChart), { deep: true })
 
 onMounted(() => {
   renderChart()
-  window.addEventListener('resize', renderChart)
+  window.addEventListener("resize", renderChart)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', renderChart)
+  window.removeEventListener("resize", renderChart)
   chartInstance?.dispose()
   chartInstance = null
 })
@@ -134,84 +211,161 @@ defineExpose({ resize: renderChart })
 <style scoped lang="scss">
 .risk-ranking-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: 12px;
-  min-height: 280px;
-}
-
-.risk-ranking-panel__list {
-  display: grid;
   gap: 8px;
-  max-height: 280px;
-  overflow: auto;
+  flex: 1;
+  min-height: 0;
 }
 
-.risk-ranking-item {
-  display: grid;
-  gap: 6px;
-  padding: 10px 12px;
-  color: inherit;
+.risk-ranking-panel--full {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(120px, 0.8fr);
+}
+
+.risk-ranking-panel--table {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.risk-ranking-panel--chart {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.risk-ranking-panel__table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.risk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.risk-table th {
+  padding: 6px 8px;
   text-align: left;
-  border: 1px solid rgba(82, 230, 255, 0.1);
-  background: linear-gradient(180deg, rgba(17, 42, 68, 0.48), rgba(7, 18, 32, 0.88));
+  color: rgba(148, 169, 196, 0.88);
+  font-weight: 500;
+  font-size: 10px;
+  border-bottom: 1px solid rgba(0, 180, 255, 0.1);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: rgba(10, 18, 34, 0.95);
+  z-index: 1;
+}
+
+.risk-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+  white-space: nowrap;
+  color: rgba(148, 169, 196, 0.88);
   cursor: pointer;
 }
 
-.risk-ranking-item__head {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  align-items: center;
+.risk-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.018);
 }
 
-.risk-ranking-item__rank {
-  color: rgba(177, 214, 237, 0.72);
-  font-size: 11px;
+.risk-table__rank {
+  font-weight: 700;
+  color: rgba(148, 169, 196, 0.72) !important;
 }
 
-.risk-ranking-item strong {
-  font-size: 14px;
+.risk-table__name {
+  color: var(--text-primary, #e6ecf5) !important;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.risk-ranking-item__factors {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  color: rgba(177, 214, 237, 0.68);
-  font-size: 11px;
+.risk-table__warn {
+  color: var(--risk-red, #ff4d5a) !important;
 }
 
-.risk-ranking-item--red {
-  box-shadow: inset 3px 0 0 rgba(255, 111, 145, 0.92);
+.risk-badge {
+  display: inline-block;
+  width: 22px;
+  height: 17px;
+  border-radius: 3px;
+  text-align: center;
+  line-height: 17px;
+  font-weight: 700;
+  font-size: 10px;
+  color: #fff;
 }
 
-.risk-ranking-item--yellow {
-  box-shadow: inset 3px 0 0 rgba(255, 190, 98, 0.92);
+.risk-badge.red {
+  background: #e63946;
+  box-shadow: 0 0 6px rgba(230, 57, 70, 0.4);
 }
 
-.risk-ranking-item--green {
-  box-shadow: inset 3px 0 0 rgba(61, 242, 178, 0.92);
+.risk-badge.yellow {
+  background: #e8a430;
+  box-shadow: 0 0 6px rgba(232, 164, 48, 0.35);
 }
 
-.risk-ranking-panel__chart {
-  min-height: 280px;
+.risk-badge.green {
+  background: #2a9d5c;
+  box-shadow: 0 0 6px rgba(42, 157, 92, 0.35);
 }
 
-.risk-ranking-panel__empty {
-  padding: 24px 12px;
-  color: rgba(177, 214, 237, 0.6);
-  font-size: 12px;
-}
-
-.risk-tag {
-  display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
+.risk-table__score {
   font-weight: 700;
 }
 
-.risk-tag--red { color: #03111f; background: rgba(255, 111, 145, 0.94); }
-.risk-tag--yellow { color: #03111f; background: rgba(255, 190, 98, 0.94); }
-.risk-tag--green { color: #03111f; background: rgba(61, 242, 178, 0.94); }
+.risk-table__score--high {
+  color: var(--risk-red, #ff4d5a);
+}
+
+.risk-table__score--mid {
+  color: #ff8c3d;
+}
+
+.risk-table__score--low {
+  color: #3ddc84;
+}
+
+.risk-bar-wrap {
+  width: 48px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 3px;
+}
+
+.risk-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+
+.risk-bar-fill.high {
+  background: var(--risk-red, #ff4d5a);
+}
+
+.risk-bar-fill.mid {
+  background: #ff8c3d;
+}
+
+.risk-bar-fill.low {
+  background: #3ddc84;
+}
+
+.risk-ranking-panel__chart {
+  flex: 1;
+  min-height: 0;
+}
+
+.risk-ranking-panel--chart .risk-ranking-panel__chart {
+  min-height: 160px;
+}
+
+.risk-ranking-panel__empty {
+  min-height: 96px;
+}
 </style>

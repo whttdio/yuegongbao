@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev:h5": "set UNI_INPUT_DIR=%cd%&& fnm exec --using 20.20.2 node .\\node_modules\\@dcloudio\\vite-plugin-uni\\bin\\uni.js -p h5 --port 5176",
-    "build:h5": "set UNI_INPUT_DIR=%cd%&& fnm exec --using 20.20.2 node .\\node_modules\\@dcloudio\\vite-plugin-uni\\bin\\uni.js build -p h5",
-    "build:app": "set UNI_INPUT_DIR=%cd%&& fnm exec --using 20.20.2 node .\\node_modules\\@dcloudio\\vite-plugin-uni\\bin\\uni.js build -p app",
-    "build:mp-weixin": "set UNI_INPUT_DIR=%cd%&& fnm exec --using 20.20.2 node .\\node_modules\\@dcloudio\\vite-plugin-uni\\bin\\uni.js build -p mp-weixin"
+    "dev:h5": "set UNI_INPUT_DIR=%cd%&& node .\\node_modules\\@dcloudio\\vite-plugin-uni\\bin\\uni.js -p h5 --port 5176",
+    "build:h5": "set UNI_INPUT_DIR=%cd%&& node .\\node_modules\\@dcloudio\\vite-plugin-uni\\bin\\uni.js build -p h5",
+    "build:app": "set UNI_INPUT_DIR=%cd%&& node .\\node_modules\\@dcloudio\\vite-plugin-uni\\bin\\uni.js build -p app",
+    "build:mp-weixin": "set UNI_INPUT_DIR=%cd%&& node .\\node_modules\\@dcloudio\\vite-plugin-uni\\bin\\uni.js build -p mp-weixin"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-5000720260410001",

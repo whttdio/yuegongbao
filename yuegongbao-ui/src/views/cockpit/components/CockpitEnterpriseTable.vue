@@ -1,12 +1,12 @@
 <template>
-  <div class="enterprise-table">
+  <div class="enterprise-table" :class="{ 'enterprise-table--compact': compact }">
     <div class="enterprise-table__toolbar">
       <span class="enterprise-table__count">可视范围 {{ filteredRows.length }} 条</span>
-      <el-select v-model="riskFilter" class="enterprise-table__filter" placeholder="风险等级" clearable>
+      <el-select v-model="riskFilter" class="enterprise-table__filter cockpit-control" placeholder="风险等级" clearable>
         <el-option label="全部" value="" />
-        <el-option label="红码" value="RED" />
-        <el-option label="黄码" value="YELLOW" />
-        <el-option label="绿码" value="GREEN" />
+        <el-option label="红码 · 高危" value="RED" />
+        <el-option label="黄码 · 预警" value="YELLOW" />
+        <el-option label="绿码 · 正常" value="GREEN" />
       </el-select>
     </div>
     <div class="enterprise-table__scroll">
@@ -14,7 +14,7 @@
         <thead>
           <tr>
             <th>企业名称</th>
-            <th>风险码等级</th>
+            <th>风险等级</th>
             <th>区域</th>
             <th>参保率</th>
             <th>违规次数</th>
@@ -23,14 +23,9 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="row in pagedRows"
-            :key="row.id"
-            :class="rowRowClass(row)"
-            @click="emit('row-click', row)"
-          >
+          <tr v-for="row in pagedRows" :key="row.id" :class="rowRowClass(row)" @click="emit('row-click', row)">
             <td>{{ row.enterpriseName }}</td>
-            <td><span :class="['risk-tag', `risk-tag--${row.riskTone}`]">{{ row.riskLabel }}</span></td>
+            <td><span :class="['cockpit-risk-tag', `cockpit-risk-tag--${row.riskTone}`]">{{ row.riskLabel }}</span></td>
             <td>{{ row.regionName }}</td>
             <td>{{ row.insuranceRateText }}</td>
             <td>{{ row.violationCountText }}</td>
@@ -38,7 +33,13 @@
             <td>{{ row.warningStatusText }}</td>
           </tr>
           <tr v-if="!pagedRows.length">
-            <td colspan="7" class="enterprise-table__empty">当前可视范围内暂无企业点位</td>
+            <td colspan="7">
+              <div class="cockpit-empty enterprise-table__empty">
+                <div class="cockpit-empty__icon" />
+                <div class="cockpit-empty__title">当前可视范围内暂无企业点位</div>
+                <div class="cockpit-empty__desc">调整地图缩放或切换区域筛选后，将自动刷新可视范围内的企业明细</div>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -47,6 +48,7 @@
       <el-pagination
         v-model:current-page="pageNum"
         v-model:page-size="pageSize"
+        class="cockpit-pagination"
         :total="filteredRows.length"
         :page-sizes="[5, 10, 20]"
         layout="total, sizes, prev, pager, next"
@@ -58,21 +60,22 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch } from "vue"
 
 const props = defineProps({
-  rows: { type: Array, default: () => [] }
+  rows: { type: Array, default: () => [] },
+  compact: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['row-click'])
+const emit = defineEmits(["row-click"])
 
-const riskFilter = ref('')
+const riskFilter = ref("")
 const pageNum = ref(1)
 const pageSize = ref(10)
 
 const filteredRows = computed(() => {
   if (!riskFilter.value) return props.rows
-  return props.rows.filter(item => item.colorCode === riskFilter.value)
+  return props.rows.filter((item) => item.colorCode === riskFilter.value)
 })
 
 const pagedRows = computed(() => {
@@ -80,9 +83,12 @@ const pagedRows = computed(() => {
   return filteredRows.value.slice(start, start + pageSize.value)
 })
 
-watch(() => [props.rows.length, riskFilter.value], () => {
-  pageNum.value = 1
-})
+watch(
+  () => [props.rows.length, riskFilter.value],
+  () => {
+    pageNum.value = 1
+  },
+)
 
 function rowRowClass(row) {
   return `enterprise-table__row enterprise-table__row--${row.riskTone}`
@@ -93,7 +99,9 @@ function rowRowClass(row) {
 .enterprise-table {
   display: grid;
   gap: 10px;
-  min-height: 220px;
+  min-height: 0;
+  height: 100%;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .enterprise-table__toolbar {
@@ -101,20 +109,25 @@ function rowRowClass(row) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding-bottom: 2px;
 }
 
 .enterprise-table__count {
-  color: rgba(177, 214, 237, 0.72);
+  color: rgba(205, 228, 234, 0.76);
   font-size: 12px;
 }
 
 .enterprise-table__filter {
-  width: 140px;
+  width: 148px;
 }
 
 .enterprise-table__scroll {
   overflow: auto;
-  border: 1px solid rgba(82, 230, 255, 0.12);
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  background: rgba(4, 14, 28, 0.45);
+  backdrop-filter: blur(8px);
+  min-height: 0;
+  height: 100%;
 }
 
 .enterprise-table__grid {
@@ -126,82 +139,94 @@ function rowRowClass(row) {
 
 .enterprise-table__grid th,
 .enterprise-table__grid td {
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(82, 230, 255, 0.08);
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.08);
   text-align: left;
   white-space: nowrap;
 }
 
-.enterprise-table__grid th {
-  color: rgba(177, 214, 237, 0.72);
-  background: rgba(6, 17, 31, 0.88);
+.enterprise-table__grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  color: #77f5ff;
+  background: linear-gradient(180deg, rgba(8, 38, 66, 0.96), rgba(6, 27, 49, 0.96));
+  box-shadow: inset 0 -1px 0 rgba(0, 229, 255, 0.12);
   font-weight: 600;
 }
 
 .enterprise-table__row {
   cursor: pointer;
-  background: rgba(7, 18, 32, 0.72);
-  transition: background 0.18s ease;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+  border-left: 3px solid transparent;
 }
 
 .enterprise-table__row:hover {
-  background: rgba(17, 42, 68, 0.72);
+  background: rgba(0, 229, 255, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.1);
 }
 
 .enterprise-table__row--red {
-  box-shadow: inset 3px 0 0 rgba(255, 111, 145, 0.92);
+  background: rgba(255, 77, 79, 0.1);
+  border-left-color: var(--risk-red, #ff4d4f);
+  box-shadow: inset 4px 0 12px rgba(255, 77, 79, 0.12);
+}
+
+.enterprise-table__row--red:hover {
+  background: rgba(255, 77, 79, 0.16);
+  box-shadow:
+    inset 4px 0 16px rgba(255, 77, 79, 0.18),
+    inset 0 0 0 1px rgba(255, 77, 79, 0.14);
 }
 
 .enterprise-table__row--yellow {
-  box-shadow: inset 3px 0 0 rgba(255, 190, 98, 0.92);
+  background: rgba(255, 204, 0, 0.09);
+  border-left-color: var(--risk-yellow, #ffcc00);
+  box-shadow: inset 4px 0 12px rgba(255, 204, 0, 0.1);
+}
+
+.enterprise-table__row--yellow:hover {
+  background: rgba(255, 204, 0, 0.14);
 }
 
 .enterprise-table__row--green {
-  box-shadow: inset 3px 0 0 rgba(61, 242, 178, 0.92);
+  background: rgba(0, 255, 200, 0.07);
+  border-left-color: var(--risk-green, #00ffc8);
+  box-shadow: inset 4px 0 12px rgba(0, 255, 200, 0.08);
+}
+
+.enterprise-table__row--green:hover {
+  background: rgba(0, 255, 200, 0.12);
 }
 
 .enterprise-table__empty {
-  text-align: center;
-  color: rgba(177, 214, 237, 0.6);
-}
-
-.risk-tag {
-  display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.risk-tag--red {
-  color: #03111f;
-  background: rgba(255, 111, 145, 0.94);
-}
-
-.risk-tag--yellow {
-  color: #03111f;
-  background: rgba(255, 190, 98, 0.94);
-}
-
-.risk-tag--green {
-  color: #03111f;
-  background: rgba(61, 242, 178, 0.94);
-}
-
-.risk-tag--normal {
-  color: #ebf8ff;
-  background: rgba(82, 230, 255, 0.24);
+  border: none;
+  background: transparent;
+  min-height: 96px;
 }
 
 .enterprise-table__pager {
   display: flex;
   justify-content: flex-end;
+  padding-top: 2px;
 }
 
-.enterprise-table :deep(.el-pagination.is-background .btn-next),
-.enterprise-table :deep(.el-pagination.is-background .btn-prev),
-.enterprise-table :deep(.el-pagination.is-background .el-pager li) {
-  background: rgba(6, 17, 31, 0.88);
-  color: #ebf8ff;
+.enterprise-table__scroll::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.enterprise-table__scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.4);
+}
+
+.enterprise-table--compact .enterprise-table__grid th,
+.enterprise-table--compact .enterprise-table__grid td {
+  padding: 4px 7px;
+  font-size: 10px;
+}
+
+.enterprise-table--compact .enterprise-table__grid thead th {
+  font-size: 9px;
 }
 </style>

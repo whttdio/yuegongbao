@@ -1,0 +1,394 @@
+/* 驾驶舱 · 深色科技风毛玻璃视觉规范 */
+
+.cockpit-screen {
+  --risk-red: #ff4d4f;
+  --risk-red-soft: rgba(255, 77, 79, 0.14);
+  --risk-red-glow: rgba(255, 77, 79, 0.62);
+  --risk-yellow: #ffcc00;
+  --risk-yellow-soft: rgba(255, 204, 0, 0.14);
+  --risk-yellow-glow: rgba(255, 204, 0, 0.52);
+  --risk-green: #00ffc8;
+  --risk-green-soft: rgba(0, 255, 200, 0.12);
+  --risk-green-glow: rgba(0, 255, 200, 0.48);
+  --cockpit-cyan: #00e5ff;
+  --cockpit-cyan-soft: rgba(0, 229, 255, 0.1);
+  --cockpit-cyan-glow: rgba(0, 229, 255, 0.45);
+  --glass-blur: 14px;
+  --glass-bg-deep: rgba(4, 12, 26, 0.62);
+  --glass-bg-mid: rgba(6, 22, 44, 0.58);
+  --glass-bg-light: rgba(8, 28, 52, 0.52);
+  --glass-border: rgba(0, 229, 255, 0.2);
+  --glass-border-inner: rgba(0, 119, 153, 0.38);
+  --glass-highlight: rgba(255, 255, 255, 0.04);
+  --text-primary: #effcff;
+  --text-muted: rgba(204, 228, 235, 0.72);
+  --text-dim: rgba(192, 220, 228, 0.58);
+}
+
+/* ── 毛玻璃卡片分层 ── */
+.cockpit-screen .cockpit-glass {
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.cockpit-screen .screen-panel {
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  background:
+    linear-gradient(155deg, var(--glass-highlight) 0%, transparent 42%),
+    linear-gradient(180deg, var(--glass-bg-mid), rgba(4, 14, 28, 0.88));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 20px rgba(0, 229, 255, 0.1);
+  transition: box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.cockpit-screen .screen-panel--layer-primary {
+  background:
+    linear-gradient(155deg, rgba(0, 229, 255, 0.06) 0%, transparent 38%),
+    linear-gradient(180deg, rgba(8, 30, 56, 0.72), rgba(4, 14, 28, 0.9));
+  box-shadow:
+    inset 0 1px 0 rgba(0, 229, 255, 0.08),
+    0 0 24px rgba(0, 229, 255, 0.14);
+}
+
+.cockpit-screen .screen-panel--layer-map {
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(0, 229, 255, 0.08), transparent 58%),
+    linear-gradient(180deg, rgba(6, 24, 46, 0.68), rgba(3, 10, 22, 0.92));
+  animation: cockpit-panel-breathe 4.5s ease-in-out infinite;
+}
+
+.cockpit-screen .screen-panel--layer-table {
+  background:
+    linear-gradient(180deg, rgba(7, 26, 48, 0.65), rgba(4, 12, 24, 0.88));
+}
+
+.cockpit-screen .screen-header,
+.cockpit-screen .screen-header__summary,
+.cockpit-screen .screen-header__tools {
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* ── 风险三色标签（全页统一） ── */
+.cockpit-risk-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 1px;
+}
+
+.cockpit-risk-tag--red {
+  color: #190507;
+  background: var(--risk-red);
+  box-shadow: 0 0 14px var(--risk-red-glow);
+}
+
+.cockpit-risk-tag--yellow {
+  color: #211700;
+  background: var(--risk-yellow);
+  box-shadow: 0 0 12px var(--risk-yellow-glow);
+}
+
+.cockpit-risk-tag--green {
+  color: #031815;
+  background: var(--risk-green);
+  box-shadow: 0 0 12px var(--risk-green-glow);
+}
+
+/* ── 空数据状态 ── */
+.cockpit-empty {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  min-height: 88px;
+  padding: 16px 12px;
+  text-align: center;
+  border: 1px dashed rgba(0, 229, 255, 0.16);
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.03), transparent);
+}
+
+.cockpit-empty__icon {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  background: rgba(0, 229, 255, 0.06);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.12);
+  position: relative;
+}
+
+.cockpit-empty__icon::before,
+.cockpit-empty__icon::after {
+  content: "";
+  position: absolute;
+  background: rgba(0, 229, 255, 0.55);
+}
+
+.cockpit-empty__icon::before {
+  left: 50%;
+  top: 10px;
+  width: 2px;
+  height: 14px;
+  transform: translateX(-50%);
+}
+
+.cockpit-empty__icon::after {
+  left: 50%;
+  bottom: 10px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+.cockpit-empty__title {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cockpit-empty__desc {
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1.5;
+  max-width: 280px;
+}
+
+/* ── 筛选控件 / 按钮 / 分页 ── */
+.cockpit-screen .cockpit-control.el-input__wrapper,
+.cockpit-screen .cockpit-control.el-select__wrapper,
+.cockpit-screen .cockpit-control.el-date-editor.el-input__wrapper,
+.cockpit-screen :deep(.el-input__wrapper),
+.cockpit-screen :deep(.el-select__wrapper),
+.cockpit-screen :deep(.el-date-editor.el-input__wrapper) {
+  backdrop-filter: blur(8px);
+  background: var(--glass-bg-deep) !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.2) !important;
+  border-radius: 0;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.cockpit-screen :deep(.el-input__wrapper:hover),
+.cockpit-screen :deep(.el-select__wrapper:hover),
+.cockpit-screen :deep(.el-date-editor.el-input__wrapper:hover) {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 229, 255, 0.38),
+    0 0 12px rgba(0, 229, 255, 0.12) !important;
+}
+
+.cockpit-screen :deep(.el-input__wrapper.is-focus),
+.cockpit-screen :deep(.el-select__wrapper.is-focused),
+.cockpit-screen :deep(.el-date-editor.el-input__wrapper.is-focus) {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 229, 255, 0.55),
+    0 0 16px rgba(0, 229, 255, 0.18) !important;
+}
+
+.cockpit-screen :deep(.el-button) {
+  border-radius: 0;
+  border-color: rgba(0, 229, 255, 0.2);
+  background: rgba(0, 229, 255, 0.07);
+  color: var(--text-primary);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.cockpit-screen :deep(.el-button:hover) {
+  transform: translateY(-1px);
+  border-color: rgba(0, 229, 255, 0.38);
+  background: rgba(0, 229, 255, 0.14);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.16);
+}
+
+.cockpit-screen :deep(.el-button--primary) {
+  border-color: transparent;
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.94), rgba(0, 255, 200, 0.9));
+  color: #041017;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.28);
+}
+
+.cockpit-screen :deep(.el-pagination),
+.cockpit-screen .cockpit-pagination {
+  --el-pagination-bg-color: transparent;
+  --el-pagination-text-color: var(--text-muted);
+  --el-pagination-button-color: var(--text-primary);
+  --el-pagination-hover-color: var(--cockpit-cyan);
+}
+
+.cockpit-screen :deep(.el-pagination.is-background .btn-next),
+.cockpit-screen :deep(.el-pagination.is-background .btn-prev),
+.cockpit-screen :deep(.el-pagination.is-background .el-pager li) {
+  backdrop-filter: blur(6px);
+  background: var(--glass-bg-deep) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid rgba(0, 229, 255, 0.16) !important;
+  border-radius: 0;
+  transition: box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.cockpit-screen :deep(.el-pagination.is-background .el-pager li.is-active) {
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.88), rgba(0, 255, 200, 0.82)) !important;
+  color: #041017 !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.32);
+}
+
+.cockpit-screen :deep(.el-pagination.is-background .el-pager li:hover),
+.cockpit-screen :deep(.el-pagination.is-background .btn-next:hover),
+.cockpit-screen :deep(.el-pagination.is-background .btn-prev:hover) {
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.18);
+}
+
+.cockpit-screen :deep(.el-pagination .el-select .el-select__wrapper) {
+  min-width: 96px;
+}
+
+.cockpit-screen :deep(.el-pagination__total),
+.cockpit-screen :deep(.el-pagination__sizes),
+.cockpit-screen :deep(.el-pagination__jump) {
+  color: var(--text-muted) !important;
+}
+
+/* ── 图表图例规范 ── */
+.cockpit-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+}
+
+.cockpit-chart-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  background: var(--glass-bg-deep);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.cockpit-chart-legend__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+  flex-shrink: 0;
+}
+
+/* ── 加载过渡 ── */
+.cockpit-screen.is-loading .screen-layout,
+.cockpit-screen.is-loading .screen-header {
+  opacity: 0.55;
+  filter: blur(1px);
+  transition: opacity 0.35s ease, filter 0.35s ease;
+}
+
+.cockpit-screen:not(.is-loading) .screen-layout,
+.cockpit-screen:not(.is-loading) .screen-header {
+  animation: cockpit-content-in 0.45s ease;
+}
+
+.cockpit-loading.el-loading-mask {
+  backdrop-filter: blur(6px);
+  background: rgba(4, 10, 23, 0.72) !important;
+}
+
+.cockpit-loading .el-loading-spinner {
+  top: 46%;
+}
+
+.cockpit-loading .el-loading-spinner .circular {
+  width: 48px;
+  height: 48px;
+  animation: cockpit-loading-spin 1.1s linear infinite;
+}
+
+.cockpit-loading .el-loading-spinner .path {
+  stroke: var(--cockpit-cyan);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.8));
+}
+
+.cockpit-loading .el-loading-text {
+  color: rgba(149, 240, 249, 0.88) !important;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+/* ── 动画 ── */
+@keyframes cockpit-panel-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(0, 229, 255, 0.06),
+      0 0 20px rgba(0, 229, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(0, 229, 255, 0.1),
+      0 0 32px rgba(0, 229, 255, 0.2),
+      0 0 48px rgba(255, 77, 79, 0.06);
+  }
+}
+
+@keyframes cockpit-heat-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.18);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(0, 229, 255, 0.32),
+      0 0 28px rgba(255, 77, 79, 0.22);
+    filter: brightness(1.12);
+  }
+}
+
+@keyframes cockpit-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cockpit-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes cockpit-risk-pulse {
+  0%,
+  100% {
+    text-shadow: 0 0 12px var(--risk-red-glow);
+  }
+  50% {
+    text-shadow:
+      0 0 22px var(--risk-red-glow),
+      0 0 36px rgba(255, 77, 79, 0.35);
+  }
+}
+
+@keyframes cockpit-warning-pulse {
+  0%,
+  100% {
+    text-shadow: 0 0 12px var(--risk-yellow-glow);
+  }
+  50% {
+    text-shadow:
+      0 0 20px var(--risk-yellow-glow),
+      0 0 32px rgba(255, 204, 0, 0.28);
+  }
+}

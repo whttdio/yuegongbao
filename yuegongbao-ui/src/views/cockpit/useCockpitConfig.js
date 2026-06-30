@@ -130,6 +130,15 @@ export function useCockpitConfig(modeRef) {
     dialogVisible.value = false
   }
 
+  function togglePanel(key, visible) {
+    const panels = new Set(prefs.value.visiblePanels)
+    if (visible) panels.add(key)
+    else panels.delete(key)
+    prefs.value.visiblePanels = [...panels]
+    const mode = typeof modeRef === 'function' ? modeRef() : modeRef?.value || modeRef
+    saveLocalPrefs(mode, prefs.value)
+  }
+
   return {
     prefs,
     draftPrefs,
@@ -139,6 +148,7 @@ export function useCockpitConfig(modeRef) {
     loadConfig,
     openDialog,
     applyDraft,
+    togglePanel,
     isPanelVisible,
     isMetricVisible
   }
