@@ -1,6 +1,6 @@
 <template>
   <!-- 联调快照：企业小程序页面已纳入接口联调与真机验收台账 -->
-  <view class="worker-page login-page login-page--screen">
+  <view class="worker-page login-page">
     <view class="login-hero worker-card worker-hero">
       <view class="login-hero__top">
         <view class="login-brand-mark">

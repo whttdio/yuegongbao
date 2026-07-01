@@ -94,6 +94,7 @@
 import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { createFeedback, getHelpList, getLegalHotline } from '../../api/worker'
+import { sanitizeFaqRows } from '../../utils/faq-sanitize'
 import { normalizeWorkerJumpTarget, openWorkerJumpTarget } from '../../utils/worker-jump'
 import { resolveEntryIcon } from '../../utils/entry-icon'
 
@@ -180,7 +181,7 @@ async function loadData() {
     hotline.value = data?.hotline || phone || {}
     quickActions.value = data?.quickActions || []
     serviceCards.value = data?.serviceCards || []
-    faqRows.value = data?.faqRows || []
+    faqRows.value = sanitizeFaqRows(data?.faqRows || [])
     helpLastLoadedAt.value = new Date().toLocaleString()
     helpLastMessage.value = rows.value.length || faqRows.value.length
       ? '帮助中心聚合已加载，可核对帮助条目、FAQ 和服务承接'

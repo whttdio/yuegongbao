@@ -82,6 +82,7 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getLegalConsultList, getLegalFaqList, getLegalHotline } from '../../api/enterprise-service'
+import { sanitizeFaqRows } from '../../utils/faq-sanitize'
 
 const rows = ref([])
 const faqRows = ref([])
@@ -92,7 +93,7 @@ const hotlineText = computed(() => hotline.value?.displayText || '工会法律�
 
 async function loadFaqs() {
   const faqs = await getLegalFaqList(faqKeyword.value.trim())
-  faqRows.value = faqs?.rows || []
+  faqRows.value = sanitizeFaqRows(faqs?.rows || [])
 }
 
 async function loadData() {

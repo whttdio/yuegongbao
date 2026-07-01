@@ -6,9 +6,9 @@
           <tr>
             <th>排名</th>
             <th>企业名称</th>
-            <th>码</th>
+            <th>码色</th>
             <th>参保率</th>
-            <th>违规</th>
+            <th>违规次数</th>
             <th>事故率</th>
             <th>风险值</th>
           </tr>
@@ -35,7 +35,7 @@
       <div v-else class="cockpit-empty risk-ranking-panel__empty">
         <div class="cockpit-empty__icon" />
         <div class="cockpit-empty__title">暂无红黄绿码排行数据</div>
-        <div class="cockpit-empty__desc">企业赋码完成后将在此展示风险分层与 TOP 排行</div>
+        <div class="cockpit-empty__desc">企业风险评分入库后，将在这里展示 TOP 风险企业排行。</div>
       </div>
     </div>
     <div v-if="layout !== 'table'" ref="chartRef" class="risk-ranking-panel__chart" />
@@ -43,8 +43,8 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
-import * as echarts from "echarts"
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import * as echarts from 'echarts'
 
 const props = defineProps({
   creditSummary: { type: Object, default: () => ({}) },
@@ -52,20 +52,20 @@ const props = defineProps({
   colors: { type: Object, default: () => ({}) },
   layout: {
     type: String,
-    default: "full",
-    validator: (value) => ["full", "table", "chart"].includes(value),
-  },
+    default: 'full',
+    validator: value => ['full', 'table', 'chart'].includes(value)
+  }
 })
 
-const emit = defineEmits(["open-module"])
+const emit = defineEmits(['open-module'])
 
 const chartRef = ref(null)
 let chartInstance = null
 
 const RISK_COLORS = Object.freeze({
-  red: "#ff4d4f",
-  yellow: "#ffcc00",
-  green: "#00ffc8",
+  red: '#ff4d4f',
+  yellow: '#ffcc00',
+  green: '#00ffc8'
 })
 
 const donutData = computed(() => {
@@ -74,16 +74,16 @@ const donutData = computed(() => {
   const total = Number(props.creditSummary?.totalCount || 0)
   const green = Math.max(total - red - yellow, 0)
   return [
-    { name: "红码 · 高危", value: red, itemStyle: { color: RISK_COLORS.red } },
-    { name: "黄码 · 预警", value: yellow, itemStyle: { color: RISK_COLORS.yellow } },
-    { name: "绿码 · 正常", value: green, itemStyle: { color: RISK_COLORS.green } },
+    { name: '红码 / 高风险', value: red, itemStyle: { color: RISK_COLORS.red } },
+    { name: '黄码 / 预警', value: yellow, itemStyle: { color: RISK_COLORS.yellow } },
+    { name: '绿码 / 正常', value: green, itemStyle: { color: RISK_COLORS.green } }
   ]
 })
 
 const tableRows = computed(() =>
   props.rankingList.slice(0, 15).map((item, index) => {
-    const colorCode = String(item.colorCode || "").toUpperCase()
-    const tone = colorCode === "RED" ? "red" : colorCode === "YELLOW" ? "yellow" : "green"
+    const colorCode = String(item.colorCode || '').toUpperCase()
+    const tone = colorCode === 'RED' ? 'red' : colorCode === 'YELLOW' ? 'yellow' : 'green'
     const insuranceRate = Number(item.insuranceRate ?? item.socialTaxScore ?? 0)
     const violationCount = Number(item.violationCount ?? 0)
     const accidentRate = Number(item.accidentRate ?? item.safetyScore ?? 0)
@@ -91,103 +91,103 @@ const tableRows = computed(() =>
       100,
       Math.max(
         12,
-        tone === "red" ? 72 : tone === "yellow" ? 48 : 24,
-        100 - Number(item.totalScore ?? 60),
-      ),
+        tone === 'red' ? 72 : tone === 'yellow' ? 48 : 24,
+        100 - Number(item.totalScore ?? 60)
+      )
     )
-    const riskLevel = riskScore >= 58 ? "high" : riskScore >= 32 ? "mid" : "low"
+    const riskLevel = riskScore >= 58 ? 'high' : riskScore >= 32 ? 'mid' : 'low'
     return {
       key: item.scoreId || item.enterpriseId || index,
       rank: item.rankNo || index + 1,
-      enterpriseName: item.enterpriseName || "-",
-      badgeLabel: tone === "red" ? "红" : tone === "yellow" ? "黄" : "绿",
+      enterpriseName: item.enterpriseName || '-',
+      badgeLabel: tone === 'red' ? '红' : tone === 'yellow' ? '黄' : '绿',
       tone,
-      insuranceRateText: insuranceRate ? `${insuranceRate.toFixed(1)}%` : "--",
+      insuranceRateText: insuranceRate ? `${insuranceRate.toFixed(1)}%` : '--',
       violationCount,
-      accidentRateText: accidentRate ? `${accidentRate.toFixed(2)}%` : "--",
+      accidentRateText: accidentRate ? `${accidentRate.toFixed(2)}%` : '--',
       riskScore,
       riskLevel,
-      action: { path: "/credit/score", query: { enterpriseId: item.enterpriseId, colorCode } },
+      action: { path: '/credit/score', query: { enterpriseId: item.enterpriseId, colorCode } }
     }
-  }),
+  })
 )
 
 function renderChart() {
-  if (props.layout === "table" || !chartRef.value) return
+  if (props.layout === 'table' || !chartRef.value) return
   if (!chartInstance) chartInstance = echarts.init(chartRef.value)
   const total = donutData.value.reduce((sum, item) => sum + item.value, 0)
   const redCount = Number(props.creditSummary?.redCount || 0)
   chartInstance.setOption(
     {
       tooltip: {
-        trigger: "item",
-        backgroundColor: "rgba(5, 15, 28, 0.94)",
-        borderColor: "rgba(0, 229, 255, 0.28)",
-        textStyle: { color: "#e9fcff" },
+        trigger: 'item',
+        backgroundColor: 'rgba(5, 15, 28, 0.94)',
+        borderColor: 'rgba(0, 229, 255, 0.28)',
+        textStyle: { color: '#e9fcff' }
       },
       legend: {
         bottom: 4,
-        icon: "circle",
+        icon: 'circle',
         itemHeight: 8,
         itemWidth: 8,
         itemGap: 12,
-        textStyle: { color: "rgba(207, 230, 236, 0.82)", fontSize: 11 },
+        textStyle: { color: 'rgba(207, 230, 236, 0.82)', fontSize: 11 }
       },
       series: [
         {
-          type: "pie",
-          radius: ["60%", "74%"],
-          center: ["50%", "42%"],
+          type: 'pie',
+          radius: ['60%', '74%'],
+          center: ['50%', '42%'],
           silent: true,
           label: { show: false },
-          data: donutData.value.map((item) => ({
+          data: donutData.value.map(item => ({
             value: Math.max(item.value, 0),
-            itemStyle: { color: `${item.itemStyle.color}22` },
-          })),
+            itemStyle: { color: `${item.itemStyle.color}22` }
+          }))
         },
         {
-          type: "pie",
-          radius: ["48%", "58%"],
-          center: ["50%", "42%"],
-          label: { color: "#dffcff", formatter: "{d}%", fontSize: 11 },
+          type: 'pie',
+          radius: ['48%', '58%'],
+          center: ['50%', '42%'],
+          label: { color: '#dffcff', formatter: '{d}%', fontSize: 11 },
           itemStyle: {
-            borderColor: "rgba(4, 10, 23, 0.96)",
+            borderColor: 'rgba(4, 10, 23, 0.96)',
             borderWidth: 2,
             shadowBlur: 14,
-            shadowColor: "rgba(0, 229, 255, 0.2)",
+            shadowColor: 'rgba(0, 229, 255, 0.2)'
           },
           data: total
             ? donutData.value
-            : [{ name: "暂无", value: 1, itemStyle: { color: "rgba(0, 229, 255, 0.12)" } }],
-        },
+            : [{ name: '暂无', value: 1, itemStyle: { color: 'rgba(0, 229, 255, 0.12)' } }]
+        }
       ],
       graphic: [
         {
-          type: "text",
-          left: "center",
-          top: "28%",
+          type: 'text',
+          left: 'center',
+          top: '28%',
           style: {
-            text: redCount ? String(redCount) : total ? String(total) : "--",
-            fill: redCount ? RISK_COLORS.red : "#ebfbff",
+            text: redCount ? String(redCount) : total ? String(total) : '--',
+            fill: redCount ? RISK_COLORS.red : '#ebfbff',
             fontSize: redCount ? 28 : 24,
             fontWeight: 800,
             textShadowBlur: redCount ? 20 : 16,
-            textShadowColor: redCount ? "rgba(255, 77, 79, 0.72)" : "rgba(0, 229, 255, 0.55)",
-          },
+            textShadowColor: redCount ? 'rgba(255, 77, 79, 0.72)' : 'rgba(0, 229, 255, 0.55)'
+          }
         },
         {
-          type: "text",
-          left: "center",
-          top: "44%",
+          type: 'text',
+          left: 'center',
+          top: '44%',
           style: {
-            text: redCount ? "红码企业" : "风险企业总量",
-            fill: "rgba(204, 228, 235, 0.72)",
-            fontSize: 11,
-          },
-        },
-      ],
+            text: redCount ? '红码企业' : '风险企业总量',
+            fill: 'rgba(204, 228, 235, 0.72)',
+            fontSize: 11
+          }
+        }
+      ]
     },
-    true,
+    true
   )
   chartInstance.resize()
 }
@@ -196,11 +196,11 @@ watch([donutData, () => props.rankingList, () => props.layout], () => nextTick(r
 
 onMounted(() => {
   renderChart()
-  window.addEventListener("resize", renderChart)
+  window.addEventListener('resize', renderChart)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener("resize", renderChart)
+  window.removeEventListener('resize', renderChart)
   chartInstance?.dispose()
   chartInstance = null
 })

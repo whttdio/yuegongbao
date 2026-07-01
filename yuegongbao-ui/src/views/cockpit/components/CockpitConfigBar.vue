@@ -1,56 +1,69 @@
 <template>
   <footer class="cockpit-config-bar">
-    <span class="cockpit-config-bar__title">驾驶舱配置</span>
-    <span class="cockpit-config-bar__divider" />
+    <div class="cockpit-config-bar__section cockpit-config-bar__section--panels">
+      <span class="cockpit-config-bar__title">驾驶舱配置</span>
+      <div class="cockpit-config-bar__checks">
+        <label v-for="item in panelOptions" :key="item.key" class="cockpit-config-bar__check">
+          <input
+            type="checkbox"
+            :checked="visiblePanels.includes(item.key)"
+            @change="emit('toggle-panel', item.key, $event.target.checked)"
+          />
+          <span>{{ item.shortLabel || item.label }}</span>
+        </label>
+      </div>
+    </div>
 
-    <label v-for="item in panelOptions" :key="item.key" class="cockpit-config-bar__check">
-      <input
-        type="checkbox"
-        :checked="visiblePanels.includes(item.key)"
-        @change="emit('toggle-panel', item.key, $event.target.checked)"
-      />
-      {{ item.shortLabel || item.label }}
-    </label>
+    <div class="cockpit-config-bar__section cockpit-config-bar__section--filters">
+      <span class="cockpit-config-bar__label">检索条件</span>
 
-    <span class="cockpit-config-bar__divider" />
+      <div class="cockpit-config-bar__field">
+        <span>区域</span>
+        <el-select
+          :model-value="regionCode"
+          class="cockpit-config-bar__select cockpit-control"
+          size="small"
+          @update:model-value="emit('update:regionCode', $event)"
+        >
+          <el-option v-for="item in regionOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </div>
 
-    <el-select
-      :model-value="regionCode"
-      class="cockpit-config-bar__select cockpit-control"
-      size="small"
-      @update:model-value="emit('update:regionCode', $event)"
-    >
-      <el-option v-for="item in regionOptions" :key="item.value" :label="item.label" :value="item.value" />
-    </el-select>
+      <div class="cockpit-config-bar__field">
+        <span>月份</span>
+        <el-date-picker
+          :model-value="statMonth"
+          class="cockpit-config-bar__select cockpit-control cockpit-config-bar__select--month"
+          type="month"
+          size="small"
+          value-format="YYYY-MM"
+          format="YYYY-MM"
+          @update:model-value="emit('update:statMonth', $event)"
+        />
+      </div>
 
-    <el-date-picker
-      :model-value="statMonth"
-      class="cockpit-config-bar__select cockpit-control"
-      type="month"
-      size="small"
-      value-format="YYYY-MM"
-      format="YYYY-MM"
-      @update:model-value="emit('update:statMonth', $event)"
-    />
+      <div class="cockpit-config-bar__field">
+        <span>周期</span>
+        <el-select
+          :model-value="days"
+          class="cockpit-config-bar__select cockpit-control cockpit-config-bar__select--short"
+          size="small"
+          @update:model-value="emit('update:days', $event)"
+        >
+          <el-option v-for="item in dayOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </div>
+    </div>
 
-    <el-select
-      :model-value="days"
-      class="cockpit-config-bar__select cockpit-control cockpit-config-bar__select--short"
-      size="small"
-      @update:model-value="emit('update:days', $event)"
-    >
-      <el-option v-for="item in dayOptions" :key="item.value" :label="item.label" :value="item.value" />
-    </el-select>
-
-    <button type="button" class="cockpit-config-bar__refresh" @click="emit('refresh')">立即刷新</button>
-
-    <el-button plain size="small" :icon="Setting" @click="emit('open-advanced')">高级</el-button>
-    <el-button plain size="small" :icon="Download" @click="emit('export')" v-hasPermi="['ygb:cockpit:export']">导出</el-button>
-    <el-button plain size="small" @click="emit('toggle-immersive')">
-      {{ isImmersive ? "退出全屏" : "全屏" }}
-    </el-button>
-
-    <span class="cockpit-config-bar__refresh-label">{{ lastRefreshLabel }}</span>
+    <div class="cockpit-config-bar__section cockpit-config-bar__section--actions">
+      <button type="button" class="cockpit-config-bar__refresh" @click="emit('refresh')">立即刷新</button>
+      <el-button plain size="small" :icon="Setting" @click="emit('open-advanced')">高级</el-button>
+      <el-button plain size="small" :icon="Download" @click="emit('export')" v-hasPermi="['ygb:cockpit:export']">导出</el-button>
+      <el-button plain size="small" @click="emit('toggle-immersive')">
+        {{ isImmersive ? "退出全屏" : "全屏" }}
+      </el-button>
+      <span class="cockpit-config-bar__refresh-label">{{ lastRefreshLabel }}</span>
+    </div>
   </footer>
 </template>
 
@@ -80,50 +93,99 @@ const emit = defineEmits([
   "toggle-immersive",
 ])
 
+const SHORT_LABEL_MAP = Object.freeze({
+  "panel-metrics": "大屏指标",
+  "panel-risk-ranking": "风险分类",
+  "panel-trend": "趋势分析",
+  "panel-map": "地图",
+  "panel-table": "点位明细",
+  "panel-region-summary": "区域态势",
+  "panel-warning": "实时预警",
+})
+
 const panelOptions = COCKPIT_PANEL_OPTIONS.map((item) => ({
   ...item,
-  shortLabel: item.label.replace(/面板|流|表格|GIS /g, "").slice(0, 6),
+  shortLabel: SHORT_LABEL_MAP[item.key] || item.label,
 }))
 </script>
 
 <style scoped lang="scss">
 .cockpit-config-bar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  padding: 6px 12px;
-  min-height: 34px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(360px, 1.15fr) auto;
+  gap: 10px;
+  padding: 8px 12px;
+  min-height: 56px;
   flex-shrink: 0;
-  border: 1px solid rgba(0, 180, 255, 0.1);
-  border-radius: 8px;
-  background: rgba(10, 18, 34, 0.9);
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 180, 255, 0.12);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(14, 24, 40, 0.94), rgba(8, 16, 30, 0.92));
+  backdrop-filter: blur(10px);
   font-size: 11px;
-  color: rgba(148, 169, 196, 0.88);
+  color: rgba(190, 216, 228, 0.84);
 }
 
-.cockpit-config-bar__title {
+.cockpit-config-bar__section {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cockpit-config-bar__section--panels {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  padding-right: 10px;
+  border-right: 1px solid rgba(0, 180, 255, 0.1);
+}
+
+.cockpit-config-bar__section--filters {
+  padding-right: 10px;
+  border-right: 1px solid rgba(0, 180, 255, 0.1);
+}
+
+.cockpit-config-bar__section--actions {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cockpit-config-bar__title,
+.cockpit-config-bar__label {
+  flex-shrink: 0;
   font-weight: 600;
-  color: var(--text-primary, #e6ecf5);
+  color: #e8fbff;
   white-space: nowrap;
 }
 
-.cockpit-config-bar__divider {
-  width: 1px;
-  height: 14px;
-  background: rgba(0, 180, 255, 0.14);
-  flex-shrink: 0;
+.cockpit-config-bar__checks {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cockpit-config-bar__checks::-webkit-scrollbar {
+  display: none;
 }
 
 .cockpit-config-bar__check {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 4px;
+  padding: 3px 5px;
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  background: rgba(0, 229, 255, 0.03);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 11px;
+  color: rgba(205, 230, 236, 0.82);
 }
 
 .cockpit-config-bar__check input {
@@ -133,21 +195,37 @@ const panelOptions = COCKPIT_PANEL_OPTIONS.map((item) => ({
   cursor: pointer;
 }
 
+.cockpit-config-bar__field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.cockpit-config-bar__field > span {
+  color: rgba(155, 211, 227, 0.74);
+  font-size: 11px;
+}
+
 .cockpit-config-bar__select {
   width: 120px;
 }
 
 .cockpit-config-bar__select--short {
-  width: 108px;
+  width: 104px;
+}
+
+.cockpit-config-bar__select--month {
+  width: 132px;
 }
 
 .cockpit-config-bar__refresh {
   padding: 4px 12px;
-  border: 1px solid rgba(0, 200, 255, 0.22);
+  border: 1px solid rgba(0, 200, 255, 0.24);
   border-radius: 4px;
-  background: rgba(0, 180, 255, 0.08);
-  color: #00d4ff;
-  font-size: 10px;
+  background: rgba(0, 180, 255, 0.1);
+  color: #00dfff;
+  font-size: 11px;
   cursor: pointer;
   transition: background 0.18s ease, box-shadow 0.18s ease;
 }
@@ -158,9 +236,32 @@ const panelOptions = COCKPIT_PANEL_OPTIONS.map((item) => ({
 }
 
 .cockpit-config-bar__refresh-label {
-  margin-left: auto;
+  margin-left: 4px;
   font-size: 10px;
   color: rgba(148, 169, 196, 0.72);
   white-space: nowrap;
+}
+
+@media (max-width: 1600px) {
+  .cockpit-config-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .cockpit-config-bar__section--panels,
+  .cockpit-config-bar__section--filters {
+    padding-right: 0;
+    border-right: none;
+  }
+
+  .cockpit-config-bar__section--actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 980px) {
+  .cockpit-config-bar__section {
+    flex-wrap: wrap;
+  }
 }
 </style>

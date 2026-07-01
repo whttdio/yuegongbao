@@ -20,6 +20,7 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getLegalFaqDetail } from '../../api/worker'
+import { sanitizeFaqDetail } from '../../utils/faq-sanitize'
 
 const detail = ref({})
 const faqDetailLastLoadedAt = ref('')
@@ -46,7 +47,7 @@ async function loadData(faqKey) {
     return
   }
   try {
-    detail.value = await getLegalFaqDetail(faqKey)
+    detail.value = sanitizeFaqDetail(await getLegalFaqDetail(faqKey))
     faqDetailLastLoadedAt.value = new Date().toLocaleString()
     faqDetailLastMessage.value = '常见问题详情已加载，可核对分类和正文段落'
   } catch (error) {

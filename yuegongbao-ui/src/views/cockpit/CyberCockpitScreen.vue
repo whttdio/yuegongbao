@@ -16,19 +16,23 @@
     <div class="cockpit-screen__corner cockpit-screen__corner--br" />
 
     <div class="cockpit-screen__shell">
-      <header class="cockpit-header">
-        <div class="cockpit-header__left">
-          <div class="cockpit-header__logo">🛡</div>
-          <div>
-            <div class="cockpit-header__title">{{ pageConfig.title }}</div>
-            <div class="cockpit-header__subtitle">{{ pageConfig.kicker }} · {{ pageDescription }}</div>
+      <header class="cockpit-command">
+        <section class="cockpit-command__hero screen-panel screen-panel--layer-primary">
+          <div class="cockpit-command__headline">
+            <div class="cockpit-command__status">
+              <span class="cockpit-command__status-pill">
+                <i class="cockpit-command__status-dot" />
+                系统运行正常
+              </span>
+              <span>{{ regionLabel }}</span>
+              <span>{{ roleLabel }}</span>
+              <strong>{{ currentTimeText }}</strong>
+            </div>
+            <div class="cockpit-command__title-wrap">
+              <h1 class="cockpit-command__title">{{ pageConfig.title }}</h1>
+            </div>
           </div>
-        </div>
-        <div class="cockpit-header__right">
-          <span><i class="cockpit-header__dot" /> 系统运行正常</span>
-          <span>{{ regionLabel }} · {{ roleLabel }}</span>
-          <span class="cockpit-header__time">{{ currentTimeText }}</span>
-        </div>
+        </section>
       </header>
 
       <el-alert
@@ -41,110 +45,47 @@
         class="readonly-banner"
       />
 
-      <section v-if="isPanelVisible('panel-metrics')" class="cockpit-metrics-row">
-        <button
+      <section
+        v-if="isPanelVisible('panel-metrics')"
+        class="cockpit-metrics-row"
+        :style="{ '--metric-column-count': visibleMetricCards.length }"
+      >
+        <cockpit-metric-card
           v-for="item in visibleMetricCards"
           :key="item.key"
-          type="button"
-          class="metric-card-v4"
-          :class="[
-            accentClass(item),
-            { 'metric-card-v4--hero': isRiskHeroKey(item.key) },
-          ]"
+          :label="item.label"
+          :value="item.value"
+          :unit="item.unit"
+          :tone="item.tone"
+          :delta-tone="item.deltaTone"
+          :delta-text="item.deltaText"
+          :share-text="item.shareText"
+          :spark-values="item.sparkValues"
+          :hero="isRiskHeroKey(item.key)"
+          compact
           @click="item.action && openModule(item.action)"
-        >
-          <span class="metric-card-v4__shimmer" />
-          <span class="metric-card-v4__label">{{ item.label }}</span>
-          <strong class="metric-card-v4__value">{{ item.value }}<em>{{ item.unit }}</em></strong>
-          <span class="metric-card-v4__sub">{{ item.deltaText }}</span>
-        </button>
+        />
       </section>
 
-      <section class="cockpit-main-row">
-        <article v-if="isPanelVisible('panel-warning')" class="screen-panel screen-panel--layer-primary">
-          <div class="panel-header-v4">
-            <span class="dot-indicator dot-indicator--red" />
-            <span>实时预警流</span>
-            <span class="panel-header-v4__extra">{{ warningItems.length }} 条</span>
-          </div>
-          <div class="panel-body">
-            <cockpit-warning-stream :items="warningItems" @open-module="openModule" />
-          </div>
-        </article>
-
-        <article v-if="isPanelVisible('panel-map')" class="screen-panel screen-panel--map screen-panel--layer-map map-panel">
-          <div class="panel-header-v4 panel-header-v4--map">
-            <div class="panel-header-v4__titles">
-              <span class="dot-indicator" />
-              <span>地图可视化</span>
-              <strong>{{ pageConfig.mapTitle }}</strong>
-            </div>
-            <div class="layer-switches">
-              <button
-                v-for="item in mapLayerOptions"
-                :key="item.key"
-                type="button"
-                class="layer-switch"
-                :class="{ 'is-active': activeMapLayers.includes(item.key) }"
-                @click="toggleMapLayer(item.key)"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-          </div>
-          <div class="panel-body map-wrap">
-            <div ref="mapChartRef" class="map-wrap__chart" />
-            <div class="map-wrap__legend cockpit-chart-legend">
-              <div class="map-wrap__legend-bar map-wrap__legend-bar--breathe" />
-              <div v-for="item in mapLegendItems" :key="item.label" class="cockpit-chart-legend__item legend-item">
-                <i class="cockpit-chart-legend__dot" :style="{ background: item.color, color: item.color }" />
-                <span>{{ item.label }}</span>
-              </div>
-            </div>
-            <div class="map-wrap__stats">
-              <div v-for="item in mapStats" :key="item.label" class="map-stat">
-                <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article v-if="isPanelVisible('panel-risk-ranking')" class="screen-panel screen-panel--layer-primary">
-          <div class="panel-header-v4">
-            <span class="dot-indicator dot-indicator--yellow" />
-            <span>红黄绿码 · 企业风险排名</span>
-          </div>
-          <div class="panel-body">
-            <cockpit-risk-ranking-panel
-              ref="riskRankingRef"
-              layout="table"
-              :credit-summary="dashboardData.creditScoreSummary || {}"
-              :ranking-list="creditRankingList"
-              :colors="COLORS"
-              @open-module="openModule"
+      <section class="cockpit-stage">
+        <aside class="cockpit-stage__side cockpit-stage__side--left">
+          <article v-if="isPanelVisible('panel-warning')" class="screen-panel screen-panel--layer-primary">
+            <cockpit-section-header
+              title="实时预警流"
+              subtitle="级别 / 位置 / 摘要 / 处置状态"
+              extra="滚动监测"
+              dot-tone="danger"
             />
-          </div>
-        </article>
-      </section>
+            <cockpit-warning-stream :items="warningItems" @open-module="openModule" />
+          </article>
 
-      <section class="cockpit-bottom-row cockpit-bottom-row--1">
-        <article v-if="isPanelVisible('panel-trend')" class="screen-panel screen-panel--layer-primary cockpit-bottom-span-2">
-          <div class="panel-header-v4">
-            <span class="dot-indicator" />
-            <span>{{ pageConfig.trendTitle }}</span>
-          </div>
-          <div class="panel-body">
-            <div ref="trendChartRef" class="chart-box chart-box--trend" />
-          </div>
-        </article>
-
-        <article v-if="isPanelVisible('panel-region-summary')" class="screen-panel screen-panel--layer-primary">
-          <div class="panel-header-v4">
-            <span class="dot-indicator dot-indicator--green" />
-            <span>{{ pageConfig.regionSummaryTitle }}</span>
-          </div>
-          <div class="panel-body">
+          <article v-if="isPanelVisible('panel-region-summary')" class="screen-panel screen-panel--layer-primary">
+            <cockpit-section-header
+              :title="pageConfig.regionSummaryTitle"
+              subtitle="参保、预警、点位、扩面四类监测摘要"
+              extra="区域态势"
+              dot-tone="green"
+            />
             <div class="region-summary-grid">
               <div
                 v-for="item in regionSummaryItems"
@@ -157,27 +98,74 @@
                 <em>{{ item.note }}</em>
               </div>
             </div>
-          </div>
-        </article>
-      </section>
+          </article>
+        </aside>
 
-      <section class="cockpit-bottom-row cockpit-bottom-row--2">
-        <article v-if="isPanelVisible('panel-table')" class="screen-panel screen-panel--layer-table cockpit-bottom-span-2">
-          <div class="panel-header-v4">
-            <span class="dot-indicator" />
-            <span>地图可视范围内企业点位明细</span>
-          </div>
-          <div class="panel-body">
-            <cockpit-enterprise-table compact :rows="visibleEnterpriseRows" @row-click="handleEnterpriseRowClick" />
-          </div>
-        </article>
+        <main class="cockpit-stage__center">
+          <article v-if="isPanelVisible('panel-map')" class="screen-panel screen-panel--map screen-panel--layer-map map-panel">
+            <cockpit-section-header
+              title="地图可视化"
+              :subtitle="pageConfig.mapTitle"
+              eyebrow="空间监测"
+              dot-tone="cyan"
+            >
+              <div class="layer-switches">
+                <button
+                  v-for="item in mapLayerOptions"
+                  :key="item.key"
+                  type="button"
+                  class="layer-switch"
+                  :class="{ 'is-active': activeMapLayers.includes(item.key) }"
+                  @click="toggleMapLayer(item.key)"
+                >
+                  {{ item.label }}
+                </button>
+              </div>
+            </cockpit-section-header>
+            <div class="map-wrap">
+              <div ref="mapChartRef" class="map-wrap__chart" />
+              <div class="map-wrap__legend cockpit-chart-legend">
+                <div class="map-wrap__legend-bar map-wrap__legend-bar--breathe" />
+                <div v-for="item in mapLegendItems" :key="item.label" class="cockpit-chart-legend__item legend-item">
+                  <i class="cockpit-chart-legend__dot" :style="{ background: item.color, color: item.color }" />
+                  <span>{{ item.label }}</span>
+                </div>
+              </div>
+              <div class="map-wrap__stats">
+                <div v-for="item in mapStats" :key="item.label" class="map-stat">
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.value }}</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+        </main>
 
-        <article v-if="isPanelVisible('panel-risk-ranking')" class="screen-panel screen-panel--layer-primary">
-          <div class="panel-header-v4">
-            <span class="dot-indicator dot-indicator--yellow" />
-            <span>红黄绿码企业分布</span>
-          </div>
-          <div class="panel-body">
+        <aside class="cockpit-stage__side cockpit-stage__side--right">
+          <article v-if="isPanelVisible('panel-risk-ranking')" class="screen-panel screen-panel--layer-primary">
+            <cockpit-section-header
+              title="红黄绿码企业分类"
+              subtitle="企业风险排名与风险因子概览"
+              extra="TOP 风险企业"
+              dot-tone="warning"
+            />
+            <cockpit-risk-ranking-panel
+              ref="riskRankingRef"
+              layout="table"
+              :credit-summary="dashboardData.creditScoreSummary || {}"
+              :ranking-list="creditRankingList"
+              :colors="COLORS"
+              @open-module="openModule"
+            />
+          </article>
+
+          <article v-if="isPanelVisible('panel-risk-ranking')" class="screen-panel screen-panel--layer-primary">
+            <cockpit-section-header
+              title="红黄绿码企业分布"
+              subtitle="高风险、中风险、正常企业结构占比"
+              extra="结构分布"
+              dot-tone="warning"
+            />
             <cockpit-risk-ranking-panel
               ref="riskDonutRef"
               layout="chart"
@@ -185,7 +173,32 @@
               :ranking-list="creditRankingList"
               :colors="COLORS"
             />
+          </article>
+        </aside>
+      </section>
+
+      <section
+        v-if="isPanelVisible('panel-trend') || isPanelVisible('panel-table')"
+        class="cockpit-detail-row"
+      >
+        <article v-if="isPanelVisible('panel-trend')" class="screen-panel screen-panel--layer-primary cockpit-detail-row__trend">
+          <cockpit-section-header
+            :title="pageConfig.trendTitle"
+            subtitle="工伤事故、预警、扩面、设备、职业病五类趋势协同"
+            extra="趋势分析"
+          />
+          <div class="cockpit-trend-panel">
+            <div ref="trendChartRef" class="chart-box chart-box--trend" />
           </div>
+        </article>
+
+        <article v-if="isPanelVisible('panel-table')" class="screen-panel screen-panel--layer-table cockpit-detail-row__table">
+          <cockpit-section-header
+            title="地图可视范围内企业点位明细"
+            subtitle="地图缩放和平移后自动联动当前视野企业"
+            extra="联动明细"
+          />
+          <cockpit-enterprise-table :rows="visibleEnterpriseRows" @row-click="handleEnterpriseRowClick" />
         </article>
       </section>
 
@@ -221,18 +234,20 @@
 <script setup name="CyberCockpitScreen">
 import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch, watchEffect } from "vue"
 import * as echarts from "echarts"
-import { Download, Refresh, Setting } from "@element-plus/icons-vue"
 import { getAzbCockpitDashboard, getYgbCockpitDashboard } from "@/api/ygb/cockpit"
 import { listCreditScore } from "@/api/ygb/creditScore"
 import { listWarning } from "@/api/ygb/warning"
 import { useWorkbenchAssist } from "@/composables/useWorkbenchAssist"
 import useAppStore from "@/store/modules/app"
+import { toRegionPrefix } from "@/utils/regionScope"
 import { useAuthorizedRegionOptions } from "@/utils/regionScope"
 import { useRoleViewMode } from "@/utils/roleView"
 import CockpitConfigBar from "@/views/cockpit/components/CockpitConfigBar.vue"
 import CockpitConfigDialog from "@/views/cockpit/components/CockpitConfigDialog.vue"
 import CockpitEnterpriseTable from "@/views/cockpit/components/CockpitEnterpriseTable.vue"
+import CockpitMetricCard from "@/views/cockpit/components/CockpitMetricCard.vue"
 import CockpitRiskRankingPanel from "@/views/cockpit/components/CockpitRiskRankingPanel.vue"
+import CockpitSectionHeader from "@/views/cockpit/components/CockpitSectionHeader.vue"
 import CockpitWarningStream from "@/views/cockpit/components/CockpitWarningStream.vue"
 import { useCockpitConfig } from "@/views/cockpit/useCockpitConfig"
 import {
@@ -400,13 +415,6 @@ function refreshDashboard() {
   lastRefreshLabel.value = `上次刷新：${formatTimeText()}`
 }
 
-function accentClass(item) {
-  if (item.tone === "danger") return "accent-danger"
-  if (item.tone === "amber") return "accent-warn"
-  if (item.tone === "green" || item.tone === "lime") return "accent-good"
-  return "accent-cyan"
-}
-
 function togglePanelVisible(key, visible) {
   togglePanel(key, visible)
   nextTick(() => {
@@ -553,21 +561,6 @@ const heroMetric = computed(() => {
     value: formatNumber(indicators.value.employerCount),
     unit: "家",
   }
-})
-
-const heroMetaItems = computed(() => {
-  if (props.mode === "azb") {
-    return [
-      { label: "安责险覆盖", value: formatPercent(indicators.value.aqInsuranceRate), tone: "green" },
-      { label: "待处置预警", value: `${formatNumber(indicators.value.pendingWarningCount)} 条`, tone: "danger" },
-      { label: "在线设备", value: `${formatNumber(indicators.value.onlineDeviceCount)} 台`, tone: "cyan" },
-    ]
-  }
-  return [
-    { label: "派遣员工", value: `${formatNumber(indicators.value.dispatchedWorkerCount)} 人`, tone: "cyan" },
-    { label: "工伤参保率", value: formatPercent(indicators.value.insuranceRate), tone: "green" },
-    { label: "当日预警", value: `${formatNumber(indicators.value.todayWarningCount)} 条`, tone: "danger" },
-  ]
 })
 
 const regionSummaryItems = computed(() => {
@@ -985,7 +978,7 @@ function createMapChartOption() {
 }
 
 async function loadAuxiliaryData() {
-  const regionCode = queryParams.value.regionCode
+  const regionCode = toRegionPrefix(queryParams.value.regionCode)
   const [warningRes, creditRes] = await Promise.allSettled([
     listWarning({ regionCode, pageNum: 1, pageSize: 30 }),
     listCreditScore({ regionCode, pageNum: 1, pageSize: 10, orderByColumn: "total_score", isAsc: "asc" }),
@@ -1116,12 +1109,14 @@ onBeforeUnmount(() => {
   position: relative;
   min-height: calc(100vh - var(--layout-header-height, 50px) - var(--layout-tags-height, 34px));
   height: calc(100vh - var(--layout-header-height, 50px) - var(--layout-tags-height, 34px));
+  width: 100%;
   margin: 0;
   padding: 4px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   color: #ebfaff;
+  background-color: var(--cockpit-bg);
   background:
     radial-gradient(circle at 50% 32%, rgba(0, 229, 255, 0.18), transparent 26%),
     radial-gradient(circle at 18% 20%, rgba(0, 255, 200, 0.08), transparent 26%),
@@ -1218,225 +1213,183 @@ onBeforeUnmount(() => {
   gap: 6px;
 }
 
-.screen-header {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--cockpit-col-left) var(--cockpit-col-center) var(--cockpit-col-right);
-  grid-template-areas: "summary title tools";
-  column-gap: 8px;
-  row-gap: 0;
-  align-items: center;
-  min-height: 112px;
-  padding: 6px 10px 4px;
-  border: 1px solid rgba(0, 229, 255, 0.22);
-  background:
-    linear-gradient(180deg, rgba(6, 22, 44, 0.9), rgba(4, 14, 30, 0.96)),
-    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.08), transparent 48%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-    0 0 18px rgba(0, 229, 255, 0.08);
-}
-
-.screen-header::before {
-  content: "";
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  top: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.96), transparent);
-  box-shadow: 0 0 16px rgba(0, 229, 255, 0.5);
-}
-
-.screen-header__titlebar {
-  grid-area: title;
-  min-width: 0;
-  display: grid;
-  justify-items: center;
-  text-align: center;
-  align-self: center;
-  gap: 1px;
-}
-
-.screen-header__eyebrow {
-  color: rgba(149, 240, 249, 0.86);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-}
-
-.screen-header__titlebar h1 {
-  margin: 0;
-  color: #effcff;
-  font-size: clamp(30px, 2vw, 36px);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.08;
-  text-align: center;
-  text-shadow: 0 0 12px rgba(0, 229, 255, 0.26);
-}
-
-.screen-header__titlebar p {
-  margin: 0;
-  color: rgba(205, 226, 232, 0.72);
-  max-width: 520px;
-  font-size: 10px;
-  line-height: 1.2;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.screen-header__summary {
-  grid-area: summary;
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 6px;
-  min-width: 0;
-  min-height: 88px;
-  padding: 8px 10px;
-  border: 1px solid rgba(0, 229, 255, 0.14);
-  background: linear-gradient(180deg, rgba(7, 24, 46, 0.82), rgba(5, 16, 32, 0.9));
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.1);
-}
-
-.screen-header__summary-head {
-  display: grid;
-  gap: 6px;
-}
-
-.screen-header__summary-label {
-  color: rgba(149, 240, 249, 0.82);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-}
-
-.screen-header__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.screen-header__chips span {
-  padding: 2px 8px;
-  border: 1px solid rgba(0, 229, 255, 0.14);
-  background: rgba(0, 229, 255, 0.05);
-  color: rgba(213, 236, 242, 0.78);
-  font-size: 10px;
-}
-
-.screen-header__hero {
-  align-self: stretch;
-  justify-self: stretch;
-  width: 100%;
-}
-
-.screen-header__tools {
-  grid-area: tools;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  align-content: start;
-  align-self: stretch;
-  min-width: 0;
-  min-height: 88px;
-  padding: 8px 10px;
-  border: 1px solid rgba(0, 229, 255, 0.14);
-  background: linear-gradient(180deg, rgba(7, 24, 46, 0.82), rgba(5, 16, 32, 0.9));
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.1);
-}
-
-.screen-header__tools-label {
-  grid-column: 1 / -1;
-  color: rgba(149, 240, 249, 0.82);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-align: left;
-}
-
-.screen-header__tool-buttons {
-  display: flex;
-  grid-column: 1 / -1;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.screen-header__fullscreen {
-  padding-inline: 14px;
-}
-
-.header-control {
-  width: 100%;
-  min-width: 0;
-}
-
-.header-control--month {
-  width: 100%;
-}
-
-.header-control--short {
-  width: 100%;
-}
-
 .readonly-banner {
   margin: 0;
 }
 
-.screen-layout {
+.cockpit-command {
+  display: grid;
+  gap: 6px;
+}
+
+.cockpit-command__hero {
+  padding: 6px 16px 8px;
+}
+
+.cockpit-command__headline {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  min-height: 48px;
+}
+
+.cockpit-command__title-wrap {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.cockpit-command__title {
+  margin: 0;
+  color: #effcff;
+  font-size: clamp(22px, 1.8vw, 30px);
+  line-height: 1.1;
+  font-weight: 800;
+  text-shadow: 0 0 14px rgba(0, 229, 255, 0.22);
+}
+
+.cockpit-command__status {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  align-self: start;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  color: rgba(213, 236, 242, 0.78);
+  font-size: 12px;
+  max-width: min(44%, 540px);
+}
+
+.cockpit-command__status strong {
+  color: #ebfcff;
+  font-size: 13px;
+}
+
+.cockpit-command__status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.cockpit-command__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ffc8;
+  box-shadow: 0 0 10px rgba(0, 255, 200, 0.5);
+}
+
+.cockpit-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(var(--metric-column-count, 10), minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cockpit-stage {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: var(--cockpit-col-left) var(--cockpit-col-center) var(--cockpit-col-right);
+  grid-template-columns: minmax(260px, 0.95fr) minmax(0, 2.2fr) minmax(300px, 1.05fr);
+  gap: 8px;
+}
+
+.cockpit-stage__side,
+.cockpit-stage__center {
+  min-height: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.cockpit-stage__side {
+  background: linear-gradient(180deg, rgba(5, 14, 28, 0.88), rgba(3, 8, 18, 0.94));
+  padding: 4px 6px;
   gap: 6px;
 }
 
-.layout-side,
-.layout-center {
+.cockpit-stage__side .screen-panel {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 6px 4px;
+}
+
+.cockpit-stage__side .screen-panel--layer-primary {
+  background: transparent;
+  box-shadow: none;
+}
+
+.cockpit-stage__side .screen-panel::before,
+.cockpit-stage__side .screen-panel::after {
+  display: none;
+}
+
+.cockpit-stage__side .screen-panel > :deep(.risk-ranking-panel) {
+  flex: 1;
   min-height: 0;
 }
 
-.layout-side {
+.cockpit-stage__side--left {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 0.92fr);
+}
+
+.cockpit-stage__center {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.cockpit-stage__center .map-panel {
+  min-height: 0;
+}
+
+.cockpit-detail-row {
+  flex-shrink: 0;
   display: grid;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 8px;
+  min-height: 0;
+  max-height: clamp(180px, 24vh, 260px);
+}
+
+.cockpit-detail-row:has(.cockpit-detail-row__trend:only-child),
+.cockpit-detail-row:has(.cockpit-detail-row__table:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cockpit-detail-row__trend,
+.cockpit-detail-row__table {
+  min-height: 0;
   overflow: hidden;
 }
 
-.layout-side--right {
-  grid-template-rows: auto minmax(0, 1fr);
-}
-
-.layout-side--left {
-  grid-template-rows: minmax(0, 1fr) minmax(0, 0.92fr) minmax(0, 1.08fr);
-}
-
-.layout-center {
-  display: grid;
-  gap: 4px;
-  grid-template-rows: minmax(0, 56fr) minmax(0, 44fr);
-}
-
-.panel-grow,
-.screen-panel {
-  min-height: 0;
+.cockpit-stage__side--right {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 0.88fr);
 }
 
 .screen-panel {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: 8px 8px 7px;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.screen-panel > :not(.panel-header) {
+.screen-panel > :deep(.warning-stream),
+.screen-panel > .region-summary-grid,
+.screen-panel > .map-wrap,
+.screen-panel > .chart-box--trend,
+.screen-panel > .cockpit-trend-panel,
+.screen-panel > :deep(.enterprise-table) {
   flex: 1;
   min-height: 0;
-}
-
-.screen-panel--compact > :not(.panel-header) {
-  flex: 0;
 }
 
 .screen-panel::before {
@@ -1456,242 +1409,18 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-.panel-header {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
-  flex-shrink: 0;
-}
-
-.panel-header::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(0, 229, 255, 0.84), rgba(0, 229, 255, 0.08));
-}
-
-.panel-header__tag {
-  display: inline-flex;
-  align-items: center;
-  color: #00e5ff;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.panel-header h2 {
-  margin: 4px 0 0;
-  color: #f0fcff;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.panel-header__badge {
-  padding: 4px 8px;
-  border: 1px solid rgba(0, 229, 255, 0.18);
-  background: rgba(0, 229, 255, 0.08);
-  color: rgba(211, 234, 240, 0.76);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.panel-header--map {
-  align-items: center;
-}
-
-.metric-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  flex: 1;
-  min-height: 0;
-  align-content: stretch;
-  overflow: auto;
-}
-
-.metric-card {
-  position: relative;
-  display: grid;
-  gap: 6px;
-  min-height: 120px;
-  padding: 10px 12px;
-  border: 1px solid rgba(0, 229, 255, 0.14);
-  background:
-    linear-gradient(155deg, rgba(255, 255, 255, 0.03) 0%, transparent 40%),
-    linear-gradient(180deg, rgba(8, 29, 54, 0.72), rgba(5, 18, 34, 0.88));
-  backdrop-filter: blur(10px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03), 0 0 12px rgba(0, 229, 255, 0.1);
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
-}
-
-.metric-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, rgba(0, 229, 255, 0.06), transparent 42%);
-  opacity: 0;
-  transition: opacity 0.22s ease;
-  pointer-events: none;
-}
-
-.metric-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(0, 229, 255, 0.38);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 22px rgba(0, 229, 255, 0.2);
-}
-
-.metric-card:hover::before {
-  opacity: 1;
-}
-
-.metric-card--risk-hero {
-  border-color: rgba(255, 77, 79, 0.32);
-  background:
-    linear-gradient(155deg, rgba(255, 77, 79, 0.1) 0%, transparent 42%),
-    linear-gradient(180deg, rgba(42, 12, 18, 0.78), rgba(18, 8, 14, 0.92));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 77, 79, 0.12),
-    0 0 20px rgba(255, 77, 79, 0.18);
-}
-
-.metric-card--risk-hero.metric-card--amber {
-  border-color: rgba(255, 204, 0, 0.32);
-  background:
-    linear-gradient(155deg, rgba(255, 204, 0, 0.1) 0%, transparent 42%),
-    linear-gradient(180deg, rgba(36, 28, 8, 0.78), rgba(18, 14, 6, 0.92));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 204, 0, 0.12),
-    0 0 20px rgba(255, 204, 0, 0.16);
-}
-
-.metric-card--risk-hero:hover {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 0 28px rgba(255, 77, 79, 0.28);
-}
-
-.metric-card--risk-hero.metric-card--amber:hover {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 0 28px rgba(255, 204, 0, 0.24);
-}
-
-.metric-card__head {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  align-items: baseline;
-}
-
-.metric-card__head span {
-  color: rgba(207, 228, 234, 0.74);
-  font-size: 12px;
-}
-
-.metric-card__head em {
-  color: rgba(0, 229, 255, 0.72);
-  font-size: 11px;
-  font-style: normal;
-}
-
-.metric-card strong {
-  color: #00ffc8;
-  font-size: 24px;
-  font-weight: 800;
-  line-height: 1;
-  text-align: center;
-  text-shadow: 0 0 14px rgba(0, 229, 255, 0.26);
-}
-
-.metric-card--danger strong {
-  color: var(--risk-red);
-  text-shadow: 0 0 16px var(--risk-red-glow);
-}
-
-.metric-card--amber strong {
-  color: var(--risk-yellow);
-  text-shadow: 0 0 14px var(--risk-yellow-glow);
-}
-
-.metric-card--risk-hero strong {
-  font-size: clamp(28px, 2.2vw, 34px);
-  animation: cockpit-risk-pulse 2.8s ease-in-out infinite;
-}
-
-.metric-card--risk-hero.metric-card--amber strong {
-  color: var(--risk-yellow);
-  animation: cockpit-warning-pulse 2.8s ease-in-out infinite;
-}
-
-.metric-card__foot {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  color: rgba(202, 223, 229, 0.68);
-  font-size: 11px;
-}
-
-.metric-card__delta.up {
-  color: #00ffc8;
-}
-
-.metric-card__delta.down {
-  color: #ff4d4f;
-}
-
-.metric-card__delta.flat {
-  color: #cfe5eb;
-}
-
-.metric-card__spark {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  align-items: end;
-  gap: 4px;
-  height: 28px;
-}
-
-.metric-card__spark i {
-  display: block;
-  min-height: 6px;
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.92), rgba(0, 229, 255, 0.08));
-}
-
-.metric-card--green .metric-card__spark i,
-.metric-card--lime .metric-card__spark i {
-  background: linear-gradient(180deg, rgba(0, 255, 200, 0.92), rgba(0, 255, 200, 0.08));
-}
-
-.metric-card--danger .metric-card__spark i {
-  background: linear-gradient(180deg, rgba(255, 77, 79, 0.92), rgba(255, 77, 79, 0.08));
-}
-
-.metric-card--amber .metric-card__spark i {
-  background: linear-gradient(180deg, rgba(255, 204, 0, 0.92), rgba(255, 204, 0, 0.08));
-}
-
-.metric-card--blue .metric-card__spark i,
-.metric-card--violet .metric-card__spark i {
-  background: linear-gradient(180deg, rgba(46, 164, 255, 0.92), rgba(46, 164, 255, 0.08));
-}
-
 .chart-box--trend {
   flex: 1;
-  min-height: 240px;
+  width: 100%;
+  min-height: 0;
+}
+
+.cockpit-trend-panel {
+  display: flex;
+  min-height: 0;
+  padding: 4px 6px 0;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  background: linear-gradient(180deg, rgba(8, 20, 38, 0.36), rgba(4, 12, 26, 0.08));
 }
 
 .screen-panel--map {
@@ -1711,7 +1440,7 @@ onBeforeUnmount(() => {
 .map-wrap__chart {
   width: 100%;
   height: 100%;
-  min-height: 240px;
+  min-height: 0;
 }
 
 .map-wrap__legend,
@@ -1792,11 +1521,11 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
 .layer-switch {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border: 1px solid rgba(0, 229, 255, 0.14);
   background: rgba(0, 229, 255, 0.05);
   color: rgba(206, 229, 235, 0.74);
@@ -1814,6 +1543,9 @@ onBeforeUnmount(() => {
 }
 
 .region-summary-grid {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
@@ -1905,13 +1637,13 @@ onBeforeUnmount(() => {
   padding: 0;
 }
 
-.layout-side::-webkit-scrollbar,
-.metric-grid::-webkit-scrollbar {
+.cockpit-stage__side::-webkit-scrollbar,
+.cockpit-stage__center::-webkit-scrollbar {
   width: 4px;
 }
 
-.layout-side::-webkit-scrollbar-thumb,
-.metric-grid::-webkit-scrollbar-thumb {
+.cockpit-stage__side::-webkit-scrollbar-thumb,
+.cockpit-stage__center::-webkit-scrollbar-thumb {
   background: rgba(0, 229, 255, 0.32);
 }
 
@@ -1931,47 +1663,99 @@ onBeforeUnmount(() => {
 
 @media (max-width: 1680px) {
   .cockpit-screen {
-    --cockpit-col-left: clamp(270px, 18%, 320px);
-    --cockpit-col-right: clamp(255px, 16%, 300px);
+    --cockpit-col-left: clamp(250px, 17%, 300px);
+    --cockpit-col-right: clamp(280px, 18%, 320px);
+  }
+
+  .cockpit-metrics-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .cockpit-command__status {
+    max-width: min(48%, 500px);
+  }
+
+  .cockpit-detail-row {
+    max-height: clamp(160px, 22vh, 220px);
   }
 }
 
 @media (max-width: 1440px) {
-  .screen-header {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "title"
-      "summary"
-      "tools";
+  .cockpit-command__headline {
     min-height: auto;
+    padding-top: 42px;
   }
 
-  .screen-header__summary,
-  .screen-header__tools {
-    justify-self: stretch;
+  .cockpit-command__status {
+    max-width: 100%;
   }
 
-  .screen-header__summary {
-    justify-items: center;
+  .cockpit-metrics-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .screen-header__tools {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .screen-layout {
+  .cockpit-stage {
     grid-template-columns: 1fr;
     overflow: auto;
   }
 
-  .layout-side--left,
-  .layout-side--right,
-  .layout-center {
+  .cockpit-stage__side--left,
+  .cockpit-stage__side--right,
+  .cockpit-stage__center {
     grid-template-rows: auto;
   }
 
-  .screen-panel--map {
-    min-height: 420px;
+  .cockpit-detail-row {
+    grid-template-columns: 1fr;
+    max-height: none;
+  }
+
+  .cockpit-trend-panel {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 980px) {
+  .cockpit-metrics-row,
+  .region-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cockpit-command__headline {
+    gap: 12px;
+    padding-top: 0;
+  }
+
+  .cockpit-command__status {
+    position: static;
+    justify-content: flex-start;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .cockpit-screen {
+    height: auto;
+    min-height: calc(100vh - var(--layout-header-height, 50px) - var(--layout-tags-height, 34px));
+  }
+
+  .cockpit-command__title-wrap {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .cockpit-metrics-row,
+  .region-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .layer-switches {
+    justify-content: flex-start;
+  }
+
+  .map-wrap__legend,
+  .map-wrap__stats {
+    max-width: calc(100% - 16px);
   }
 }
 </style>
@@ -1995,7 +1779,3 @@ body.cockpit-immersive {
   background: rgba(0, 0, 0, 0.48);
 }
 </style>
-
-
-
-

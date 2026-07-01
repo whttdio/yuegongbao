@@ -1,10 +1,10 @@
 <template>
   <view class="worker-page worker-page--tab worker-page--screen">
-    <view class="worker-card worker-hero">
+    <view class="worker-card worker-hero worker-hero--worker-home">
       <view class="home-head">
-        <view>
-          <view class="home-platform">{{ home.platformLabel || '广东省用工保障服务平台' }}</view>
+        <view class="home-head__main">
           <view class="home-title">{{ home.brandTitle || '阳光劳务' }}</view>
+          <view class="home-platform">{{ home.platformLabel || '广东省用工保障服务平台' }}</view>
           <view class="worker-subtitle">{{ home.enterpriseName || '当前岗位已绑定企业' }}</view>
         </view>
         <view class="home-head__actions">
@@ -13,19 +13,19 @@
             <text v-if="hasUnreadNotice" class="home-head__badge">{{ unreadNoticeText }}</text>
           </view>
           <view class="home-head__action" @click="goSettings">设置</view>
-          <view class="worker-tag">{{ home.weekText || '-' }}</view>
         </view>
       </view>
 
-      <view class="home-date">{{ home.dateText || '-' }}</view>
+      <view class="home-summary-row">
+        <view class="home-summary-pill">{{ home.weekText || '-' }}</view>
+        <view class="home-date">{{ home.dateText || '-' }}</view>
+      </view>
 
       <view class="home-worker-card">
-        <view>
+        <view class="home-worker-card__identity">
           <view class="home-worker-card__name">{{ home.workerCard?.personNameMasked || '劳动者用户' }}</view>
           <view class="home-worker-card__meta">{{ home.workerCard?.jobType || '-' }} / {{ home.workerCard?.workerType || '-' }}</view>
-        </view>
-        <view class="home-worker-card__qr">
-          <view class="home-worker-card__qr-text">{{ home.workerCard?.qrCodeText || '身份码待生成' }}</view>
+          <view class="home-worker-card__code">工牌码 {{ home.workerCard?.qrCodeText || '待生成' }}</view>
         </view>
       </view>
     </view>
@@ -49,7 +49,7 @@
         <view v-for="item in home.quickEntries || []" :key="item.key" class="entry-item" :class="{ 'entry-item--locked': item.locked }" @click="openEntry(item)">
           <view class="entry-item__icon" :class="'entry-item__icon--' + getEntryIcon(item).tone"><text class="entry-item__glyph">{{ getEntryIcon(item).glyph }}</text></view>
           <view class="entry-item__label">{{ item.label }}</view>
-          <view v-if="item.locked" class="entry-item__tip">{{ item.lockReason || '需先完成培训' }}</view>
+          <view v-if="item.locked" class="entry-item__tip">{{ compactLockReason(item.lockReason) }}</view>
         </view>
       </view>
       <view v-else class="worker-empty worker-empty--panel">当前暂无可用服务入口</view>
@@ -108,6 +108,17 @@ const progressText = computed(() => {
 
 function getEntryIcon(item) {
   return resolveEntryIcon(item)
+}
+
+function compactLockReason(value) {
+  const text = String(value || '').trim()
+  if (!text) {
+    return '需先完成培训'
+  }
+  if (text.length <= 12) {
+    return text
+  }
+  return '完成培训后解锁'
 }
 
 async function loadHome() {

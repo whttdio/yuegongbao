@@ -1138,6 +1138,9 @@ page {
 .login-page {
   padding-top: calc(32rpx + constant(safe-area-inset-top));
   padding-top: calc(32rpx + env(safe-area-inset-top));
+  width: min(calc(100vw - 32px), 430px) !important;
+  max-width: 430px !important;
+  margin: 0 auto !important;
 }
 
 .login-hero {
@@ -2262,27 +2265,39 @@ page {
   }
 
   .worker-page {
-    width: min(100%, 1720rpx);
+    width: min(calc(100vw - 32px), 430px) !important;
+    max-width: 430px !important;
     margin: 0 auto;
     padding: 40rpx 36rpx calc(48rpx + env(safe-area-inset-bottom));
   }
 
+  .uni-tabbar-bottom .uni-tabbar {
+    left: 50% !important;
+    right: auto !important;
+    bottom: 0 !important;
+    width: min(calc(100vw - 32px), 430px) !important;
+    max-width: 430px !important;
+    transform: translateX(-50%);
+  }
+
+  .login-page {
+    width: min(calc(100vw - 32px), 430px) !important;
+    max-width: 430px !important;
+  }
+
   .worker-page--tab,
   .worker-page--screen {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24rpx;
-    align-content: start;
+    display: block;
   }
 
   .worker-page--tab > *,
   .worker-page--screen > * {
-    margin-top: 0 !important;
+    margin-top: 24rpx !important;
   }
 
   .worker-page--tab .worker-hero,
   .worker-page--screen .worker-hero {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .login-page--screen {

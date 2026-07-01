@@ -2106,7 +2106,7 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
     private YgbWarning buildWarningQuery(String regionCode)
     {
         YgbWarning query = new YgbWarning();
-        query.setRegionCode(regionCode);
+        query.setRegionCode(YgbRegionHelper.toRegionPrefix(regionCode));
         return query;
     }
 
@@ -2129,7 +2129,7 @@ public class YgbCockpitServiceImpl implements IYgbCockpitService
     private YgbCreditScore buildCreditScoreQuery(String regionCode, String statMonth)
     {
         YgbCreditScore query = new YgbCreditScore();
-        query.setRegionCode(regionCode);
+        query.setRegionCode(YgbRegionHelper.toRegionPrefix(regionCode));
         query.setStatMonth(statMonth);
         return query;
     }

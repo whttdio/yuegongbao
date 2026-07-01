@@ -1,5 +1,5 @@
 <template>
-  <view class="worker-page login-page login-page--screen">
+  <view class="worker-page login-page">
     <view class="login-hero worker-card worker-hero">
       <view class="login-hero__top">
         <view class="login-brand-mark">

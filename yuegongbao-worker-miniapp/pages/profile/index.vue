@@ -6,7 +6,10 @@
         <view class="profile-hero__info">
           <view class="profile-hero__name">{{ profile.personNameMasked || profile.personName || '劳动者用户' }}</view>
           <view class="profile-hero__enterprise">{{ profile.enterpriseName || '未绑定企业' }}</view>
-          <view v-if="profile.jobType" class="profile-hero__tag">{{ profile.jobType }}</view>
+          <view class="profile-hero__meta-row">
+            <view v-if="profile.jobType" class="profile-hero__tag">{{ profile.jobType }}</view>
+            <view class="profile-hero__status">{{ profile.insuranceStatus || '状态待确认' }}</view>
+          </view>
         </view>
       </view>
     </view>
@@ -64,18 +67,18 @@
         <view v-if="hasUnreadNotice" class="worker-tag worker-tag--notice">未读 {{ unreadNoticeText }}</view>
       </view>
       <view class="settings-list">
-        <view class="settings-row" @click="goNoticeList">消息中心</view>
-        <view class="settings-row" @click="goRealname">实名认证</view>
-        <view class="settings-row" @click="goSecurity">保险保障</view>
-        <view class="settings-row" @click="goLaborContracts">我的合同</view>
-        <view class="settings-row" @click="goResume">我的简历</view>
-        <view class="settings-row" @click="goApplyList">投递记录</view>
-        <view class="settings-row" @click="goUploadRecords">上传记录</view>
-        <view class="settings-row" @click="goPoints">积分商城</view>
-        <view class="settings-row" @click="goUnion">工会服务</view>
-        <view class="settings-row" @click="goHelp">帮助中心</view>
-        <view class="settings-row" @click="goSettings">设置</view>
-        <view class="settings-row settings-row--danger settings-row--no-arrow" @click="logout">退出登录</view>
+        <view class="settings-row" @click="goNoticeList"><view class="settings-row__main"><view class="settings-row__title">消息中心</view><view class="settings-row__desc">通知、公告与业务提醒</view></view></view>
+        <view class="settings-row" @click="goRealname"><view class="settings-row__main"><view class="settings-row__title">实名认证</view><view class="settings-row__desc">身份信息与实名状态核对</view></view></view>
+        <view class="settings-row" @click="goSecurity"><view class="settings-row__main"><view class="settings-row__title">保险保障</view><view class="settings-row__desc">查看保单状态和保障明细</view></view></view>
+        <view class="settings-row" @click="goLaborContracts"><view class="settings-row__main"><view class="settings-row__title">我的合同</view><view class="settings-row__desc">合同摘要、期限与工资标准</view></view></view>
+        <view class="settings-row" @click="goResume"><view class="settings-row__main"><view class="settings-row__title">我的简历</view><view class="settings-row__desc">维护求职资料和技能证书</view></view></view>
+        <view class="settings-row" @click="goApplyList"><view class="settings-row__main"><view class="settings-row__title">投递记录</view><view class="settings-row__desc">跟进岗位申请和处理进度</view></view></view>
+        <view class="settings-row" @click="goUploadRecords"><view class="settings-row__main"><view class="settings-row__title">上传记录</view><view class="settings-row__desc">查看资料上传和附件留痕</view></view></view>
+        <view class="settings-row" @click="goPoints"><view class="settings-row__main"><view class="settings-row__title">积分商城</view><view class="settings-row__desc">查看积分与可兑换权益</view></view></view>
+        <view class="settings-row" @click="goUnion"><view class="settings-row__main"><view class="settings-row__title">工会服务</view><view class="settings-row__desc">工会案例、通知和协同入口</view></view></view>
+        <view class="settings-row" @click="goHelp"><view class="settings-row__main"><view class="settings-row__title">帮助中心</view><view class="settings-row__desc">常见问题、服务指引和反馈入口</view></view></view>
+        <view class="settings-row" @click="goSettings"><view class="settings-row__main"><view class="settings-row__title">设置</view><view class="settings-row__desc">通知、缓存与账号设置</view></view></view>
+        <view class="settings-row settings-row--danger settings-row--no-arrow" @click="logout"><view class="settings-row__main"><view class="settings-row__title">退出登录</view><view class="settings-row__desc">清除当前账号登录状态</view></view></view>
       </view>
     </view>
   </view>

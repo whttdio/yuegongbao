@@ -3,7 +3,7 @@
     <div v-if="!items.length" class="cockpit-empty warning-stream__empty">
       <div class="cockpit-empty__icon" />
       <div class="cockpit-empty__title">暂无滚动预警</div>
-      <div class="cockpit-empty__desc">系统持续监测中，新增预警将自动进入滚动台账</div>
+      <div class="cockpit-empty__desc">系统持续监测中，新的预警会自动进入滚动列表。</div>
     </div>
     <ul v-else ref="listRef" class="alert-list">
       <li
@@ -24,13 +24,13 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from "vue"
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-const props = defineProps({
-  items: { type: Array, default: () => [] },
+defineProps({
+  items: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(["open-module"])
+const emit = defineEmits(['open-module'])
 
 const listRef = ref(null)
 const pauseScroll = ref(false)
@@ -38,26 +38,26 @@ let scrollTimer = null
 let scrollOffset = 0
 
 function levelSymbol(tone) {
-  if (tone === "critical") return "Ⅰ"
-  if (tone === "warning") return "Ⅱ"
-  return "Ⅲ"
+  if (tone === 'critical') return '红'
+  if (tone === 'warning') return '黄'
+  return '蓝'
 }
 
 function levelClass(tone) {
-  if (tone === "critical") return "critical"
-  if (tone === "warning") return "warning"
-  return "info"
+  if (tone === 'critical') return 'critical'
+  if (tone === 'warning') return 'warning'
+  return 'info'
 }
 
 function statusClass(status) {
-  if (status === "待处理") return "pending"
-  if (status === "处理中") return "processing"
-  if (status === "已办结" || status === "已解决") return "resolved"
-  return "processing"
+  if (status === '待处理') return 'pending'
+  if (status === '处理中') return 'processing'
+  if (status === '已办结' || status === '已解除') return 'resolved'
+  return 'processing'
 }
 
 function autoScroll() {
-  if (!listRef.value || pauseScroll.value || props.items.length <= 1) return
+  if (!listRef.value || pauseScroll.value) return
   const el = listRef.value
   const maxScroll = el.scrollHeight - el.clientHeight
   if (maxScroll <= 0) return
@@ -79,12 +79,12 @@ function stopScroll() {
 }
 
 watch(
-  () => props.items.length,
+  () => listRef.value,
   () => {
     scrollOffset = 0
     if (listRef.value) listRef.value.scrollTop = 0
     startScroll()
-  },
+  }
 )
 
 onMounted(() => {

@@ -47,6 +47,7 @@ export function featureTypeLabel(value) {
   if (value === 'ENTERPRISE') return '企业'
   if (value === 'DEVICE') return '设备'
   if (value === 'FENCE') return '围栏'
+  if (value === 'STATION') return '站点'
   return value || '-'
 }
 
@@ -261,25 +262,28 @@ export function useCockpitPage(options = {}) {
     }
   }))
 
-  const visibleEnterpriseRows = computed(() => filterFeaturesByBounds(
-    enterpriseTableRows.value.map(item => ({ geometry: { coordinates: item.coordinates }, ...item })),
-    mapViewBounds.value
-  ).map(item => ({
-    id: item.id,
-    enterpriseName: item.enterpriseName,
-    colorCode: item.colorCode,
-    riskTone: item.riskTone,
-    riskLabel: item.riskLabel,
-    regionName: item.regionName,
-    insuranceRateText: item.insuranceRateText,
-    violationCountText: item.violationCountText,
-    deviceCountText: item.deviceCountText,
-    warningStatusText: item.warningStatusText,
-    coordinates: item.coordinates,
-    lng: item.lng,
-    lat: item.lat,
-    raw: item.raw
-  })))
+  const visibleEnterpriseRows = computed(() => {
+    const rows = filterFeaturesByBounds(
+      enterpriseTableRows.value.map(item => ({ geometry: { coordinates: item.coordinates }, ...item })),
+      mapViewBounds.value
+    ).map(item => ({
+      id: item.id,
+      enterpriseName: item.enterpriseName,
+      colorCode: item.colorCode,
+      riskTone: item.riskTone,
+      riskLabel: item.riskLabel,
+      regionName: item.regionName,
+      insuranceRateText: item.insuranceRateText,
+      violationCountText: item.violationCountText,
+      deviceCountText: item.deviceCountText,
+      warningStatusText: item.warningStatusText,
+      coordinates: item.coordinates,
+      lng: item.lng,
+      lat: item.lat,
+      raw: item.raw
+    }))
+    return rows.length ? rows : enterpriseTableRows.value
+  })
 
   const featureTableList = computed(() => enterpriseTableRows.value.map(item => ({
     id: item.id,

@@ -1,4 +1,4 @@
-/** 广东省常用行政区划名称（测试种子 + 生产常见区县） */
+/** 广东省常用行政区划名称 */
 export const gdRegionNameMap = {
   '440000': '广东省',
   '440100': '广州市',
@@ -54,7 +54,6 @@ export function formatRegionName(code, fallback = '全部区域') {
   return gdRegionNameMap[normalized] || normalized
 }
 
-/** 确保当前选中区域在下拉选项中，避免 el-select 只显示编码 */
 export function ensureRegionInOptions(options, regionCode) {
   const source = Array.isArray(options) ? options : []
   const normalized = normalizeRegionCode(regionCode)

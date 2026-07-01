@@ -35,6 +35,9 @@ const LEGACY_VIEW_PREFIX_ALIASES = Object.freeze({
   'ygb-techdefense/': 'ygb/'
 })
 
+const COCKPIT_OVERVIEW_TITLES = new Set(['指标总览', '驾驶舱总览'])
+const COCKPIT_EXTRA_TITLES = new Set(['地图可视化', '实时预警流', '红黄绿码企业分类', '趋势分析', '驾驶舱配置'])
+
 const usePermissionStore = defineStore('permission', {
   state: () => ({
     routes: [],
@@ -62,6 +65,7 @@ const usePermissionStore = defineStore('permission', {
         getRouters().then(res => {
           const portalCode = getActivePortalCode()
           const rawRoutes = dedupeRoutesByPath(filterPortalRoutes(res.data, portalCode))
+          normalizeCockpitMenus(rawRoutes)
           normalizeRouteNames(rawRoutes)
           const sdata = JSON.parse(JSON.stringify(rawRoutes))
           const rdata = JSON.parse(JSON.stringify(rawRoutes))
@@ -121,6 +125,71 @@ function dedupeRoutesByPath(routes = []) {
 
     return nextRoute
   })
+}
+
+function normalizeCockpitMenus(routes = []) {
+  routes.forEach(route => {
+    normalizeCockpitMenuNode(route)
+    if (route.children?.length) {
+      normalizeCockpitMenus(route.children)
+    }
+  })
+}
+
+function normalizeCockpitMenuNode(route) {
+  const title = String(route?.meta?.title || route?.name || '')
+  const path = String(route?.path || '')
+  const component = normalizeViewName(route?.component || '')
+
+  if (COCKPIT_OVERVIEW_TITLES.has(title) || isCockpitOverviewRoute(path, component)) {
+    ensureRouteTitle(route, '驾驶舱大屏')
+    return
+  }
+
+  if (!isCockpitContainerRoute(route, title, path, component) || !Array.isArray(route.children)) {
+    return
+  }
+
+  const normalizedChildren = route.children
+    .filter(child => !COCKPIT_EXTRA_TITLES.has(String(child?.meta?.title || child?.name || '')))
+    .map(child => {
+      const childTitle = String(child?.meta?.title || child?.name || '')
+      if (COCKPIT_OVERVIEW_TITLES.has(childTitle) || isCockpitOverviewRoute(child?.path || '', child?.component || '')) {
+        ensureRouteTitle(child, '驾驶舱大屏')
+      }
+      return child
+    })
+
+  route.children = normalizedChildren
+}
+
+function ensureRouteTitle(route, title) {
+  route.meta = { ...(route.meta || {}), title }
+  if (route.name && COCKPIT_OVERVIEW_TITLES.has(String(route.name))) {
+    route.name = title
+  }
+}
+
+function isCockpitContainerRoute(route, title, path, component) {
+  if (title === '驾驶舱') {
+    return true
+  }
+  if (String(path).includes('cockpit')) {
+    return true
+  }
+  return component === 'ygb/cockpit/index' || component === 'azb/cockpit/index'
+}
+
+function isCockpitOverviewRoute(path, component) {
+  const normalizedPath = String(path || '')
+  const normalizedComponent = normalizeViewName(component || '')
+  return normalizedPath.includes('cockpit') && (
+    normalizedPath.includes('overview') ||
+    normalizedComponent === 'ygb/cockpit/index' ||
+    normalizedComponent === 'azb/cockpit/index' ||
+    normalizedComponent === 'ygb/cockpit/overview/index' ||
+    normalizedComponent === 'azb/cockpit/overview/index'
+  )
 }
 
 function normalizeRouteNames(routes, seenNames = new Set(), ancestorNames = [], parentPath = '') {

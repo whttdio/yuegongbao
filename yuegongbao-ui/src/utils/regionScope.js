@@ -2,7 +2,7 @@ import { computed, unref } from 'vue'
 import useUserStore from '@/store/modules/user'
 import { gdRegionOptions, normalizeRegionCode } from '@/utils/regionName'
 
-function toRegionPrefix(code) {
+export function toRegionPrefix(code) {
   if (!code) {
     return ''
   }

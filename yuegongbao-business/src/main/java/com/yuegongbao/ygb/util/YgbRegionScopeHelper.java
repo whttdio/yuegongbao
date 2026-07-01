@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.page.PageMethod;
 import com.yuegongbao.common.constant.Constants;
 import com.yuegongbao.common.constant.UserConstants;
 import com.yuegongbao.common.core.domain.BaseEntity;
@@ -168,7 +171,8 @@ public class YgbRegionScopeHelper
                 String dataScope = role.getDataScope();
                 if (Constants.Dept.DATA_SCOPE_CUSTOM.equals(dataScope))
                 {
-                    addDeptAndChildren(deptIds, deptMapper.selectDeptListByRoleId(role.getRoleId(), role.isDeptCheckStrictly()));
+                    addDeptAndChildren(deptIds, executeWithoutPage(
+                        () -> deptMapper.selectDeptListByRoleId(role.getRoleId(), role.isDeptCheckStrictly())));
                 }
                 else if (Constants.Dept.DATA_SCOPE_DEPT.equals(dataScope)
                     || Constants.Dept.DATA_SCOPE_DEPT_AND_CHILD.equals(dataScope)
@@ -194,7 +198,7 @@ public class YgbRegionScopeHelper
                 continue;
             }
             deptIds.add(deptId);
-            List<SysDept> children = deptMapper.selectChildrenDeptById(deptId);
+            List<SysDept> children = executeWithoutPage(() -> deptMapper.selectChildrenDeptById(deptId));
             for (SysDept child : children)
             {
                 deptIds.add(child.getDeptId());
@@ -242,11 +246,32 @@ public class YgbRegionScopeHelper
         {
             return null;
         }
-        SysDept dept = deptMapper.selectDeptById(deptId);
+        SysDept dept = executeWithoutPage(() -> deptMapper.selectDeptById(deptId));
         if (dept == null || StringUtils.isEmpty(dept.getRegionCode()))
         {
             return null;
         }
         return dept.getRegionCode();
+    }
+
+    private <T> T executeWithoutPage(Supplier<T> supplier)
+    {
+        Page<?> currentPage = PageMethod.getLocalPage();
+        try
+        {
+            PageMethod.clearPage();
+            return supplier.get();
+        }
+        finally
+        {
+            if (currentPage != null)
+            {
+                PageMethod.setLocalPage(currentPage);
+            }
+            else
+            {
+                PageMethod.clearPage();
+            }
+        }
     }
 }

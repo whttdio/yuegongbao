@@ -110,6 +110,7 @@ import {
   getLegalHotline,
   uploadWorkerImage
 } from '../../api/worker'
+import { sanitizeFaqRows } from '../../utils/faq-sanitize'
 
 const MAX_UPLOAD_SIZE = 2 * 1024 * 1024
 const typeOptions = ['欠薪维权', '社保争议', '劳动合同', '工伤赔付', '其他咨询']
@@ -214,7 +215,7 @@ async function chooseEvidence() {
 
 async function loadFaqs() {
   const faqs = await getLegalFaqList(faqKeyword.value.trim())
-  faqRows.value = faqs?.rows || []
+  faqRows.value = sanitizeFaqRows(faqs?.rows || [])
 }
 
 async function loadData() {
