@@ -61,11 +61,15 @@ function handleClick() {
   gap: 8px;
   min-height: 104px;
   padding: 10px 12px;
-  border: 1px solid rgba(0, 229, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, transparent 42%),
-    linear-gradient(180deg, rgba(10, 30, 58, 0.78), rgba(4, 16, 32, 0.92));
-  backdrop-filter: blur(14px);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 38%),
+    linear-gradient(180deg, rgba(10, 30, 58, 0.36), rgba(4, 16, 32, 0.48));
+  backdrop-filter: blur(20px) saturate(168%);
+  -webkit-backdrop-filter: blur(20px) saturate(168%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 8px 28px rgba(0, 0, 0, 0.18);
   color: inherit;
   text-align: left;
   overflow: hidden;
@@ -78,15 +82,20 @@ function handleClick() {
 
 .cockpit-metric-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(0, 229, 255, 0.34);
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.18);
+  border-color: rgba(0, 229, 255, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 12px 32px rgba(0, 0, 0, 0.22),
+    0 0 28px rgba(0, 229, 255, 0.2);
 }
 
 .cockpit-metric-card__shine {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.08), transparent 36%);
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.16) 0%, transparent 34%),
+    linear-gradient(300deg, rgba(0, 229, 255, 0.06) 0%, transparent 42%);
   pointer-events: none;
 }
 

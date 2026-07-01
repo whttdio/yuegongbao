@@ -4,7 +4,7 @@ const https = require('https')
 const path = require('path')
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:8080'
-const DEFAULT_WORKER_ACCOUNT = '13700010001'
+const DEFAULT_WORKER_ACCOUNT = 'gzentadmin'
 const DEFAULT_TIMEOUT_MS = 8000
 
 function parseArgs(argv) {
@@ -228,17 +228,17 @@ async function main() {
 
   if (!failures.length && args['probe-auth'] && !args['skip-network']) {
     try {
-      smsProbe = await requestUrl(buildUrl(config.baseUrl, '/app/worker/auth/send-sms-code'), {
+      smsProbe = await requestUrl(buildUrl(config.baseUrl, '/app/enterprise/auth/send-sms-code'), {
         method: 'POST',
         timeout,
-        body: { mobile: account }
+        body: { mobile: '13900001006' }
       })
       if (smsProbe.statusCode !== 200) {
-        failures.push(`/app/worker/auth/send-sms-code returned HTTP ${smsProbe.statusCode}`)
+        failures.push(`/app/enterprise/auth/send-sms-code returned HTTP ${smsProbe.statusCode}`)
       }
-      validateAjaxResult(smsProbe, '/app/worker/auth/send-sms-code', failures)
+      validateAjaxResult(smsProbe, '/app/enterprise/auth/send-sms-code', failures)
     } catch (error) {
-      failures.push(`/app/worker/auth/send-sms-code probe failed: ${error.message}`)
+      failures.push(`/app/enterprise/auth/send-sms-code probe failed: ${error.message}`)
     }
   }
 
@@ -257,7 +257,7 @@ async function main() {
   }
 
   warnings.push('SMS login cannot be completed automatically because local WorkerAuthController generates a random Redis-backed code')
-  warnings.push('Password login requires a sys_user for 13700010001 with a known password; worker business seed alone is not enough')
+  warnings.push('Password login requires a sys_user enterprise account such as gzentadmin with a known password')
 
   if (warnings.length) {
     console.warn('Warnings:')

@@ -4,13 +4,13 @@
     <view class="login-hero worker-card worker-hero">
       <view class="login-hero__top">
         <view class="login-brand-mark">
-          <text class="login-brand-mark__glyph">阳</text>
+          <text class="login-brand-mark__glyph">企</text>
         </view>
         <view class="login-hero__main">
           <view class="login-platform">广东省用工保障监测平台</view>
-          <view class="login-brand worker-title--display">粤工保 · 阳光劳务</view>
+          <view class="login-brand worker-title--display">粤工保 · 企业端</view>
           <view class="worker-subtitle">
-            考勤、工资、社保、个税、培训与维权，一站服务劳动者
+            人员、考勤、工资、设备与审批，一站服务企业用工管理
           </view>
         </view>
       </view>
@@ -22,7 +22,7 @@
     <view class="worker-card login-form-card">
       <view class="login-form-head">
         <view class="worker-title">欢迎登录</view>
-        <view class="worker-caption">请使用本人账号或手机号进入平台</view>
+        <view class="worker-caption">请使用企业管理员或经办员账号登录</view>
       </view>
 
       <view class="login-tabs">
@@ -119,17 +119,17 @@
 import { onUnmounted, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import {
-  sendWorkerSmsCode,
+  sendEnterpriseSmsCode,
   setWorkerLoginAccount,
   setWorkerLoginType,
   setWorkerToken,
-  workerLogin,
-  workerSmsLogin
+  enterpriseLogin,
+  enterpriseSmsLogin
 } from '../../utils/request'
 import { syncWorkerPushRegistration } from '../../utils/push'
 import { consumePendingWorkerJumpTarget, getWorkerJumpDiagnostics, readPendingWorkerJumpTarget } from '../../utils/worker-jump'
 
-const featureTags = ['考勤打卡', '工资查询', '培训维权']
+const featureTags = ['人员管理', '工资审批', '设备台账']
 
 const loginMode = ref('password')
 const loading = ref(false)
@@ -202,9 +202,9 @@ async function handlePasswordLogin() {
   loading.value = true
   loginLastActionAt.value = new Date().toLocaleString()
   try {
-    const data = await workerLogin(passwordForm)
+    const data = await enterpriseLogin(passwordForm)
     setWorkerToken(data.token)
-    setWorkerLoginType(data.loginType || 'worker-password')
+    setWorkerLoginType(data.loginType || 'enterprise-password')
     persistWorkerLoginAccount(passwordForm.username)
     await syncWorkerPushRegistration().catch(() => null)
     loginLastMessage.value = '账号登录成功，已写入 token 并尝试 push 注册'
@@ -233,7 +233,7 @@ async function handleSendSmsCode() {
   smsSending.value = true
   loginLastActionAt.value = new Date().toLocaleString()
   try {
-    const data = await sendWorkerSmsCode({ mobile: smsForm.mobile })
+    const data = await sendEnterpriseSmsCode({ mobile: smsForm.mobile })
     smsTip.value = data?.message || '验证码已发送，请注意查收'
     loginLastMessage.value = `验证码已发送至 ${smsForm.mobile}`
     uni.showToast({ title: '验证码已发送', icon: 'none' })
@@ -256,9 +256,9 @@ async function handleSmsLogin() {
   loading.value = true
   loginLastActionAt.value = new Date().toLocaleString()
   try {
-    const data = await workerSmsLogin(smsForm)
+    const data = await enterpriseSmsLogin(smsForm)
     setWorkerToken(data.token)
-    setWorkerLoginType(data.loginType || 'worker-sms')
+    setWorkerLoginType(data.loginType || 'enterprise-sms')
     persistWorkerLoginAccount(smsForm.mobile)
     await syncWorkerPushRegistration().catch(() => null)
     loginLastMessage.value = '短信登录成功，已写入 token 并尝试 push 注册'

@@ -499,7 +499,7 @@ export function useCockpitPage(options = {}) {
 
   function highlightMapPoint(row = {}) {
     if (!mapChartInstance || !row.lng || !row.lat) return
-    const zoom = mapConfigRef?.value?.zoom || 9
+    const zoom = mapConfigRef?.value?.zoom ?? 1.2
     mapChartInstance.setOption({
       geo: {
         center: [row.lng, row.lat],

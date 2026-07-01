@@ -1,7 +1,7 @@
 ﻿<template>
   <div v-if="!item.hidden">
     <template v-if="isSingleMenu">
-      <app-link v-if="singleMenu.meta" :to="singleMenuPath">
+      <app-link v-if="singleMenu.meta" :to="singleMenuPath" :link-meta="singleMenu.meta">
         <el-menu-item :index="singleMenuIndex" :class="{ 'submenu-title-noDropdown': !isNest }">
           <item
             :icon="resolveMenuIcon(singleMenu, item)"

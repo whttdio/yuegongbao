@@ -13,13 +13,20 @@
   --cockpit-cyan: #00e5ff;
   --cockpit-cyan-soft: rgba(0, 229, 255, 0.1);
   --cockpit-cyan-glow: rgba(0, 229, 255, 0.45);
-  --glass-blur: 14px;
-  --glass-bg-deep: rgba(4, 12, 26, 0.62);
-  --glass-bg-mid: rgba(6, 22, 44, 0.58);
-  --glass-bg-light: rgba(8, 28, 52, 0.52);
-  --glass-border: rgba(0, 229, 255, 0.2);
-  --glass-border-inner: rgba(0, 119, 153, 0.38);
-  --glass-highlight: rgba(255, 255, 255, 0.04);
+  --glass-blur: 22px;
+  --glass-blur-strong: 34px;
+  --glass-saturate: 168%;
+  --glass-bg-deep: rgba(6, 18, 38, 0.34);
+  --glass-bg-mid: rgba(8, 26, 50, 0.28);
+  --glass-bg-light: rgba(12, 34, 62, 0.22);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-glow: rgba(0, 229, 255, 0.32);
+  --glass-border-inner: rgba(0, 180, 220, 0.22);
+  --glass-highlight: rgba(255, 255, 255, 0.14);
+  --glass-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 229, 255, 0.06);
   --text-primary: #effcff;
   --text-muted: rgba(204, 228, 235, 0.72);
   --text-dim: rgba(192, 220, 228, 0.58);
@@ -27,42 +34,42 @@
 
 /* ── 毛玻璃卡片分层 ── */
 .cockpit-screen .cockpit-glass {
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
 .cockpit-screen .screen-panel {
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  isolation: isolate;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-border);
   background:
-    linear-gradient(155deg, var(--glass-highlight) 0%, transparent 42%),
-    linear-gradient(180deg, var(--glass-bg-mid), rgba(4, 14, 28, 0.88));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 0 20px rgba(0, 229, 255, 0.1);
-  transition: box-shadow 0.28s ease, border-color 0.28s ease;
+    linear-gradient(135deg, var(--glass-highlight) 0%, transparent 38%),
+    linear-gradient(180deg, var(--glass-bg-mid), rgba(4, 14, 28, 0.42));
+  box-shadow: var(--glass-shadow), 0 0 28px rgba(0, 229, 255, 0.08);
+  transition: box-shadow 0.28s ease, border-color 0.28s ease, background 0.28s ease;
 }
 
 .cockpit-screen .screen-panel--layer-primary {
   background:
-    linear-gradient(155deg, rgba(0, 229, 255, 0.06) 0%, transparent 38%),
-    linear-gradient(180deg, rgba(8, 30, 56, 0.72), rgba(4, 14, 28, 0.9));
+    linear-gradient(135deg, rgba(0, 229, 255, 0.12) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(10, 34, 62, 0.38), rgba(4, 14, 28, 0.46));
   box-shadow:
-    inset 0 1px 0 rgba(0, 229, 255, 0.08),
-    0 0 24px rgba(0, 229, 255, 0.14);
+    var(--glass-shadow),
+    0 0 32px rgba(0, 229, 255, 0.12);
 }
 
 .cockpit-screen .screen-panel--layer-map {
   background:
-    radial-gradient(ellipse at 50% 38%, rgba(0, 229, 255, 0.08), transparent 58%),
-    linear-gradient(180deg, rgba(6, 24, 46, 0.68), rgba(3, 10, 22, 0.92));
+    radial-gradient(ellipse at 50% 38%, rgba(0, 229, 255, 0.14), transparent 58%),
+    linear-gradient(180deg, rgba(8, 28, 52, 0.34), rgba(3, 10, 22, 0.48));
   animation: cockpit-panel-breathe 4.5s ease-in-out infinite;
 }
 
 .cockpit-screen .screen-panel--layer-table {
   background:
-    linear-gradient(180deg, rgba(7, 26, 48, 0.65), rgba(4, 12, 24, 0.88));
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, transparent 36%),
+    linear-gradient(180deg, rgba(8, 28, 52, 0.32), rgba(4, 12, 24, 0.44));
 }
 
 .cockpit-screen .screen-header,
@@ -161,30 +168,56 @@
 }
 
 /* ── 筛选控件 / 按钮 / 分页 ── */
-.cockpit-screen .cockpit-control.el-input__wrapper,
-.cockpit-screen .cockpit-control.el-select__wrapper,
-.cockpit-screen .cockpit-control.el-date-editor.el-input__wrapper,
-.cockpit-screen :deep(.el-input__wrapper),
-.cockpit-screen :deep(.el-select__wrapper),
-.cockpit-screen :deep(.el-date-editor.el-input__wrapper) {
-  backdrop-filter: blur(8px);
-  background: var(--glass-bg-deep) !important;
-  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.2) !important;
+.cockpit-screen .cockpit-control .el-input__wrapper,
+.cockpit-screen .cockpit-control .el-select__wrapper,
+.cockpit-screen .cockpit-control.el-date-editor .el-input__wrapper,
+.cockpit-screen .el-input__wrapper,
+.cockpit-screen .el-select__wrapper,
+.cockpit-screen .el-date-editor .el-input__wrapper {
+  backdrop-filter: blur(12px) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(12px) saturate(var(--glass-saturate));
+  background: rgba(6, 20, 38, 0.42) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(0, 229, 255, 0.18) !important;
   border-radius: 0;
   transition: box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.cockpit-screen :deep(.el-input__wrapper:hover),
-.cockpit-screen :deep(.el-select__wrapper:hover),
-.cockpit-screen :deep(.el-date-editor.el-input__wrapper:hover) {
+.cockpit-screen .cockpit-control .el-input__inner,
+.cockpit-screen .cockpit-control .el-select__selected-item,
+.cockpit-screen .cockpit-control .el-select__placeholder,
+.cockpit-screen .cockpit-control .el-range-input,
+.cockpit-screen .el-input__inner,
+.cockpit-screen .el-select__selected-item {
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary);
+}
+
+.cockpit-screen .cockpit-control .el-select__placeholder,
+.cockpit-screen .el-select__placeholder {
+  color: var(--text-muted) !important;
+  -webkit-text-fill-color: var(--text-muted);
+}
+
+.cockpit-screen .cockpit-control .el-input__prefix,
+.cockpit-screen .cockpit-control .el-input__suffix,
+.cockpit-screen .cockpit-control .el-select__caret,
+.cockpit-screen .cockpit-control .el-select__icon {
+  color: rgba(0, 229, 255, 0.82);
+}
+
+.cockpit-screen .el-input__wrapper:hover,
+.cockpit-screen .el-select__wrapper:hover,
+.cockpit-screen .el-date-editor .el-input__wrapper:hover {
   box-shadow:
     inset 0 0 0 1px rgba(0, 229, 255, 0.38),
     0 0 12px rgba(0, 229, 255, 0.12) !important;
 }
 
-.cockpit-screen :deep(.el-input__wrapper.is-focus),
-.cockpit-screen :deep(.el-select__wrapper.is-focused),
-.cockpit-screen :deep(.el-date-editor.el-input__wrapper.is-focus) {
+.cockpit-screen .el-input__wrapper.is-focus,
+.cockpit-screen .el-select__wrapper.is-focused,
+.cockpit-screen .el-date-editor .el-input__wrapper.is-focus {
   box-shadow:
     inset 0 0 0 1px rgba(0, 229, 255, 0.55),
     0 0 16px rgba(0, 229, 255, 0.18) !important;
@@ -267,8 +300,11 @@
   align-items: center;
   gap: 6px;
   padding: 3px 8px;
-  border: 1px solid rgba(0, 229, 255, 0.14);
-  background: var(--glass-bg-deep);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(6, 20, 38, 0.36);
+  backdrop-filter: blur(12px) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(12px) saturate(var(--glass-saturate));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   color: var(--text-muted);
   font-size: 11px;
 }
@@ -327,14 +363,16 @@
   0%,
   100% {
     box-shadow:
-      inset 0 1px 0 rgba(0, 229, 255, 0.06),
-      0 0 20px rgba(0, 229, 255, 0.1);
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 10px 36px rgba(0, 0, 0, 0.24),
+      0 0 24px rgba(0, 229, 255, 0.1);
   }
   50% {
     box-shadow:
-      inset 0 1px 0 rgba(0, 229, 255, 0.1),
-      0 0 32px rgba(0, 229, 255, 0.2),
-      0 0 48px rgba(255, 77, 79, 0.06);
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 14px 42px rgba(0, 0, 0, 0.28),
+      0 0 40px rgba(0, 229, 255, 0.2),
+      0 0 56px rgba(255, 77, 79, 0.08);
   }
 }
 

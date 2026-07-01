@@ -70,6 +70,44 @@ class YgbEnterpriseScopeHelperTest
     }
 
     @Test
+    void validateEnterpriseLoginAccountRejectsMissingEnterpriseBinding()
+    {
+        SysUser user = new SysUser();
+        user.setStatus(UserConstants.NORMAL);
+        user.setRoles(List.of(buildEnterpriseRole()));
+        ServiceException ex = assertThrows(ServiceException.class, () -> helper.validateEnterpriseLoginAccount(user));
+        assertTrue(ex.getMessage().contains("未绑定企业"));
+    }
+
+    @Test
+    void validateEnterpriseLoginAccountRejectsMissingEnterpriseRole()
+    {
+        SysUser user = new SysUser();
+        user.setStatus(UserConstants.NORMAL);
+        user.setEnterpriseId(1001L);
+        ServiceException ex = assertThrows(ServiceException.class, () -> helper.validateEnterpriseLoginAccount(user));
+        assertTrue(ex.getMessage().contains("无企业端登录权限"));
+    }
+
+    @Test
+    void validateEnterpriseLoginAccountAcceptsEnterpriseAdmin()
+    {
+        SysUser user = new SysUser();
+        user.setStatus(UserConstants.NORMAL);
+        user.setEnterpriseId(1001L);
+        user.setRoles(List.of(buildEnterpriseRole()));
+        helper.validateEnterpriseLoginAccount(user);
+    }
+
+    private SysRole buildEnterpriseRole()
+    {
+        SysRole role = new SysRole();
+        role.setRoleKey("ygb_enterprise_admin");
+        role.setStatus(UserConstants.ROLE_NORMAL);
+        return role;
+    }
+
+    @Test
     void assertDualEnterpriseAuthorizedAcceptsEitherSide()
     {
         helper.assertDualEnterpriseAuthorized(1002L, 1001L);

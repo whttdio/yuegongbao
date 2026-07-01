@@ -45,6 +45,18 @@ nbdist/
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml
-# Node.js
+######################################################################
+# Node.js / 前端依赖（勿提交 node_modules）
 node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 tmp/
+
+######################################################################
+# Python / 临时产物
+__pycache__/
+*.py[cod]
+*.pyc

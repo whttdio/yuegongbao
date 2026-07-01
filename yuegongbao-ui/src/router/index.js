@@ -84,6 +84,20 @@ export const constantRoutes = [
     meta: { title: '锁定屏幕' }
   },
   {
+    path: '/cockpit-screen/ygb',
+    component: () => import('@/views/ygb/cockpit/index.vue'),
+    name: 'YgbCockpitScreen',
+    hidden: true,
+    meta: { title: '驾驶舱大屏', standalone: true }
+  },
+  {
+    path: '/cockpit-screen/azb',
+    component: () => import('@/views/azb/cockpit/index.vue'),
+    name: 'AzbCockpitScreen',
+    hidden: true,
+    meta: { title: '驾驶舱大屏', standalone: true }
+  },
+  {
     path: '/user',
     component: Layout,
     hidden: true,

@@ -13,9 +13,9 @@ export const COCKPIT_PANEL_OPTIONS = [
 ]
 
 export const DEFAULT_COCKPIT_PREFS = {
-  mapCenterLng: 113.28,
-  mapCenterLat: 23.13,
-  mapZoom: 7,
+  mapCenterLng: 113.42,
+  mapCenterLat: 23.08,
+  mapZoom: 1,
   refreshSeconds: 0,
   visiblePanels: COCKPIT_PANEL_OPTIONS.map((item) => item.key),
   visibleMetrics: [],
@@ -24,10 +24,10 @@ export const DEFAULT_COCKPIT_PREFS = {
 const REQUIRED_VISIBLE_PANELS = ["panel-map"]
 
 export const REFRESH_INTERVAL_OPTIONS = [
+  { label: "关闭自动刷新", value: 0 },
   { label: "30 秒", value: 30 },
   { label: "60 秒", value: 60 },
   { label: "5 分钟", value: 300 },
-  { label: "关闭自动刷新", value: 0 },
 ]
 
 function storageKey(mode) {
@@ -48,14 +48,14 @@ function normalizeVisiblePanels(value) {
   return [...new Set(panels)]
 }
 
-function mergePrefs(serverConfig = {}, localPrefs = {}) {
+function mergePrefs(_serverConfig = {}, localPrefs = {}) {
   const visibleMetrics = localPrefs.visibleMetrics?.length ? localPrefs.visibleMetrics : DEFAULT_COCKPIT_PREFS.visibleMetrics
 
   return {
-    mapCenterLng: Number(localPrefs.mapCenterLng ?? serverConfig.mapCenterLng ?? DEFAULT_COCKPIT_PREFS.mapCenterLng),
-    mapCenterLat: Number(localPrefs.mapCenterLat ?? serverConfig.mapCenterLat ?? DEFAULT_COCKPIT_PREFS.mapCenterLat),
-    mapZoom: Number(localPrefs.mapZoom ?? serverConfig.mapZoom ?? DEFAULT_COCKPIT_PREFS.mapZoom),
-    refreshSeconds: localPrefs.refreshSeconds ?? serverConfig.refreshSeconds ?? DEFAULT_COCKPIT_PREFS.refreshSeconds,
+    mapCenterLng: DEFAULT_COCKPIT_PREFS.mapCenterLng,
+    mapCenterLat: DEFAULT_COCKPIT_PREFS.mapCenterLat,
+    mapZoom: DEFAULT_COCKPIT_PREFS.mapZoom,
+    refreshSeconds: DEFAULT_COCKPIT_PREFS.refreshSeconds,
     visiblePanels: normalizeVisiblePanels(localPrefs.visiblePanels),
     visibleMetrics,
   }
@@ -142,6 +142,13 @@ export function useCockpitConfig(modeRef) {
     saveLocalPrefs(mode, prefs.value)
   }
 
+  function updateRefreshSeconds(seconds) {
+    prefs.value.refreshSeconds = Number(seconds) || 0
+    draftPrefs.value.refreshSeconds = prefs.value.refreshSeconds
+    const mode = typeof modeRef === "function" ? modeRef() : modeRef?.value || modeRef
+    saveLocalPrefs(mode, prefs.value)
+  }
+
   return {
     prefs,
     draftPrefs,
@@ -154,5 +161,6 @@ export function useCockpitConfig(modeRef) {
     togglePanel,
     isPanelVisible,
     isMetricVisible,
+    updateRefreshSeconds,
   }
 }

@@ -4,7 +4,7 @@ const https = require('https')
 const path = require('path')
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:8080'
-const DEFAULT_ACCOUNT = '13700010001'
+const DEFAULT_ACCOUNT = 'gzentadmin'
 const DEFAULT_PASSWORD = 'admin123'
 const DEFAULT_TIMEOUT_MS = 10000
 
@@ -196,7 +196,7 @@ async function main() {
   const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14)
   const results = []
 
-  const loginResponse = await requestUrl(buildUrl(baseUrl, '/app/worker/auth/login'), {
+  const loginResponse = await requestUrl(buildUrl(baseUrl, '/app/enterprise/auth/login'), {
     method: 'POST',
     timeout,
     body: { username: account, password }

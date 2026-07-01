@@ -12,6 +12,7 @@ import { computed, ref, watch } from 'vue'
 import { decoratePortalExplanationItems } from '@/utils/portalExplanation'
 import router from '@/router'
 import { getActivePortalConfig } from '@/utils/portal'
+import { isEmbeddedCockpitOverviewPath, openCockpitScreen, resolveCockpitScreenMode } from '@/utils/cockpitScreen'
 import useUserStore from '@/store/modules/user'
 import usePermissionStore from '@/store/modules/permission'
 import { getYgbHomeAggregate, getAzbHomeAggregate } from '@/api/ygb/home'
@@ -526,6 +527,10 @@ function resolveModuleLabel(moduleCode) {
 
 function openAction(actionItem) {
   if (!actionItem?.path) {
+    return
+  }
+  if (isEmbeddedCockpitOverviewPath(actionItem.path)) {
+    openCockpitScreen(resolveCockpitScreenMode('', actionItem.path, portal.value.code), router)
     return
   }
   router.push({

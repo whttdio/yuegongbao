@@ -56,26 +56,44 @@
     </div>
 
     <div class="cockpit-config-bar__section cockpit-config-bar__section--actions">
-      <button type="button" class="cockpit-config-bar__refresh" @click="emit('refresh')">立即刷新</button>
+      <div class="cockpit-config-bar__field">
+        <span>自动刷新</span>
+        <el-select
+          :model-value="refreshSeconds"
+          class="cockpit-config-bar__select cockpit-config-bar__select--refresh cockpit-control"
+          size="small"
+          @update:model-value="emit('update:refreshSeconds', $event)"
+        >
+          <el-option v-for="item in refreshOptions" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      </div>
+
+      <button type="button" class="cockpit-config-bar__refresh" @click="emit('refresh')">
+        <el-icon class="cockpit-config-bar__refresh-icon"><Refresh /></el-icon>
+        立即刷新
+      </button>
+
       <el-button plain size="small" :icon="Setting" @click="emit('open-advanced')">高级</el-button>
       <el-button plain size="small" :icon="Download" @click="emit('export')" v-hasPermi="['ygb:cockpit:export']">导出</el-button>
       <el-button plain size="small" @click="emit('toggle-immersive')">
         {{ isImmersive ? "退出全屏" : "全屏" }}
       </el-button>
+
       <span class="cockpit-config-bar__refresh-label">{{ lastRefreshLabel }}</span>
     </div>
   </footer>
 </template>
 
 <script setup>
-import { Download, Setting } from "@element-plus/icons-vue"
-import { COCKPIT_PANEL_OPTIONS } from "@/views/cockpit/useCockpitConfig"
+import { Download, Refresh, Setting } from "@element-plus/icons-vue"
+import { COCKPIT_PANEL_OPTIONS, REFRESH_INTERVAL_OPTIONS } from "@/views/cockpit/useCockpitConfig"
 
 defineProps({
   visiblePanels: { type: Array, default: () => [] },
   regionCode: { type: String, default: "" },
   statMonth: { type: String, default: "" },
   days: { type: Number, default: 7 },
+  refreshSeconds: { type: Number, default: 0 },
   regionOptions: { type: Array, default: () => [] },
   dayOptions: { type: Array, default: () => [] },
   lastRefreshLabel: { type: String, default: "" },
@@ -87,6 +105,7 @@ const emit = defineEmits([
   "update:regionCode",
   "update:statMonth",
   "update:days",
+  "update:refreshSeconds",
   "refresh",
   "export",
   "open-advanced",
@@ -107,47 +126,61 @@ const panelOptions = COCKPIT_PANEL_OPTIONS.map((item) => ({
   ...item,
   shortLabel: SHORT_LABEL_MAP[item.key] || item.label,
 }))
+
+const refreshOptions = REFRESH_INTERVAL_OPTIONS
 </script>
 
 <style scoped lang="scss">
 .cockpit-config-bar {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(360px, 1.15fr) auto;
-  gap: 10px;
-  padding: 8px 12px;
-  min-height: 56px;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 6px 10px;
+  min-height: 52px;
   flex-shrink: 0;
-  border: 1px solid rgba(0, 180, 255, 0.12);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   background:
-    linear-gradient(180deg, rgba(14, 24, 40, 0.94), rgba(8, 16, 30, 0.92));
-  backdrop-filter: blur(10px);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 36%),
+    linear-gradient(180deg, rgba(14, 28, 48, 0.38), rgba(8, 18, 34, 0.46));
+  backdrop-filter: blur(22px) saturate(168%);
+  -webkit-backdrop-filter: blur(22px) saturate(168%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 -8px 28px rgba(0, 0, 0, 0.24),
+    0 0 24px rgba(0, 229, 255, 0.06);
   font-size: 11px;
   color: rgba(190, 216, 228, 0.84);
 }
 
 .cockpit-config-bar__section {
-  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
 .cockpit-config-bar__section--panels {
-  flex-wrap: nowrap;
-  overflow: hidden;
-  padding-right: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-right: 8px;
   border-right: 1px solid rgba(0, 180, 255, 0.1);
 }
 
 .cockpit-config-bar__section--filters {
-  padding-right: 10px;
+  padding: 0 8px;
   border-right: 1px solid rgba(0, 180, 255, 0.1);
 }
 
 .cockpit-config-bar__section--actions {
-  justify-content: flex-end;
-  gap: 8px;
+  flex-shrink: 0;
+  gap: 6px;
+  margin-left: auto;
 }
 
 .cockpit-config-bar__title,
@@ -164,7 +197,7 @@ const panelOptions = COCKPIT_PANEL_OPTIONS.map((item) => ({
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -177,8 +210,8 @@ const panelOptions = COCKPIT_PANEL_OPTIONS.map((item) => ({
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 4px;
-  padding: 3px 5px;
+  gap: 3px;
+  padding: 2px 4px;
   border: 1px solid rgba(0, 229, 255, 0.08);
   background: rgba(0, 229, 255, 0.03);
   cursor: pointer;
@@ -190,15 +223,15 @@ const panelOptions = COCKPIT_PANEL_OPTIONS.map((item) => ({
 
 .cockpit-config-bar__check input {
   accent-color: #00d4ff;
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   cursor: pointer;
 }
 
 .cockpit-config-bar__field {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   white-space: nowrap;
 }
 
@@ -208,60 +241,101 @@ const panelOptions = COCKPIT_PANEL_OPTIONS.map((item) => ({
 }
 
 .cockpit-config-bar__select {
-  width: 120px;
+  width: 108px;
 }
 
 .cockpit-config-bar__select--short {
-  width: 104px;
+  width: 92px;
 }
 
 .cockpit-config-bar__select--month {
-  width: 132px;
+  width: 118px;
+}
+
+.cockpit-config-bar__select--refresh {
+  width: 112px;
 }
 
 .cockpit-config-bar__refresh {
-  padding: 4px 12px;
-  border: 1px solid rgba(0, 200, 255, 0.24);
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid rgba(0, 200, 255, 0.32);
   border-radius: 4px;
-  background: rgba(0, 180, 255, 0.1);
+  background: rgba(0, 180, 255, 0.14);
   color: #00dfff;
   font-size: 11px;
   cursor: pointer;
   transition: background 0.18s ease, box-shadow 0.18s ease;
 }
 
+.cockpit-config-bar__refresh-icon {
+  font-size: 13px;
+}
+
 .cockpit-config-bar__refresh:hover {
-  background: rgba(0, 180, 255, 0.18);
+  background: rgba(0, 180, 255, 0.22);
   box-shadow: 0 0 10px rgba(0, 180, 255, 0.18);
 }
 
 .cockpit-config-bar__refresh-label {
-  margin-left: 4px;
+  flex-shrink: 0;
   font-size: 10px;
   color: rgba(148, 169, 196, 0.72);
   white-space: nowrap;
 }
 
-@media (max-width: 1600px) {
-  .cockpit-config-bar {
-    grid-template-columns: 1fr;
-  }
+.cockpit-config-bar__section--actions :deep(.el-button) {
+  margin-left: 0;
+}
 
-  .cockpit-config-bar__section--panels,
-  .cockpit-config-bar__section--filters {
-    padding-right: 0;
-    border-right: none;
-  }
+.cockpit-config-bar :deep(.el-input__wrapper),
+.cockpit-config-bar :deep(.el-select__wrapper) {
+  background: rgba(6, 20, 38, 0.42) !important;
+  backdrop-filter: blur(12px) saturate(165%);
+  -webkit-backdrop-filter: blur(12px) saturate(165%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(0, 200, 255, 0.22) !important;
+}
 
-  .cockpit-config-bar__section--actions {
-    justify-content: flex-start;
-    flex-wrap: wrap;
+.cockpit-config-bar :deep(.el-input__inner),
+.cockpit-config-bar :deep(.el-select__selected-item),
+.cockpit-config-bar :deep(.el-range-input) {
+  color: #e8fbff !important;
+  font-weight: 600;
+  -webkit-text-fill-color: #e8fbff;
+}
+
+.cockpit-config-bar :deep(.el-select__placeholder) {
+  color: rgba(180, 214, 224, 0.76) !important;
+  font-weight: 400;
+  -webkit-text-fill-color: rgba(180, 214, 224, 0.76);
+}
+
+.cockpit-config-bar :deep(.el-input__prefix),
+.cockpit-config-bar :deep(.el-input__suffix),
+.cockpit-config-bar :deep(.el-select__caret),
+.cockpit-config-bar :deep(.el-select__icon) {
+  color: rgba(0, 223, 255, 0.88);
+}
+
+@media (max-width: 1680px) {
+  .cockpit-config-bar__refresh-label {
+    display: none;
   }
 }
 
-@media (max-width: 980px) {
-  .cockpit-config-bar__section {
-    flex-wrap: wrap;
+@media (max-width: 1440px) {
+  .cockpit-config-bar {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .cockpit-config-bar::-webkit-scrollbar {
+    display: none;
   }
 }
 </style>

@@ -152,9 +152,11 @@ function rowRowClass(row) {
 
 .enterprise-table__scroll {
   overflow: auto;
-  border: 1px solid rgba(0, 229, 255, 0.18);
-  background: rgba(4, 14, 28, 0.45);
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(4, 14, 28, 0.28);
+  backdrop-filter: blur(16px) saturate(165%);
+  -webkit-backdrop-filter: blur(16px) saturate(165%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   min-height: 0;
   height: 100%;
 }

@@ -218,28 +218,43 @@ function request(options) {
   })
 }
 
+export function enterpriseLogin(data) {
+  return request({
+    url: '/app/enterprise/auth/login',
+    method: 'POST',
+    data
+  })
+}
+
+export function sendEnterpriseSmsCode(data) {
+  return request({
+    url: '/app/enterprise/auth/send-sms-code',
+    method: 'POST',
+    data
+  })
+}
+
+export function enterpriseSmsLogin(data) {
+  return request({
+    url: '/app/enterprise/auth/sms-login',
+    method: 'POST',
+    data
+  })
+}
+
+/** @deprecated 企业端请使用 enterpriseLogin */
 export function workerLogin(data) {
-  return request({
-    url: '/app/worker/auth/login',
-    method: 'POST',
-    data
-  })
+  return enterpriseLogin(data)
 }
 
+/** @deprecated 企业端请使用 sendEnterpriseSmsCode */
 export function sendWorkerSmsCode(data) {
-  return request({
-    url: '/app/worker/auth/send-sms-code',
-    method: 'POST',
-    data
-  })
+  return sendEnterpriseSmsCode(data)
 }
 
+/** @deprecated 企业端请使用 enterpriseSmsLogin */
 export function workerSmsLogin(data) {
-  return request({
-    url: '/app/worker/auth/sms-login',
-    method: 'POST',
-    data
-  })
+  return enterpriseSmsLogin(data)
 }
 
 export default request

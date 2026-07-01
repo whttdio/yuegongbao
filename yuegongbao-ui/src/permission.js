@@ -22,6 +22,7 @@ import {
   setActivePortalCode,
   syncPortalBranding
 } from '@/utils/portal'
+import { interceptEmbeddedCockpitNavigation } from '@/utils/cockpitScreen'
 
 NProgress.configure({ showSpinner: false })
 
@@ -86,6 +87,12 @@ router.beforeEach(async (to, from) => {
     if (ygbDocumentRouteAlias) {
       NProgress.done()
       return ygbDocumentRouteAlias
+    }
+
+    const cockpitRedirect = interceptEmbeddedCockpitNavigation(to, from, router)
+    if (cockpitRedirect) {
+      NProgress.done()
+      return cockpitRedirect
     }
 
     if (userStore.roles.length === 0) {

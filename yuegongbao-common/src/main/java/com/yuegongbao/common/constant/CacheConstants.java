@@ -46,4 +46,9 @@ public class CacheConstants
      * 劳动者短信验证码 redis key
      */
     public static final String WORKER_SMS_CODE_KEY = "worker_sms_code:";
+
+    /**
+     * 企业端短信验证码 redis key
+     */
+    public static final String ENTERPRISE_SMS_CODE_KEY = "enterprise_sms_code:";
 }

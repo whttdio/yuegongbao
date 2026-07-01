@@ -11,6 +11,7 @@ import com.yuegongbao.common.core.domain.BaseEntity;
 import com.yuegongbao.common.core.domain.entity.SysRole;
 import com.yuegongbao.common.core.domain.entity.SysUser;
 import com.yuegongbao.common.core.domain.model.LoginUser;
+import com.yuegongbao.common.enums.UserStatus;
 import com.yuegongbao.common.exception.ServiceException;
 import com.yuegongbao.common.utils.SecurityUtils;
 import com.yuegongbao.common.utils.StringUtils;
@@ -61,6 +62,26 @@ public class YgbEnterpriseScopeHelper
             return null;
         }
         return loginUser.getUser().getEnterpriseId();
+    }
+
+    public void validateEnterpriseLoginAccount(SysUser user)
+    {
+        if (user == null)
+        {
+            throw new ServiceException("企业账号不存在。");
+        }
+        if (UserStatus.DISABLE.getCode().equals(user.getStatus()))
+        {
+            throw new ServiceException("当前企业账号已停用。");
+        }
+        if (user.getEnterpriseId() == null)
+        {
+            throw new ServiceException("当前账号未绑定企业，请联系管理员。");
+        }
+        if (!hasEnterpriseRole(user))
+        {
+            throw new ServiceException("当前账号无企业端登录权限。");
+        }
     }
 
     public void assertEnterpriseAuthorized(Long enterpriseId)

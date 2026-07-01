@@ -18,6 +18,10 @@ const props = defineProps({
   to: {
     type: [String, Object],
     required: true
+  },
+  linkMeta: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -27,12 +31,16 @@ const isExt = computed(() => {
   return isExternal(props.to)
 })
 
+const opensInNewWindow = computed(() => {
+  return Boolean(props.linkMeta?.openInNewWindow && props.linkMeta?.cockpitScreenPath)
+})
+
 const isOfficialPortal = computed(() => {
   return isOfficialPortalPath(props.to)
 })
 
 const type = computed(() => {
-  if (isExt.value || isOfficialPortal.value) {
+  if (isExt.value || isOfficialPortal.value || opensInNewWindow.value) {
     return 'a'
   }
   return 'router-link'
@@ -53,6 +61,14 @@ function resolveOfficialPortalCodeFromTarget(target) {
 function linkProps() {
   const officialPortalCode = resolveOfficialPortalCodeFromTarget(props.to)
   const officialHref = resolveOfficialPortalHref(router, officialPortalCode)
+  if (opensInNewWindow.value) {
+    const path = props.linkMeta.cockpitScreenPath
+    return {
+      href: router.resolve(path).href,
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    }
+  }
   if (isExt.value) {
     return {
       href: props.to,

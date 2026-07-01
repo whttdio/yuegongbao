@@ -1,7 +1,11 @@
 ﻿<template>
   <div
     class="cockpit-screen"
-    :class="{ 'is-immersive': isImmersive, 'is-loading': loading }"
+    :class="{
+      'cockpit-screen--standalone': isStandalone,
+      'is-immersive': isImmersive,
+      'is-loading': loading,
+    }"
     v-loading="loading"
     element-loading-text="数据加载中..."
     element-loading-custom-class="cockpit-loading"
@@ -124,9 +128,8 @@
             </cockpit-section-header>
             <div class="map-wrap">
               <div ref="mapChartRef" class="map-wrap__chart" />
-              <div class="map-wrap__legend cockpit-chart-legend">
-                <div class="map-wrap__legend-bar map-wrap__legend-bar--breathe" />
-                <div v-for="item in mapLegendItems" :key="item.label" class="cockpit-chart-legend__item legend-item">
+              <div class="map-wrap__legend map-wrap__legend--points">
+                <div v-for="item in mapPointLegendItems" :key="item.label" class="cockpit-chart-legend__item legend-item">
                   <i class="cockpit-chart-legend__dot" :style="{ background: item.color, color: item.color }" />
                   <span>{{ item.label }}</span>
                 </div>
@@ -207,6 +210,7 @@
         :region-code="queryParams.regionCode"
         :stat-month="queryParams.statMonth"
         :days="queryParams.days"
+        :refresh-seconds="prefs.refreshSeconds"
         :region-options="regionOptions"
         :day-options="dayOptions"
         :last-refresh-label="lastRefreshLabel"
@@ -215,6 +219,7 @@
         @update:region-code="handleConfigRegionChange"
         @update:stat-month="handleConfigStatMonthChange"
         @update:days="handleConfigDaysChange"
+        @update:refresh-seconds="handleRefreshSecondsChange"
         @refresh="refreshDashboard"
         @export="handleExport"
         @open-advanced="openConfigDialog"
@@ -352,6 +357,8 @@ const PAGE_CONFIG = Object.freeze({
 })
 
 const pageConfig = computed(() => PAGE_CONFIG[props.mode] || PAGE_CONFIG.ygb)
+const route = useRoute()
+const isStandalone = computed(() => Boolean(route.meta?.standalone) || route.path.startsWith('/cockpit-screen/'))
 const regionOptions = useAuthorizedRegionOptions(allRegionOptions)
 const appStore = useAppStore()
 const { setPageGuide } = useWorkbenchAssist()
@@ -368,6 +375,7 @@ const {
   togglePanel,
   isPanelVisible,
   isMetricVisible,
+  updateRefreshSeconds,
 } = useCockpitConfig(computed(() => props.mode))
 
 const activeMapLayers = ref(["risk", "points", "fence", "route", "station"])
@@ -436,6 +444,11 @@ function handleConfigStatMonthChange(value) {
 function handleConfigDaysChange(value) {
   queryParams.value.days = value
   refreshDashboard()
+}
+
+function handleRefreshSecondsChange(value) {
+  updateRefreshSeconds(value)
+  setupRefreshTimer()
 }
 
 function handleRegionChange() {
@@ -601,10 +614,7 @@ const mapStats = computed(() => {
   ]
 })
 
-const mapLegendItems = computed(() => [
-  { label: "低风险", color: COLORS.cyan },
-  { label: "中风险", color: COLORS.amber },
-  { label: "高风险", color: COLORS.danger },
+const mapPointLegendItems = computed(() => [
   { label: "企业点位", color: COLORS.cyan },
   { label: "设备点位", color: COLORS.green },
   { label: "电子围栏", color: COLORS.amber },
@@ -809,8 +819,8 @@ function createMapChartOption() {
   const showFence = activeMapLayers.value.includes("fence")
   const showRoute = activeMapLayers.value.includes("route")
   const showStation = activeMapLayers.value.includes("station")
-  const center = mapConfig.value.center || [113.28, 23.13]
-  const zoom = mapConfig.value.zoom || 7
+  const center = mapConfig.value.center || [113.42, 23.08]
+  const zoom = mapConfig.value.zoom ?? 1
 
   const enterprisePoints = points.filter((item) => item.properties?.featureType === "ENTERPRISE")
   const devicePoints = points.filter((item) => item.properties?.featureType === "DEVICE")
@@ -858,10 +868,22 @@ function createMapChartOption() {
     },
     visualMap: showRisk
       ? {
+          type: "continuous",
           min: 0,
           max: Math.max(...cityRiskItems.value.map((item) => item.riskScore), 20),
-          show: false,
+          calculable: false,
+          orient: "vertical",
+          left: 10,
+          bottom: 24,
+          itemWidth: 12,
+          itemHeight: 108,
+          text: ["高", "低"],
+          textGap: 8,
+          textStyle: { color: "rgba(204, 226, 232, 0.82)", fontSize: 10 },
           inRange: { color: ["#123d55", "#167c9d", "#00b8db", "#00e5ff", "#ffcc00", "#ff4d4f"] },
+          borderColor: "rgba(0, 229, 255, 0.22)",
+          backgroundColor: "rgba(4, 12, 26, 0.76)",
+          padding: 8,
         }
       : undefined,
     geo: {
@@ -870,7 +892,7 @@ function createMapChartOption() {
       center,
       zoom,
       layoutCenter: ["50%", "50%"],
-      layoutSize: "112%",
+      layoutSize: "100%",
       label: { show: true, color: "rgba(217, 241, 247, 0.68)", fontSize: 10 },
       itemStyle: {
         areaColor: {
@@ -1077,6 +1099,8 @@ onMounted(async () => {
 })
 
 onActivated(async () => {
+  await loadConfig(queryParams.value.regionCode)
+  setupRefreshTimer()
   await loadDashboard()
   await loadAuxiliaryData()
   lastRefreshLabel.value = `上次刷新：${formatTimeText()}`
@@ -1118,10 +1142,17 @@ onBeforeUnmount(() => {
   color: #ebfaff;
   background-color: var(--cockpit-bg);
   background:
-    radial-gradient(circle at 50% 32%, rgba(0, 229, 255, 0.18), transparent 26%),
-    radial-gradient(circle at 18% 20%, rgba(0, 255, 200, 0.08), transparent 26%),
-    radial-gradient(circle at 82% 18%, rgba(0, 229, 255, 0.06), transparent 20%),
-    linear-gradient(180deg, #040a17 0%, #061021 50%, #040a17 100%);
+    radial-gradient(circle at 18% 12%, rgba(0, 255, 200, 0.12), transparent 28%),
+    radial-gradient(circle at 82% 8%, rgba(0, 140, 255, 0.14), transparent 24%),
+    radial-gradient(circle at 50% 32%, rgba(0, 229, 255, 0.2), transparent 30%),
+    radial-gradient(circle at 50% 88%, rgba(255, 77, 79, 0.06), transparent 32%),
+    linear-gradient(180deg, #030810 0%, #061021 48%, #030810 100%);
+}
+
+.cockpit-screen--standalone {
+  min-height: 100vh;
+  height: 100vh;
+  padding: 0;
 }
 
 .cockpit-screen.is-immersive {
@@ -1141,17 +1172,21 @@ onBeforeUnmount(() => {
 
 .cockpit-screen__aurora {
   inset: 0;
+  opacity: 0.92;
   background:
-    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.18), transparent 34%),
-    radial-gradient(circle at 50% 45%, rgba(0, 85, 128, 0.16), transparent 48%);
+    radial-gradient(circle at 20% 18%, rgba(0, 255, 200, 0.12), transparent 28%),
+    radial-gradient(circle at 78% 22%, rgba(0, 160, 255, 0.1), transparent 26%),
+    radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.22), transparent 36%),
+    radial-gradient(circle at 50% 58%, rgba(0, 85, 128, 0.18), transparent 52%);
+  animation: cockpit-aurora-drift 18s ease-in-out infinite alternate;
 }
 
 .cockpit-screen__grid {
   inset: 0;
-  opacity: 0.32;
+  opacity: 0.38;
   background:
-    linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 229, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
   background-size: 40px 40px;
   mask-image: radial-gradient(circle at 50% 42%, #000 42%, transparent 92%);
 }
@@ -1274,8 +1309,11 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border: 1px solid rgba(0, 229, 255, 0.18);
-  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 229, 255, 0.1);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .cockpit-command__status-dot {
@@ -1308,28 +1346,47 @@ onBeforeUnmount(() => {
 }
 
 .cockpit-stage__side {
-  background: linear-gradient(180deg, rgba(5, 14, 28, 0.88), rgba(3, 8, 18, 0.94));
+  backdrop-filter: blur(24px) saturate(165%);
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(8, 24, 46, 0.32), rgba(4, 12, 26, 0.44));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 40px rgba(0, 0, 0, 0.22);
   padding: 4px 6px;
   gap: 6px;
 }
 
 .cockpit-stage__side .screen-panel {
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 40%),
+    rgba(6, 20, 38, 0.24);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   padding: 6px 4px;
 }
 
 .cockpit-stage__side .screen-panel--layer-primary {
-  background: transparent;
-  box-shadow: none;
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.08) 0%, transparent 42%),
+    rgba(6, 20, 38, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 20px rgba(0, 229, 255, 0.06);
 }
 
-.cockpit-stage__side .screen-panel::before,
+.cockpit-stage__side .screen-panel::before {
+  display: block;
+  border-color: rgba(0, 229, 255, 0.18);
+}
+
 .cockpit-stage__side .screen-panel::after {
-  display: none;
+  display: block;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 22%);
 }
 
 .cockpit-stage__side .screen-panel > :deep(.risk-ranking-panel) {
@@ -1354,8 +1411,11 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
   gap: 8px;
-  min-height: 0;
-  max-height: clamp(180px, 24vh, 260px);
+  min-height: clamp(240px, 28vh, 320px);
+  max-height: clamp(280px, 32vh, 360px);
+  margin-bottom: 2px;
+  position: relative;
+  z-index: 1;
 }
 
 .cockpit-detail-row:has(.cockpit-detail-row__trend:only-child),
@@ -1396,8 +1456,9 @@ onBeforeUnmount(() => {
   content: "";
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(0, 119, 153, 0.45);
+  border: 1px solid rgba(0, 229, 255, 0.22);
   pointer-events: none;
+  z-index: 1;
 }
 
 .screen-panel::after {
@@ -1405,8 +1466,10 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 20%);
   pointer-events: none;
+  z-index: 0;
 }
 
 .chart-box--trend {
@@ -1417,10 +1480,15 @@ onBeforeUnmount(() => {
 
 .cockpit-trend-panel {
   display: flex;
-  min-height: 0;
+  min-height: 220px;
   padding: 4px 6px 0;
-  border: 1px solid rgba(0, 229, 255, 0.1);
-  background: linear-gradient(180deg, rgba(8, 20, 38, 0.36), rgba(4, 12, 26, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 38%),
+    rgba(6, 20, 38, 0.22);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .screen-panel--map {
@@ -1453,26 +1521,22 @@ onBeforeUnmount(() => {
   left: 8px;
   bottom: 8px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 8px;
-  max-width: min(420px, 46%);
+  flex-direction: column;
+  gap: 4px;
+  max-width: min(160px, 28%);
   padding: 6px 8px;
-  border: 1px solid rgba(0, 229, 255, 0.14);
-  background: rgba(4, 12, 26, 0.72);
-  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(6, 20, 38, 0.36);
+  backdrop-filter: blur(16px) saturate(165%);
+  -webkit-backdrop-filter: blur(16px) saturate(165%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
-.map-wrap__legend-bar {
-  flex: 1 1 100%;
-  height: 6px;
-  border: 1px solid rgba(0, 229, 255, 0.2);
-  background: linear-gradient(90deg, #173e61, #00e5ff 45%, #ffcc00 72%, #ff4d4f 100%);
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.18);
-}
-
-.map-wrap__legend-bar--breathe {
-  animation: cockpit-heat-breathe 3.2s ease-in-out infinite;
+.map-wrap__legend--points {
+  left: 58px;
+  bottom: 8px;
 }
 
 .legend-item {
@@ -1496,9 +1560,11 @@ onBeforeUnmount(() => {
   gap: 2px;
   padding: 5px 8px;
   min-width: 72px;
-  border: 1px solid rgba(0, 229, 255, 0.12);
-  background: rgba(4, 12, 26, 0.72);
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(6, 20, 38, 0.36);
+  backdrop-filter: blur(14px) saturate(165%);
+  -webkit-backdrop-filter: blur(14px) saturate(165%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -1526,8 +1592,11 @@ onBeforeUnmount(() => {
 
 .layer-switch {
   padding: 4px 10px;
-  border: 1px solid rgba(0, 229, 255, 0.14);
-  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(6, 20, 38, 0.32);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   color: rgba(206, 229, 235, 0.74);
   font-size: 11px;
   cursor: pointer;
@@ -1556,25 +1625,29 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 3px;
   padding: 8px 10px;
-  border: 1px solid rgba(0, 229, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    linear-gradient(155deg, rgba(255, 255, 255, 0.03) 0%, transparent 40%),
-    linear-gradient(180deg, rgba(8, 29, 54, 0.68), rgba(5, 18, 34, 0.86));
-  backdrop-filter: blur(8px);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 40%),
+    linear-gradient(180deg, rgba(8, 28, 52, 0.34), rgba(5, 18, 34, 0.42));
+  backdrop-filter: blur(16px) saturate(165%);
+  -webkit-backdrop-filter: blur(16px) saturate(165%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .region-summary-card:hover {
   transform: translateY(-1px);
-  border-color: rgba(0, 229, 255, 0.28);
-  box-shadow: 0 0 16px rgba(0, 229, 255, 0.12);
+  border-color: rgba(0, 229, 255, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 20px rgba(0, 229, 255, 0.16);
 }
 
 .region-summary-card--danger {
-  border-color: rgba(255, 77, 79, 0.28);
+  border-color: rgba(255, 77, 79, 0.32);
   background:
-    linear-gradient(155deg, rgba(255, 77, 79, 0.1) 0%, transparent 42%),
-    linear-gradient(180deg, rgba(36, 10, 14, 0.72), rgba(16, 6, 10, 0.88));
+    linear-gradient(135deg, rgba(255, 77, 79, 0.12) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(36, 10, 14, 0.38), rgba(16, 6, 10, 0.46));
 }
 
 .region-summary-card--danger strong {
@@ -1625,9 +1698,7 @@ onBeforeUnmount(() => {
 }
 
 .cockpit-screen :deep(.el-alert__title),
-.cockpit-screen :deep(.el-alert__description),
-.cockpit-screen :deep(.el-input__inner),
-.cockpit-screen :deep(.el-select__placeholder) {
+.cockpit-screen :deep(.el-alert__description) {
   color: #ebfaff;
 }
 
@@ -1657,6 +1728,17 @@ onBeforeUnmount(() => {
   }
 }
 
+@keyframes cockpit-aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.88;
+  }
+  100% {
+    transform: translate3d(0, -1.5%, 0) scale(1.03);
+    opacity: 1;
+  }
+}
+
 .screen-panel--layer-map {
   animation: cockpit-panel-breathe 4.5s ease-in-out infinite;
 }
@@ -1676,7 +1758,8 @@ onBeforeUnmount(() => {
   }
 
   .cockpit-detail-row {
-    max-height: clamp(160px, 22vh, 220px);
+    min-height: clamp(220px, 26vh, 300px);
+    max-height: clamp(260px, 30vh, 340px);
   }
 }
 
@@ -1772,6 +1855,11 @@ body.cockpit-immersive {
     margin-left: 0 !important;
     padding: 0 !important;
   }
+}
+
+body.cockpit-page-active {
+  overflow: hidden;
+  background: #040a17;
 }
 
 .cockpit-config-dialog :deep(.el-overlay) {

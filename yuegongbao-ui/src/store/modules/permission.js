@@ -6,6 +6,7 @@ import InnerLink from '@/layout/components/InnerLink/index.vue'
 import { getRouters } from '@/api/menu'
 import { getNormalPath } from '@/utils/yuegongbao'
 import { filterPortalRoutes, getActivePortalCode } from '@/utils/portal'
+import { applyCockpitScreenMenuMeta } from '@/utils/cockpitScreen'
 
 const modules = import.meta.glob('./../../views/**/*.vue')
 
@@ -65,7 +66,7 @@ const usePermissionStore = defineStore('permission', {
         getRouters().then(res => {
           const portalCode = getActivePortalCode()
           const rawRoutes = dedupeRoutesByPath(filterPortalRoutes(res.data, portalCode))
-          normalizeCockpitMenus(rawRoutes)
+          normalizeCockpitMenus(rawRoutes, portalCode)
           normalizeRouteNames(rawRoutes)
           const sdata = JSON.parse(JSON.stringify(rawRoutes))
           const rdata = JSON.parse(JSON.stringify(rawRoutes))
@@ -127,22 +128,22 @@ function dedupeRoutesByPath(routes = []) {
   })
 }
 
-function normalizeCockpitMenus(routes = []) {
+function normalizeCockpitMenus(routes = [], portalCode = getActivePortalCode()) {
   routes.forEach(route => {
-    normalizeCockpitMenuNode(route)
+    normalizeCockpitMenuNode(route, portalCode)
     if (route.children?.length) {
-      normalizeCockpitMenus(route.children)
+      normalizeCockpitMenus(route.children, portalCode)
     }
   })
 }
 
-function normalizeCockpitMenuNode(route) {
+function normalizeCockpitMenuNode(route, portalCode = getActivePortalCode()) {
   const title = String(route?.meta?.title || route?.name || '')
   const path = String(route?.path || '')
   const component = normalizeViewName(route?.component || '')
 
   if (COCKPIT_OVERVIEW_TITLES.has(title) || isCockpitOverviewRoute(path, component)) {
-    ensureRouteTitle(route, '驾驶舱大屏')
+    applyCockpitScreenMenuMeta(route, portalCode)
     return
   }
 
@@ -155,7 +156,7 @@ function normalizeCockpitMenuNode(route) {
     .map(child => {
       const childTitle = String(child?.meta?.title || child?.name || '')
       if (COCKPIT_OVERVIEW_TITLES.has(childTitle) || isCockpitOverviewRoute(child?.path || '', child?.component || '')) {
-        ensureRouteTitle(child, '驾驶舱大屏')
+        applyCockpitScreenMenuMeta(child, portalCode)
       }
       return child
     })

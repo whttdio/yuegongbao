@@ -4,48 +4,20 @@ const https = require('https')
 const path = require('path')
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:8080'
-const DEFAULT_ACCOUNT = '13700010001'
+const DEFAULT_ACCOUNT = 'gzentadmin'
 const DEFAULT_PASSWORD = 'admin123'
 const DEFAULT_TIMEOUT_MS = 8000
 
 const smokeCases = [
-  { name: 'home', method: 'GET', path: '/app/worker/home' },
-  { name: 'profile', method: 'GET', path: '/app/worker/profile', expectText: ['13700010001', '赵志成'] },
-  { name: 'workbench', method: 'GET', path: '/app/worker/workbench' },
-  { name: 'attendanceMonthly', method: 'GET', path: '/app/worker/attendance/monthly?month=2026-06' },
-  { name: 'attendanceDay', method: 'GET', path: '/app/worker/attendance/day?date=2026-06-01' },
-  { name: 'salaryList', method: 'GET', path: '/app/worker/salary/list?year=2026' },
-  { name: 'socialSecurityList', method: 'GET', path: '/app/worker/social-security/list?year=2026' },
-  { name: 'taxList', method: 'GET', path: '/app/worker/tax/list?year=2026' },
-  { name: 'resumeDetail', method: 'GET', path: '/app/worker/resume/detail' },
-  { name: 'laborContractList', method: 'GET', path: '/app/worker/labor-contract/list' },
-  { name: 'complaintList', method: 'GET', path: '/app/worker/complaint/list' },
-  { name: 'legalConsultList', method: 'GET', path: '/app/worker/legal-consult/list' },
-  { name: 'legalHotline', method: 'GET', path: '/app/worker/legal-consult/hotline' },
-  { name: 'legalArticleList', method: 'GET', path: '/app/worker/legal-article/list' },
-  { name: 'legalFaqList', method: 'GET', path: '/app/worker/legal-faq/list' },
-  { name: 'noticeList', method: 'GET', path: '/app/worker/notice/list?pageNum=1&pageSize=10' },
-  { name: 'jobList', method: 'GET', path: '/app/worker/job/list' },
-  { name: 'jobApplyList', method: 'GET', path: '/app/worker/job/apply/list' },
-  { name: 'realNameDetail', method: 'GET', path: '/app/worker/real-name/detail' },
-  { name: 'settingsDetail', method: 'GET', path: '/app/worker/settings/detail' },
-  { name: 'pointsAccount', method: 'GET', path: '/app/worker/points/account' },
-  { name: 'insuranceSecurity', method: 'GET', path: '/app/worker/insurance/security' },
-  { name: 'uploadRecordList', method: 'GET', path: '/app/worker/upload-record/list' },
-  { name: 'activityDetail', method: 'GET', path: '/app/worker/activity/detail' },
-  { name: 'activityJoinList', method: 'GET', path: '/app/worker/activity/join-list' },
-  { name: 'videoList', method: 'GET', path: '/app/worker/video/list' },
-  { name: 'videoDetail', method: 'GET', path: '/app/worker/video/detail?videoKey=heatstroke-first-aid' },
-  { name: 'aiTrainingDetail', method: 'GET', path: '/app/worker/ai-training/detail' },
-  { name: 'unionServiceHome', method: 'GET', path: '/app/worker/union-service/home' },
-  { name: 'unionCases', method: 'GET', path: '/app/worker/union-service/cases' },
-  { name: 'unionNotices', method: 'GET', path: '/app/worker/union-service/notices' },
-  { name: 'unionContracts', method: 'GET', path: '/app/worker/union-service/contracts' },
-  { name: 'trainingProgress', method: 'GET', path: '/app/worker/training/progress' },
-  { name: 'trainingCourses', method: 'GET', path: '/app/worker/training/courses' },
-  { name: 'trainingHistory', method: 'GET', path: '/app/worker/training/history' },
-  { name: 'trainingCourseDetail', method: 'GET', path: '/app/worker/training/course-detail?courseKey=heatstroke-course' },
-  { name: 'trainingHistoryDetail', method: 'GET', path: '/app/worker/training/history-detail?month=202606' }
+  { name: 'home', method: 'GET', path: '/app/enterprise/home/dashboard', expectText: ['广州南粤'] },
+  { name: 'workbench', method: 'GET', path: '/app/enterprise/workbench/dashboard' },
+  { name: 'peopleLedger', method: 'GET', path: '/app/enterprise/people/ledger' },
+  { name: 'deviceLedger', method: 'GET', path: '/app/enterprise/device/ledger' },
+  { name: 'salaryDashboard', method: 'GET', path: '/app/enterprise/salary/dashboard' },
+  { name: 'operationApproval', method: 'GET', path: '/app/enterprise/operation-approval/dashboard' },
+  { name: 'insuranceDashboard', method: 'GET', path: '/app/enterprise/insurance/dashboard' },
+  { name: 'trainingDashboard', method: 'GET', path: '/app/enterprise/training/dashboard' },
+  { name: 'jobPublishDraft', method: 'GET', path: '/app/enterprise/job-publish/draft' }
 ]
 
 function parseArgs(argv) {
@@ -213,7 +185,7 @@ async function main() {
     return
   }
 
-  const loginResponse = await requestUrl(buildUrl(baseUrl, '/app/worker/auth/login'), {
+  const loginResponse = await requestUrl(buildUrl(baseUrl, '/app/enterprise/auth/login'), {
     method: 'POST',
     timeout,
     body: { username: account, password }
