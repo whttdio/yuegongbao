@@ -187,7 +187,8 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
             firstNonBlank(request == null ? null : request.getActionType(), "person-action"),
             "企业人员处理", request, request == null ? null : request.getPersonIds(), "processing");
         return successResult("已提交 " + humanAction(request == null ? null : request.getActionType(), "人员处理")
-            + "，共 " + countIds(request == null ? null : request.getPersonIds()) + " 人。", record.getRecordId());
+            + "，共 " + countIds(request == null ? null : request.getPersonIds()) + " 人。", record.getRecordId(),
+            "processing", "已登记企业人员动作，待后台继续流转。");
     }
 
     @Override
@@ -195,7 +196,7 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
     {
         Long enterpriseId = resolveEnterpriseId(user, worker);
         YgbModuleRecord record = saveExportRecord(user, enterpriseId, "PERSON_EXPORT", "企业人员花名册导出", request);
-        return successResult("人员花名册导出任务已登记。", record.getRecordId());
+        return successResult("人员花名册导出任务已登记。", record.getRecordId(), "queued", "请在导出台账中继续查看处理进度。");
     }
 
     @Override
@@ -221,7 +222,8 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
             firstNonBlank(request == null ? null : request.getActionType(), "device-action"),
             "企业设备处理", request, request == null ? null : request.getDeviceIds(), "processing");
         return successResult("已提交 " + humanAction(request == null ? null : request.getActionType(), "设备处理")
-            + "，共 " + countIds(request == null ? null : request.getDeviceIds()) + " 台设备。", record.getRecordId());
+            + "，共 " + countIds(request == null ? null : request.getDeviceIds()) + " 台设备。", record.getRecordId(),
+            "processing", "已登记设备处理动作，待后台继续流转。");
     }
 
     @Override
@@ -229,7 +231,7 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
     {
         Long enterpriseId = resolveEnterpriseId(user, worker);
         YgbModuleRecord record = saveExportRecord(user, enterpriseId, "DEVICE_EXPORT", "企业设备台账导出", request);
-        return successResult("设备台账导出任务已登记。", record.getRecordId());
+        return successResult("设备台账导出任务已登记。", record.getRecordId(), "queued", "请在导出台账中继续查看处理进度。");
     }
 
     @Override
@@ -296,7 +298,8 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
             }
             confirmedCount++;
         }
-        return successResult("已完成 " + confirmedCount + " 个工资批次确认提交。", null);
+        return successResult("已完成 " + confirmedCount + " 个工资批次确认提交。", null,
+            "submitted", "工资批次已进入真实后端流程，请继续关注批次状态。");
     }
 
     @Override
@@ -306,7 +309,8 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
         YgbModuleRecord record = saveActionRecord(user, enterpriseId, "SALARY_IMPORT",
             firstNonBlank(request == null ? null : request.getBatchMonth(), currentMonth()),
             "工资导入草稿", request, request == null ? null : request.getBatchIds(), "draft");
-        return successResult("工资明细导入登记成功，后续可在管理端继续完善。", record.getRecordId());
+        return successResult("工资明细导入登记成功，后续可在管理端继续完善。", record.getRecordId(),
+            "draft", "当前仅登记导入草稿，待后台补单流转。");
     }
 
     @Override
@@ -351,7 +355,9 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
         }
         YgbModuleRecord audit = saveActionRecord(user, enterpriseId, "OPERATION_APPROVAL",
             firstNonBlank(request.getDecision(), "pending"), "企业作业审批", request, approvalIds, workflowStatus);
-        return successResult("已提交 " + approvalIds.length + " 条作业审批结果。", audit.getRecordId());
+        return successResult("已提交 " + approvalIds.length + " 条作业审批结果。", audit.getRecordId(),
+            "approved".equalsIgnoreCase(request.getDecision()) ? "approved" : "rejected",
+            "审批结果已回写，请继续核对作业记录状态。");
     }
 
     @Override
@@ -359,7 +365,7 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
     {
         Long enterpriseId = resolveEnterpriseId(user, worker);
         YgbModuleRecord record = saveExportRecord(user, enterpriseId, "OPERATION_EXPORT", "作业审批台账导出", Map.of());
-        return successResult("作业审批台账导出任务已登记。", record.getRecordId());
+        return successResult("作业审批台账导出任务已登记。", record.getRecordId(), "queued", "请在导出台账中继续查看处理进度。");
     }
 
     @Override
@@ -403,7 +409,7 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
         YgbModuleRecord record = saveActionRecord(user, enterpriseId, "INSURANCE_ACTION",
             firstNonBlank(request == null ? null : request.getActionType(), "insurance-action"),
             "企业保险处理", request, null, "processing");
-        return successResult("保险办理请求已登记。", record.getRecordId());
+        return successResult("保险办理请求已登记。", record.getRecordId(), "processing", "已发起办理请求，待后台继续流转。");
     }
 
     @Override
@@ -436,7 +442,7 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
         YgbModuleRecord record = saveActionRecord(user, enterpriseId, "PREVENTION_TRAINING",
             firstNonBlank(request == null ? null : request.getTitle(), "月度培训计划"),
             "培训计划草稿", request, request == null ? null : request.getPlanIds(), "draft");
-        return successResult("培训计划草稿已保存。", record.getRecordId());
+        return successResult("培训计划草稿已保存。", record.getRecordId(), "draft", "培训计划仅保存为草稿，待后台继续完善。");
     }
 
     @Override
@@ -446,7 +452,7 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
         YgbModuleRecord record = saveActionRecord(user, enterpriseId, "TRAINING_ACTION",
             firstNonBlank(request == null ? null : request.getActionType(), "training-action"),
             "企业培训处理", request, request == null ? null : request.getPlanIds(), "processing");
-        return successResult("培训处理请求已提交。", record.getRecordId());
+        return successResult("培训处理请求已提交。", record.getRecordId(), "processing", "已登记培训动作，待后台继续流转。");
     }
 
     @Override
@@ -473,7 +479,8 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
         YgbEnterprise enterprise = enterpriseId == null ? null : enterpriseService.selectEnterpriseById(enterpriseId);
         WorkerJobPost job = buildJobPost(enterpriseId, enterprise, request, "1");
         workerJobPostService.insertJobPost(job);
-        return successResult("岗位草稿已保存：" + safeText(job.getTitle(), "未命名岗位"), job.getJobId());
+        return successResult("岗位草稿已保存：" + safeText(job.getTitle(), "未命名岗位"), job.getJobId(),
+            "draft", "岗位草稿已真实入库，可继续编辑或提交。");
     }
 
     @Override
@@ -483,7 +490,8 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
         YgbEnterprise enterprise = enterpriseId == null ? null : enterpriseService.selectEnterpriseById(enterpriseId);
         WorkerJobPost job = buildJobPost(enterpriseId, enterprise, request, "1");
         workerJobPostService.insertJobPost(job);
-        return successResult("岗位发布已提交审核：" + safeText(job.getTitle(), "未命名岗位"), job.getJobId());
+        return successResult("岗位发布已提交审核：" + safeText(job.getTitle(), "未命名岗位"), job.getJobId(),
+            "submitted", "岗位已真实入库，请继续关注审核和发布状态。");
     }
 
     private WorkerJobPost buildJobPost(Long enterpriseId, YgbEnterprise enterprise, AppEnterpriseActionRequest request, String status)
@@ -537,9 +545,16 @@ public class AppEnterpriseServiceImpl implements AppEnterpriseService
 
     private Map<String, Object> successResult(String message, Object recordId)
     {
+        return successResult(message, recordId, "accepted", "请在企业管理台账中继续跟进。");
+    }
+
+    private Map<String, Object> successResult(String message, Object recordId, String status, String nextStep)
+    {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
         result.put("message", message);
+        result.put("status", firstNonBlank(status, "accepted"));
+        result.put("nextStep", firstNonBlank(nextStep, "请在企业管理台账中继续跟进。"));
         if (recordId != null)
         {
             result.put("recordId", recordId);

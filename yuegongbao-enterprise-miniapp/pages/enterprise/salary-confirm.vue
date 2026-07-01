@@ -1,40 +1,47 @@
 <template>
   <!-- 联调快照：企业小程序页面已纳入接口联调与真机验收台账 -->
-  <view class="worker-page">
+  <view class="worker-page enterprise-page">
     <view class="worker-card worker-hero">
       <view class="worker-title worker-title--display">工资确认</view>
-      <view class="worker-subtitle">保留企业端工资批次确认、明细导入和后续支付申请接口位，本轮先做前端可联调闭环。</view>
-      <view v-if="tipText" class="worker-subtitle worker-subtitle--progress">{{ tipText }}</view>
+      <view class="worker-subtitle">工资确认和提交走真实批次流程。导入明细仅登记草稿，不伪装成已完成导入。</view>
+      <view class="enterprise-hero__meta">
+        <view class="worker-tag worker-tag--notice">已选 {{ selectedCount }} 批</view>
+        <view class="worker-tag">{{ batches.length }} 个批次</view>
+      </view>
     </view>
 
     <view class="worker-card">
-      <view class="section-head">
-        <view class="worker-title">批次概览</view>
-        <view class="worker-tag worker-tag--notice">已选 {{ selectedCount }} 批</view>
-      </view>
-      <view class="summary-grid summary-grid--three">
-        <view class="summary-item" v-for="item in summary" :key="item.label">
-          <view class="summary-item__label">{{ item.label }}</view>
-          <view class="summary-item__value">{{ item.value }}</view>
+      <view class="enterprise-kpi-grid">
+        <view v-for="item in summary" :key="item.label" class="enterprise-kpi">
+          <view class="enterprise-kpi__label">{{ item.label }}</view>
+          <view class="enterprise-kpi__value">{{ item.value }}</view>
+          <view class="enterprise-kpi__desc">{{ item.desc || '来自后端工资批次汇总' }}</view>
         </view>
       </view>
     </view>
 
     <view class="worker-card">
-      <view class="section-head">
-        <view class="worker-title">工资批次</view>
-        <view class="worker-caption">点击条目可勾选，统一提交确认或导入补充明细。</view>
+      <view class="enterprise-list-head">
+        <view>
+          <view class="worker-title">工资批次</view>
+          <view class="enterprise-list-head__meta">点击条目勾选，确认提交流程真实落后端，导入明细仅登记为待后台补单。</view>
+        </view>
+        <view class="worker-tag">{{ batches.length }} 批</view>
       </view>
       <view
-        class="record-row record-row--selectable"
-        :class="{ 'record-row--selected': isSelected(item.id) }"
         v-for="item in batches"
         :key="item.id"
+        class="record-row record-row--selectable"
+        :class="{ 'record-row--selected': isSelected(item.id) }"
         @click="toggleSelection(item.id)"
       >
         <view class="record-row__main">
           <view class="record-row__title">{{ item.month }} / {{ item.title }}</view>
           <view class="record-row__subtitle">{{ item.people }} 人 / 总额 {{ item.amount }}</view>
+          <view class="enterprise-record-meta">
+            <view class="enterprise-record-meta__item">状态 {{ item.status }}</view>
+            <view class="enterprise-record-meta__item">{{ isSelected(item.id) ? '已纳入本次提交' : '点击后加入确认' }}</view>
+          </view>
         </view>
         <view class="record-row__aside">
           <view class="worker-tag" :class="item.className">{{ item.status }}</view>
@@ -43,23 +50,23 @@
       </view>
       <view v-if="!batches.length" class="worker-empty worker-empty--panel">
         <view class="worker-empty__title">当前暂无工资批次</view>
-        <view class="worker-empty__desc">后续真实工资聚合接口接通后，会回写待确认和待复核批次。</view>
+        <view class="worker-empty__desc">已保留企业空态，后续继续从真实工资批次回写待确认数据。</view>
       </view>
       <view class="worker-button-row">
         <button class="worker-button" :disabled="submitting" @click="handleSubmitConfirm">
-          {{ submitting ? '提交中...' : '提交确认' }}
+          {{ submitting ? '提交中...' : '确认并提交' }}
         </button>
         <button class="worker-button worker-button--secondary" :disabled="importing" @click="handleImportDraft">
-          {{ importing ? '处理中...' : '导入明细' }}
+          {{ importing ? '处理中...' : '登记导入草稿' }}
         </button>
       </view>
       <view class="worker-button-row">
-        <button class="worker-button worker-button--ghost" @click="selectAllBatches">
-          全选批次
-        </button>
-        <button class="worker-button worker-button--secondary" @click="clearSelection">
-          清空选择
-        </button>
+        <button class="worker-button worker-button--ghost" @click="selectAllBatches">全选批次</button>
+        <button class="worker-button worker-button--secondary" @click="clearSelection">清空选择</button>
+      </view>
+      <view v-if="lastAction.message" class="enterprise-action-feedback">
+        <view class="enterprise-action-feedback__title">{{ lastAction.title }}</view>
+        <view class="enterprise-action-feedback__desc">{{ lastAction.message }}</view>
       </view>
     </view>
   </view>
@@ -72,12 +79,10 @@ import { getSalaryConfirmDashboard, importSalaryDraft, submitSalaryConfirm } fro
 const summary = ref([])
 const batches = ref([])
 const selectedIds = ref([])
-const loading = ref(false)
 const submitting = ref(false)
 const importing = ref(false)
-const tip = ref('')
+const lastAction = ref({ title: '', message: '' })
 
-const tipText = computed(() => tip.value)
 const selectedCount = computed(() => selectedIds.value.length)
 
 function notify(message) {
@@ -105,15 +110,9 @@ function clearSelection() {
 }
 
 async function loadData() {
-  loading.value = true
-  try {
-    const data = await getSalaryConfirmDashboard()
-    summary.value = Array.isArray(data.summary) ? data.summary : []
-    batches.value = Array.isArray(data.batches) ? data.batches : []
-    tip.value = ''
-  } finally {
-    loading.value = false
-  }
+  const data = await getSalaryConfirmDashboard()
+  summary.value = Array.isArray(data.summary) ? data.summary : []
+  batches.value = Array.isArray(data.batches) ? data.batches : []
 }
 
 async function handleSubmitConfirm() {
@@ -126,7 +125,12 @@ async function handleSubmitConfirm() {
     const result = await submitSalaryConfirm({
       batchIds: selectedIds.value
     })
+    lastAction.value = {
+      title: '工资确认已提交',
+      message: result.message || `已提交 ${selectedIds.value.length} 个工资批次。`
+    }
     notify(result.message || '工资确认已提交')
+    await loadData()
   } finally {
     submitting.value = false
   }
@@ -136,17 +140,23 @@ async function handleImportDraft() {
   importing.value = true
   try {
     const result = await importSalaryDraft({
-      source: 'frontend-placeholder',
+      source: 'enterprise-h5',
       batchMonth: batches.value.find((item) => selectedIds.value.includes(item.id))?.month || batches.value[0]?.month || ''
     })
-    notify(result.message || '导入入口已保留')
+    lastAction.value = {
+      title: '导入草稿已登记',
+      message: result.message || '导入草稿已登记，待后台补单流转。'
+    }
+    notify(result.message || '导入草稿已登记')
   } finally {
     importing.value = false
   }
 }
 
 onMounted(() => {
-  loadData()
+  loadData().catch((error) => {
+    notify(error.message || '加载工资批次失败')
+  })
 })
 </script>
 
